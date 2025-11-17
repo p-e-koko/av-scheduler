@@ -28,6 +28,8 @@ class RegisterRequest extends FormRequest
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'nullable|in:admin,supervisor,coordinator,student',
+            'promised_hours_per_week' => 'nullable|numeric|min:0|max:168',
+            'remaining_hours_this_week' => 'nullable|numeric|min:0|max:168',
         ];
     }
 

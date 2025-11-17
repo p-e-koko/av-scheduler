@@ -30,6 +30,8 @@ class UpdateUserRequest extends FormRequest
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $userId,
             'password' => 'nullable|string|min:8',
             'role' => 'sometimes|required|in:admin,supervisor,coordinator,student',
+            'promised_hours_per_week' => 'nullable|numeric|min:0|max:168',
+            'remaining_hours_this_week' => 'nullable|numeric|min:0|max:168',
         ];
     }
 

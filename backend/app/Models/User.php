@@ -27,6 +27,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'promised_hours_per_week',
+        'remaining_hours_this_week',
     ];
 
     /**
@@ -49,6 +51,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'promised_hours_per_week' => 'decimal:2',
+            'remaining_hours_this_week' => 'decimal:2',
         ];
     }
 
@@ -124,5 +128,52 @@ class User extends Authenticatable
     public function isStudent(): bool
     {
         return $this->hasRole('student');
+    }
+
+    /**
+     * Get the hours worked this week.
+     */
+    public function getHoursWorkedThisWeek(): float
+    {
+        return $this->promised_hours_per_week - $this->remaining_hours_this_week;
+    }
+
+    /**
+     * Add worked hours and update remaining hours.
+     */
+    public function addWorkedHours(float $hours): void
+    {
+        $this->remaining_hours_this_week = max(0, $this->remaining_hours_this_week - $hours);
+        $this->save();
+    }
+
+    /**
+     * Reset weekly hours (typically called at the start of each week).
+     */
+    public function resetWeeklyHours(): void
+    {
+        $this->remaining_hours_this_week = $this->promised_hours_per_week;
+        $this->save();
+    }
+
+    /**
+     * Check if user has remaining hours to work.
+     */
+    public function hasRemainingHours(): bool
+    {
+        return $this->remaining_hours_this_week > 0;
+    }
+
+    /**
+     * Get the percentage of hours completed this week.
+     */
+    public function getHoursCompletionPercentage(): float
+    {
+        if ($this->promised_hours_per_week <= 0) {
+            return 0;
+        }
+
+        $hoursWorked = $this->getHoursWorkedThisWeek();
+        return round(($hoursWorked / $this->promised_hours_per_week) * 100, 2);
     }
 }
