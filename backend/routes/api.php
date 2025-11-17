@@ -16,10 +16,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// Public Authentication Routes
-Route::prefix('auth')->group(function () {
+// Public Authentication Routes with Rate Limiting
+Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
 // Protected Authentication Routes
@@ -30,10 +32,10 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
 });
 
 // Protected User Management Routes - Role-Based Access Control
-Route::middleware('auth:sanctum')->group(function () {
-    
-    // User Management - Admin only
-    Route::middleware(['role:admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+
+    // User Management - Admin only with sensitive rate limiting
+    Route::middleware(['role:admin', 'throttle:sensitive'])->group(function () {
         Route::apiResource('users', UserController::class)->except(['index', 'show']);
         Route::prefix('users')->group(function () {
             Route::get('/trashed', [UserController::class, 'trashed']);
