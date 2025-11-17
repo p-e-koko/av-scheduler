@@ -184,7 +184,7 @@ class User extends Authenticatable
     {
         // Remove all existing roles
         $this->syncRoles([]);
-        
+
         // Assign the role based on enum value
         if ($this->role) {
             $this->assignRole($this->role);
