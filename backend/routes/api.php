@@ -29,16 +29,31 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh']);
 });
 
-// Protected User Management Routes
+// Protected User Management Routes - Role-Based Access Control
 Route::middleware('auth:sanctum')->group(function () {
-    // RESTful User Resource Routes
-    Route::apiResource('users', UserController::class);
+    
+    // User Management - Admin only
+    Route::middleware(['role:admin'])->group(function () {
+        Route::apiResource('users', UserController::class)->except(['index', 'show']);
+        Route::prefix('users')->group(function () {
+            Route::get('/trashed', [UserController::class, 'trashed']);
+            Route::post('/{id}/restore', [UserController::class, 'restore']);
+            Route::delete('/{id}/force', [UserController::class, 'forceDelete']);
+        });
+    });
 
-    // Additional User Routes for Soft Deletes
-    Route::prefix('users')->group(function () {
-        Route::get('/trashed', [UserController::class, 'trashed']);
-        Route::post('/{id}/restore', [UserController::class, 'restore']);
-        Route::delete('/{id}/force', [UserController::class, 'forceDelete']);
+    // View Users - Admin, Supervisor, Coordinator
+    Route::middleware(['role:admin,supervisor,coordinator'])->group(function () {
+        Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users/{user}', [UserController::class, 'show']);
+    });
+
+    // User can view and edit own profile
+    Route::get('/profile', [AuthController::class, 'me']);
+    Route::put('/profile', function (Request $request) {
+        $user = $request->user();
+        $user->update($request->only(['name', 'email', 'student_id', 'username']));
+        return response()->json(['user' => new \App\Http\Resources\UserResource($user)]);
     });
 });
 

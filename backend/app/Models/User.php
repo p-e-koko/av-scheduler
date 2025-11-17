@@ -176,4 +176,34 @@ class User extends Authenticatable
         $hoursWorked = $this->getHoursWorkedThisWeek();
         return round(($hoursWorked / $this->promised_hours_per_week) * 100, 2);
     }
+
+    /**
+     * Sync the enum role with Spatie role.
+     */
+    public function syncSpatieRole(): void
+    {
+        // Remove all existing roles
+        $this->syncRoles([]);
+        
+        // Assign the role based on enum value
+        if ($this->role) {
+            $this->assignRole($this->role);
+        }
+    }
+
+    /**
+     * Boot method to automatically sync Spatie roles when role changes.
+     */
+    protected static function booted(): void
+    {
+        static::created(function ($user) {
+            $user->syncSpatieRole();
+        });
+
+        static::updated(function ($user) {
+            if ($user->wasChanged('role')) {
+                $user->syncSpatieRole();
+            }
+        });
+    }
 }
