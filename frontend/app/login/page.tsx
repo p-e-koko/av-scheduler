@@ -28,6 +28,7 @@ export default function LoginPage() {
         setError("Cannot connect to backend server. Please ensure Laravel is running on http://localhost:8000");
       }
     };
+    
     checkConnection();
   }, []);
 

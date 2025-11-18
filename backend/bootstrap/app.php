@@ -14,17 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
+        // Remove stateful middleware for API to use token-based auth only
+        // $middleware->api(prepend: [
+        //     \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        // ]);
 
         // Add security headers to all requests
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
-
-        // Configure CORS for Next.js frontend
-        $middleware->web(append: [
-            \Illuminate\Http\Middleware\HandleCors::class,
-        ]);
 
         // Register role-based middleware aliases
         $middleware->alias([

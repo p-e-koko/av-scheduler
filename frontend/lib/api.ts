@@ -1,38 +1,5 @@
 // API configuration and utilities
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-const WEB_BASE_URL = process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:8000';
-
-// CSRF token management
-let csrfToken: string | null = null;
-
-// Get CSRF token
-async function getCSRFToken(): Promise<string> {
-  if (csrfToken) {
-    return csrfToken;
-  }
-
-  try {
-    const response = await fetch(`${WEB_BASE_URL}/sanctum/csrf-cookie`, {
-      method: 'GET',
-      credentials: 'include',
-    });
-    
-    if (response.ok) {
-      // Extract CSRF token from cookies
-      const cookies = document.cookie.split(';');
-      const xsrfCookie = cookies.find(cookie => cookie.trim().startsWith('XSRF-TOKEN='));
-      
-      if (xsrfCookie) {
-        csrfToken = decodeURIComponent(xsrfCookie.split('=')[1]);
-        return csrfToken;
-      }
-    }
-  } catch (error) {
-    console.error('Failed to fetch CSRF token:', error);
-  }
-  
-  throw new Error('Could not retrieve CSRF token');
-}
 
 // Custom error class for API errors
 export class APIError extends Error {
@@ -133,7 +100,7 @@ async function apiCall<T>(
   const url = `${API_BASE_URL}${endpoint}`;
   const token = getAuthToken();
 
-  console.log('Making API call to:', url); // Debug log
+  console.log('Making API call to:', url);
 
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
@@ -155,7 +122,7 @@ async function apiCall<T>(
   try {
     const response = await fetch(url, config);
     
-    console.log('Response status:', response.status); // Debug log
+    console.log('Response status:', response.status);
     
     // Handle rate limiting
     if (response.status === 429) {
@@ -173,7 +140,7 @@ async function apiCall<T>(
     }
 
     const data = await response.json();
-    console.log('Response data:', data); // Debug log
+    console.log('Response data:', data);
 
     if (!response.ok) {
       throw new APIError(
@@ -185,7 +152,7 @@ async function apiCall<T>(
 
     return data;
   } catch (error) {
-    console.error('API call error:', error); // Debug log
+    console.error('API call error:', error);
     
     if (error instanceof APIError) {
       throw error;
