@@ -23,6 +23,7 @@ interface AddUserFormData {
   username: string
   role: 'admin' | 'supervisor' | 'coordinator' | 'student'
   promised_hours_per_week: number
+  profile_picture: File | null
 }
 
 export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps) {
@@ -33,19 +34,43 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
     student_id: "",
     username: "",
     role: "student",
-    promised_hours_per_week: 0
+    promised_hours_per_week: 0,
+    profile_picture: null
   })
+  const [profilePreview, setProfilePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'promised_hours_per_week' ? parseFloat(value) || 0 : 
-              name === 'role' ? value as 'admin' | 'supervisor' | 'coordinator' | 'student' : 
-              value
-    }))
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: name === 'promised_hours_per_week' ? parseFloat(value) || 0 : 
+                name === 'role' ? value as 'admin' | 'supervisor' | 'coordinator' | 'student' : 
+                value
+      }
+      
+      // If role changed to student and no promised hours set, ensure minimum 1 hour
+      if (name === 'role' && value === 'student' && newData.promised_hours_per_week === 0) {
+        newData.promised_hours_per_week = 1
+      }
+      
+      return newData
+    })
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    setFormData(prev => ({ ...prev, profile_picture: file }))
+    
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = () => setProfilePreview(reader.result as string)
+      reader.readAsDataURL(file)
+    } else {
+      setProfilePreview(null)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,11 +78,34 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
     setLoading(true)
     setError(null)
 
+    // Client-side validation for students
+    if (formData.role === 'student' && formData.promised_hours_per_week < 1) {
+      setError('Students must promise at least 1 hour per week.')
+      setLoading(false)
+      return
+    }
+
+    if (formData.promised_hours_per_week > 20) {
+      setError('Promised hours cannot exceed 20 hours per week.')
+      setLoading(false)
+      return
+    }
+
     try {
-      await userAPI.createUser({
-        ...formData,
-        promised_hours_per_week: formData.promised_hours_per_week.toString()
-      })
+      const submitData = new FormData()
+      submitData.append('name', formData.name)
+      submitData.append('email', formData.email)
+      submitData.append('password', formData.password)
+      submitData.append('student_id', formData.student_id)
+      submitData.append('username', formData.username)
+      submitData.append('role', formData.role)
+      submitData.append('promised_hours_per_week', formData.promised_hours_per_week.toString())
+      
+      if (formData.profile_picture) {
+        submitData.append('profile_picture', formData.profile_picture)
+      }
+      
+      await userAPI.createUser(submitData)
       
       // Success - close modal and refresh user list
       setFormData({
@@ -67,8 +115,10 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
         student_id: "",
         username: "",
         role: "student",
-        promised_hours_per_week: 0
+        promised_hours_per_week: 0,
+        profile_picture: null
       })
+      setProfilePreview(null)
       onUserAdded()
       onClose()
     } catch (err) {
@@ -87,8 +137,10 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
         student_id: "",
         username: "",
         role: "student",
-        promised_hours_per_week: 0
+        promised_hours_per_week: 0,
+        profile_picture: null
       })
+      setProfilePreview(null)
       setError(null)
       onClose()
     }
@@ -245,21 +297,53 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
           {/* Promised Hours */}
           <div className="space-y-2">
             <Label htmlFor="promised_hours_per_week" className="text-sm font-medium text-gray-700">
-              Promised Hours per Week
+              Promised Hours per Week {formData.role === 'student' && '*'}
             </Label>
             <Input
               id="promised_hours_per_week"
               name="promised_hours_per_week"
               type="number"
               min="0"
-              max="168"
+              max="20"
               step="1"
               value={formData.promised_hours_per_week}
               onChange={handleInputChange}
               disabled={loading}
+              required={formData.role === 'student'}
               className="bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary placeholder:text-gray-600 text-gray-900"
-              placeholder="0"
+              placeholder={formData.role === 'student' ? "Required for students (1-20 hours)" : "0-20 hours"}
             />
+            {formData.role === 'student' ? (
+              <p className="text-xs text-gray-600">Students must promise 1-20 hours per week</p>
+            ) : (
+              <p className="text-xs text-gray-600">Maximum 20 hours per week</p>
+            )}
+          </div>
+
+          {/* Profile Picture */}
+          <div className="space-y-2">
+            <Label htmlFor="profile_picture" className="text-sm font-medium text-gray-700">
+              Profile Picture
+            </Label>
+            <Input
+              id="profile_picture"
+              name="profile_picture"
+              type="file"
+              accept="image/jpeg,image/png,image/jpg,image/gif"
+              onChange={handleFileChange}
+              disabled={loading}
+              className="bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+            />
+            <p className="text-xs text-gray-600">Maximum file size: 500MB. Supported formats: JPEG, PNG, JPG, GIF</p>
+            {profilePreview && (
+              <div className="mt-2">
+                <img
+                  src={profilePreview}
+                  alt="Profile preview"
+                  className="h-20 w-20 rounded-full object-cover border-2 border-gray-200"
+                />
+              </div>
+            )}
           </div>
 
           {/* Footer Buttons */}

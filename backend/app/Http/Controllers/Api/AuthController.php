@@ -19,14 +19,26 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = User::create([
+        $userData = [
             'student_id' => $request->student_id,
             'username' => $request->username,
             'name' => $request->name,
             'email' => $request->email,
             'password' => $request->password,
             'role' => $request->role ?? 'student',
-        ]);
+            'promised_hours_per_week' => $request->promised_hours_per_week,
+            'remaining_hours_this_week' => $request->promised_hours_per_week ?? 0,
+        ];
+
+        // Handle profile picture upload
+        if ($request->hasFile('profile_picture')) {
+            $profilePicture = $request->file('profile_picture');
+            $fileName = time() . '_' . uniqid() . '.' . $profilePicture->getClientOriginalExtension();
+            $path = $profilePicture->storeAs('profile_pictures', $fileName, 'public');
+            $userData['profile_picture'] = $path;
+        }
+
+        $user = User::create($userData);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 

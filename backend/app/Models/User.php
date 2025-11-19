@@ -27,6 +27,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'profile_picture',
         'promised_hours_per_week',
         'remaining_hours_this_week',
     ];
@@ -143,7 +144,8 @@ class User extends Authenticatable
      */
     public function addWorkedHours(float $hours): void
     {
-        $this->remaining_hours_this_week = max(0, $this->remaining_hours_this_week - $hours);
+        // Ensure remaining hours never goes below 0 and never exceeds promised hours
+        $this->remaining_hours_this_week = max(0, min($this->promised_hours_per_week ?? 0, $this->remaining_hours_this_week - $hours));
         $this->save();
     }
 
@@ -175,6 +177,41 @@ class User extends Authenticatable
 
         $hoursWorked = $this->getHoursWorkedThisWeek();
         return round(($hoursWorked / $this->promised_hours_per_week) * 100, 2);
+    }
+
+    /**
+     * Get the full URL for the user's profile picture.
+     */
+    public function getProfilePictureUrlAttribute(): ?string
+    {
+        if (!$this->profile_picture) {
+            return null;
+        }
+
+        return \Illuminate\Support\Facades\Storage::url($this->profile_picture);
+    }
+
+    /**
+     * Get the default profile picture URL if no profile picture is set.
+     */
+    public function getProfilePictureOrDefaultAttribute(): string
+    {
+        if ($this->profile_picture) {
+            return $this->getProfilePictureUrlAttribute();
+        }
+
+        // Return a default avatar/placeholder image
+        return asset('images/default-avatar.png');
+    }
+
+    /**
+     * Delete the user's profile picture file from storage.
+     */
+    public function deleteProfilePicture(): void
+    {
+        if ($this->profile_picture && \Illuminate\Support\Facades\Storage::exists($this->profile_picture)) {
+            \Illuminate\Support\Facades\Storage::delete($this->profile_picture);
+        }
     }
 
     /**

@@ -23,16 +23,34 @@ class UpdateUserRequest extends FormRequest
     {
         $userId = $this->route('user')?->id;
 
-        return [
+        $rules = [
             'student_id' => 'nullable|string|unique:users,student_id,' . $userId,
             'username' => 'nullable|string|unique:users,username,' . $userId,
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $userId,
             'password' => 'nullable|string|min:8',
             'role' => 'sometimes|required|in:admin,supervisor,coordinator,student',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:512000', // 500MB = 512000KB
             'promised_hours_per_week' => 'nullable|numeric|min:0|max:20',
-            'remaining_hours_this_week' => 'nullable|numeric|min:0|max:20',
+            'remaining_hours_this_week' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                function ($attribute, $value, $fail) {
+                    $promisedHours = $this->input('promised_hours_per_week');
+                    if ($promisedHours !== null && $value > $promisedHours) {
+                        $fail('The remaining hours this week cannot exceed the promised hours per week.');
+                    }
+                }
+            ],
         ];
+
+        // Make promised_hours_per_week required for students when role is being updated
+        if ($this->has('role') && $this->input('role') === 'student') {
+            $rules['promised_hours_per_week'] = 'required|numeric|min:1|max:20';
+        }
+
+        return $rules;
     }
 
     /**
@@ -44,5 +62,21 @@ class UpdateUserRequest extends FormRequest
         if ($this->password === '') {
             $this->request->remove('password');
         }
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'profile_picture.image' => 'The profile picture must be an image.',
+            'profile_picture.mimes' => 'The profile picture must be a file of type: jpeg, png, jpg, gif.',
+            'profile_picture.max' => 'The profile picture may not be greater than 500MB.',
+            'promised_hours_per_week.required' => 'The promised hours per week field is required for students.',
+            'promised_hours_per_week.min' => 'Students must promise at least 1 hour per week.',
+            'promised_hours_per_week.max' => 'The promised hours per week cannot exceed 20 hours.',
+            'remaining_hours_this_week.max' => 'The remaining hours this week cannot exceed 20 hours.',
+        ];
     }
 }

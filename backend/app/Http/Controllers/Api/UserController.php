@@ -47,7 +47,22 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
-        $user = User::create($request->validated());
+        $userData = $request->validated();
+
+        // Handle profile picture upload
+        if ($request->hasFile('profile_picture')) {
+            $profilePicture = $request->file('profile_picture');
+            $fileName = time() . '_' . uniqid() . '.' . $profilePicture->getClientOriginalExtension();
+            $path = $profilePicture->storeAs('profile_pictures', $fileName, 'public');
+            $userData['profile_picture'] = $path;
+        }
+
+        // Set remaining hours equal to promised hours for new users
+        if (isset($userData['promised_hours_per_week'])) {
+            $userData['remaining_hours_this_week'] = $userData['promised_hours_per_week'];
+        }
+
+        $user = User::create($userData);
 
         return response()->json([
             'message' => 'User created successfully',
@@ -70,7 +85,20 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
-        $user->update($request->validated());
+        $userData = $request->validated();
+        
+        // Handle profile picture upload
+        if ($request->hasFile('profile_picture')) {
+            // Delete old profile picture if it exists
+            $user->deleteProfilePicture();
+            
+            $profilePicture = $request->file('profile_picture');
+            $fileName = time() . '_' . uniqid() . '.' . $profilePicture->getClientOriginalExtension();
+            $path = $profilePicture->storeAs('profile_pictures', $fileName, 'public');
+            $userData['profile_picture'] = $path;
+        }
+
+        $user->update($userData);
 
         return response()->json([
             'message' => 'User updated successfully',

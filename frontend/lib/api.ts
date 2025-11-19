@@ -29,6 +29,7 @@ export interface User {
   name: string;
   email: string;
   role: 'admin' | 'supervisor' | 'coordinator' | 'student';
+  profile_picture?: string;
   promised_hours_per_week?: string;
   remaining_hours_this_week?: string;
   hours_worked_this_week?: number;
@@ -390,11 +391,42 @@ export const userAPI = {
   },
 
   // Create new user
-  async createUser(userData: Partial<User> & { password: string }): Promise<{ message: string; user: User }> {
-    return apiCall<{ message: string; user: User }>('/users', {
+  async createUser(userData: Partial<User> & { password: string } | FormData): Promise<{ message: string; user: User }> {
+    const isFormData = userData instanceof FormData;
+    
+    const config: RequestInit = {
       method: 'POST',
-      body: JSON.stringify(userData),
-    });
+    };
+
+    if (isFormData) {
+      // For FormData, don't set Content-Type header - let browser set it
+      config.body = userData;
+      const token = getAuthToken();
+      config.headers = {
+        'Accept': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
+      const url = `${API_BASE_URL}/users`;
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new APIError(
+          errorData.message || 'An error occurred',
+          response.status,
+          errorData.errors
+        );
+      }
+
+      return response.json();
+    } else {
+      // For regular JSON data
+      return apiCall<{ message: string; user: User }>('/users', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
+    }
   },
 
   // Update user
