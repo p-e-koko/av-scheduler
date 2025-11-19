@@ -23,11 +23,6 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'profile_picture' => $this->profile_picture,
             'profile_picture_url' => $this->getProfilePictureUrlAttribute(),
-            'profile_picture_debug' => [
-                'raw_path' => $this->profile_picture,
-                'generated_url' => $this->profile_picture ? url('storage/' . $this->profile_picture) : null,
-                'file_exists' => $this->profile_picture ? file_exists(storage_path('app/public/' . $this->profile_picture)) : false,
-            ],
             'promised_hours_per_week' => $this->promised_hours_per_week,
             'remaining_hours_this_week' => $this->remaining_hours_this_week,
             'hours_worked_this_week' => $this->getHoursWorkedThisWeek(),

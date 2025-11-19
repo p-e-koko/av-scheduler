@@ -188,8 +188,13 @@ class User extends Authenticatable
             return null;
         }
 
-        // Generate the full URL using the public disk
-        return url('storage/' . $this->profile_picture);
+        // If it's already a full URL, return as is
+        if (str_starts_with($this->profile_picture, 'http')) {
+            return $this->profile_picture;
+        }
+
+        // Generate the full URL using the app URL and storage path
+        return config('app.url') . '/storage/' . $this->profile_picture;
     }
 
     /**
