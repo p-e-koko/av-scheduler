@@ -38,6 +38,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::middleware(['role:admin', 'throttle:sensitive'])->group(function () {
         Route::apiResource('users', UserController::class)->except(['index', 'show']);
         Route::prefix('users')->group(function () {
+            Route::post('/create-with-files', [UserController::class, 'storeWithFiles']);
+            Route::post('/{user}/update-with-files', [UserController::class, 'updateWithFiles']);
             Route::get('/trashed', [UserController::class, 'trashed']);
             Route::post('/{id}/restore', [UserController::class, 'restore']);
             Route::delete('/{id}/force', [UserController::class, 'forceDelete']);

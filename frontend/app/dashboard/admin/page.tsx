@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import AddUserModal from "@/components/AddUserModal"
+import EditUserModal from "@/components/EditUserModal"
 
 import { 
   userAPI, 
@@ -53,6 +54,8 @@ export default function AdminDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [selectedRole, setSelectedRole] = useState<string>("")
   const [showAddUserModal, setShowAddUserModal] = useState(false)
+  const [showEditUserModal, setShowEditUserModal] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
 
   // Check authentication and permissions
   useEffect(() => {
@@ -82,6 +85,16 @@ export default function AdminDashboard() {
         search: searchQuery || undefined,
         role: selectedRole || undefined
       })
+      
+      // Temporary debug: Log Derek's user data
+      const derekUser = response.data.find(user => user.name.toLowerCase().includes('derek'))
+      if (derekUser) {
+        console.log('Derek found:', {
+          name: derekUser.name,
+          profile_picture: derekUser.profile_picture,
+          profile_picture_url: derekUser.profile_picture_url
+        })
+      }
       
       setUsers(response.data)
       setPagination(response.meta)
@@ -151,9 +164,14 @@ export default function AdminDashboard() {
     fetchUsers() // Refresh the user list
   }
 
-  const handleEditUser = (userId: number) => {
-    // TODO: Open edit user modal/page
-    alert(`Edit user ${userId} functionality coming soon!`)
+  const handleUserUpdated = () => {
+    fetchUsers() // Refresh the user list
+    setSelectedUser(null)
+  }
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user)
+    setShowEditUserModal(true)
   }
 
   if (!currentUser) {
@@ -379,7 +397,7 @@ export default function AdminDashboard() {
                                   variant="ghost" 
                                   size="sm" 
                                   className="h-6 px-2 text-xs text-gray-600 hover:text-primary hover:bg-primary/10"
-                                  onClick={() => handleEditUser(user.id)}
+                                  onClick={() => handleEditUser(user)}
                                 >
                                   <Edit className="w-3 h-3 mr-1" />
                                   Edit
@@ -465,7 +483,7 @@ export default function AdminDashboard() {
                                     variant="ghost" 
                                     size="sm" 
                                     className="h-8 w-8 p-0"
-                                    onClick={() => handleEditUser(user.id)}
+                                    onClick={() => handleEditUser(user)}
                                   >
                                     <Edit className="w-4 h-4" />
                                   </Button>
@@ -540,6 +558,17 @@ export default function AdminDashboard() {
         isOpen={showAddUserModal}
         onClose={() => setShowAddUserModal(false)}
         onUserAdded={handleUserAdded}
+      />
+
+      {/* Edit User Modal */}
+      <EditUserModal
+        isOpen={showEditUserModal}
+        onClose={() => {
+          setShowEditUserModal(false)
+          setSelectedUser(null)
+        }}
+        onUserUpdated={handleUserUpdated}
+        user={selectedUser}
       />
     </div>
   )

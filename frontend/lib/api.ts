@@ -440,7 +440,7 @@ export const userAPI = {
     };
 
     if (isFormData) {
-      // For FormData, don't set Content-Type header - let browser set it
+      // For FormData with file uploads, use the special file upload endpoint
       config.body = userData;
       const token = getAuthToken();
       config.headers = {
@@ -448,7 +448,7 @@ export const userAPI = {
         ...(token && { Authorization: `Bearer ${token}` }),
       };
 
-      const url = `${API_BASE_URL}/users`;
+      const url = `${API_BASE_URL}/users/create-with-files`;
       const response = await fetch(url, config);
 
       if (!response.ok) {
@@ -462,7 +462,7 @@ export const userAPI = {
 
       return response.json();
     } else {
-      // For regular JSON data
+      // For regular JSON data, use standard endpoint
       return apiCall<{ message: string; user: User }>('/users', {
         method: 'POST',
         body: JSON.stringify(userData),
@@ -471,11 +471,41 @@ export const userAPI = {
   },
 
   // Update user
-  async updateUser(id: number, userData: Partial<User>): Promise<{ message: string; user: User }> {
-    return apiCall<{ message: string; user: User }>(`/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData),
-    });
+  async updateUser(id: number, userData: Partial<User> | FormData): Promise<{ message: string; user: User }> {
+    const isFormData = userData instanceof FormData;
+    
+    if (isFormData) {
+      // For FormData with file uploads, use the special file upload endpoint
+      const token = getAuthToken();
+      const config: RequestInit = {
+        method: 'POST',
+        body: userData,
+        headers: {
+          'Accept': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        }
+      };
+
+      const url = `${API_BASE_URL}/users/${id}/update-with-files`;
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new APIError(
+          errorData.message || 'An error occurred',
+          response.status,
+          errorData.errors
+        );
+      }
+
+      return response.json();
+    } else {
+      // For regular JSON data, use standard PUT method
+      return apiCall<{ message: string; user: User }>(`/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(userData),
+      });
+    }
   },
 
   // Delete user (soft delete)
