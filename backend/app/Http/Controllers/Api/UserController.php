@@ -86,12 +86,12 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
         $userData = $request->validated();
-        
+
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
             // Delete old profile picture if it exists
             $user->deleteProfilePicture();
-            
+
             $profilePicture = $request->file('profile_picture');
             $fileName = time() . '_' . uniqid() . '.' . $profilePicture->getClientOriginalExtension();
             $path = $profilePicture->storeAs('profile_pictures', $fileName, 'public');

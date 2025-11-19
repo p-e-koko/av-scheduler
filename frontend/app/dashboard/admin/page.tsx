@@ -83,6 +83,20 @@ export default function AdminDashboard() {
         role: selectedRole || undefined
       })
       
+      // Debug: Log user data to check profile pictures
+      console.log('Fetched users:', response.data)
+      response.data.forEach(user => {
+        if (user.name.toLowerCase().includes('derek')) {
+          console.log('Derek user data:', {
+            name: user.name,
+            profile_picture: user.profile_picture,
+            profile_picture_url: user.profile_picture_url,
+            // @ts-ignore - temporary debug field
+            profile_picture_debug: user.profile_picture_debug
+          })
+        }
+      })
+      
       setUsers(response.data)
       setPagination(response.meta)
     } catch (err) {
@@ -208,7 +222,7 @@ export default function AdminDashboard() {
           <div className="p-4 border-t border-gray-200/30">
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}>
               <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src="" />
+                <AvatarImage src={currentUser.profile_picture_url || ""} />
                 <AvatarFallback className="bg-primary text-white font-semibold">
                   {getInitials(currentUser.name)}
                 </AvatarFallback>
@@ -351,7 +365,13 @@ export default function AdminDashboard() {
                         <div className="flex items-center space-x-4 h-full">
                           {/* Profile Picture - Left Side */}
                           <Avatar className="h-16 w-16 flex-shrink-0">
-                            <AvatarImage src="" />
+                            <AvatarImage 
+                              src={user.profile_picture_url || ""} 
+                              onError={(e) => {
+                                console.log(`Failed to load profile picture for ${user.name}:`, user.profile_picture_url)
+                                e.currentTarget.style.display = 'none'
+                              }}
+                            />
                             <AvatarFallback className="bg-primary text-white font-semibold text-lg">
                               {getInitials(user.name)}
                             </AvatarFallback>
@@ -433,7 +453,13 @@ export default function AdminDashboard() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <Avatar className="h-10 w-10">
-                                  <AvatarImage src="" />
+                                  <AvatarImage 
+                                    src={user.profile_picture_url || ""} 
+                                    onError={(e) => {
+                                      console.log(`Failed to load profile picture for ${user.name}:`, user.profile_picture_url)
+                                      e.currentTarget.style.display = 'none'
+                                    }}
+                                  />
                                   <AvatarFallback className="bg-primary text-white font-semibold">
                                     {getInitials(user.name)}
                                   </AvatarFallback>

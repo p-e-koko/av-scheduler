@@ -19,8 +19,11 @@ export default function RegisterPage() {
     password: "",
     password_confirmation: "",
     student_id: "",
-    username: ""
+    username: "",
+    promised_hours_per_week: 0,
+    profile_picture: null as File | null
   })
+  const [profilePreview, setProfilePreview] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -43,6 +46,19 @@ export default function RegisterPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    setFormData(prev => ({ ...prev, profile_picture: file }))
+    
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = () => setProfilePreview(reader.result as string)
+      reader.readAsDataURL(file)
+    } else {
+      setProfilePreview(null)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -61,8 +77,35 @@ export default function RegisterPage() {
       return
     }
 
+    // Validate promised hours for students (default role)
+    if (formData.promised_hours_per_week < 1) {
+      setError("Students must promise at least 1 hour per week")
+      setIsLoading(false)
+      return
+    }
+
+    if (formData.promised_hours_per_week > 20) {
+      setError("Promised hours cannot exceed 20 hours per week")
+      setIsLoading(false)
+      return
+    }
+
     try {
-      const response = await authAPI.register(formData)
+      // Use FormData for file upload
+      const submitData = new FormData()
+      submitData.append('name', formData.name)
+      submitData.append('email', formData.email)
+      submitData.append('password', formData.password)
+      submitData.append('password_confirmation', formData.password_confirmation)
+      submitData.append('student_id', formData.student_id)
+      submitData.append('username', formData.username)
+      submitData.append('promised_hours_per_week', formData.promised_hours_per_week.toString())
+      
+      if (formData.profile_picture) {
+        submitData.append('profile_picture', formData.profile_picture)
+      }
+      
+      const response = await authAPI.register(submitData)
       
       if (response.access_token && response.user) {
         // Redirect based on user role
@@ -167,6 +210,52 @@ export default function RegisterPage() {
                   className="h-12 rounded-xl border-0 bg-gray-50/80 ring-1 ring-gray-200 focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all duration-200 placeholder:text-gray-400 text-gray-900"
                   disabled={isLoading}
                 />
+              </div>
+
+              {/* Promised Hours per Week */}
+              <div className="space-y-3">
+                <Label htmlFor="promised_hours_per_week" className="text-gray-800 font-medium text-sm tracking-wide">
+                  Promised Hours per Week <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="promised_hours_per_week"
+                  type="number"
+                  min="1"
+                  max="20"
+                  step="1"
+                  placeholder="Enter hours (1-20)"
+                  value={formData.promised_hours_per_week || ""}
+                  onChange={(e) => handleInputChange('promised_hours_per_week', e.target.value)}
+                  className="h-12 rounded-xl border-0 bg-gray-50/80 ring-1 ring-gray-200 focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all duration-200 placeholder:text-gray-400 text-gray-900"
+                  required
+                  disabled={isLoading}
+                />
+                <p className="text-xs text-gray-500">As a student, you must promise 1-20 hours per week</p>
+              </div>
+
+              {/* Profile Picture (Optional) */}
+              <div className="space-y-3">
+                <Label htmlFor="profile_picture" className="text-gray-800 font-medium text-sm tracking-wide">
+                  Profile Picture <span className="text-gray-400 font-normal">(optional)</span>
+                </Label>
+                <Input
+                  id="profile_picture"
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg,image/gif"
+                  onChange={handleFileChange}
+                  className="h-12 rounded-xl border-0 bg-gray-50/80 ring-1 ring-gray-200 focus:ring-2 focus:ring-primary/30 focus:bg-white transition-all duration-200 text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                  disabled={isLoading}
+                />
+                <p className="text-xs text-gray-500">Maximum file size: 500MB. Supported: JPEG, PNG, JPG, GIF</p>
+                {profilePreview && (
+                  <div className="mt-3">
+                    <img
+                      src={profilePreview}
+                      alt="Profile preview"
+                      className="h-20 w-20 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Password Field */}

@@ -188,7 +188,8 @@ class User extends Authenticatable
             return null;
         }
 
-        return \Illuminate\Support\Facades\Storage::url($this->profile_picture);
+        // Generate the full URL using the public disk
+        return url('storage/' . $this->profile_picture);
     }
 
     /**

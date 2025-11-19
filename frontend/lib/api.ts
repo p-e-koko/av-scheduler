@@ -30,6 +30,7 @@ export interface User {
   email: string;
   role: 'admin' | 'supervisor' | 'coordinator' | 'student';
   profile_picture?: string;
+  profile_picture_url?: string;
   promised_hours_per_week?: string;
   remaining_hours_this_week?: string;
   hours_worked_this_week?: number;
@@ -56,6 +57,7 @@ export interface RegisterData {
   role?: string;
   promised_hours_per_week?: number;
   remaining_hours_this_week?: number;
+  profile_picture?: File;
 }
 
 // Helper function to get stored token
@@ -205,19 +207,58 @@ export const authAPI = {
   },
 
   // Register user
-  async register(userData: RegisterData): Promise<ApiResponse> {
-    const response = await apiCall<ApiResponse>('/auth/register', {
+  async register(userData: RegisterData | FormData): Promise<ApiResponse> {
+    const isFormData = userData instanceof FormData;
+    
+    const config: RequestInit = {
       method: 'POST',
-      body: JSON.stringify(userData),
-    });
+    };
 
-    // Store token and user data
-    if (response.access_token && response.user) {
-      setAuthToken(response.access_token);
-      setStoredUser(response.user);
+    if (isFormData) {
+      // For FormData, don't set Content-Type header - let browser set it
+      config.body = userData;
+      const token = getAuthToken();
+      config.headers = {
+        'Accept': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      };
+
+      const url = `${API_BASE_URL}/auth/register`;
+      const response = await fetch(url, config);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new APIError(
+          errorData.message || 'An error occurred',
+          response.status,
+          errorData.errors
+        );
+      }
+
+      const result = await response.json();
+      
+      // Store token and user data
+      if (result.access_token && result.user) {
+        setAuthToken(result.access_token);
+        setStoredUser(result.user);
+      }
+
+      return result;
+    } else {
+      // For regular JSON data
+      const response = await apiCall<ApiResponse>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+      });
+
+      // Store token and user data
+      if (response.access_token && response.user) {
+        setAuthToken(response.access_token);
+        setStoredUser(response.user);
+      }
+
+      return response;
     }
-
-    return response;
   },
 
   // Logout user
