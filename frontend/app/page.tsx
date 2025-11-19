@@ -1,65 +1,136 @@
-import Image from "next/image";
+"use client"
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Calendar } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { getStoredUser, hasAnyRole } from '@/lib/api'
 
 export default function Home() {
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const currentUser = getStoredUser()
+    setUser(currentUser)
+    setLoading(false)
+  }, [])
+
+  const handleNavigateToDashboard = () => {
+    if (user && hasAnyRole(['admin', 'supervisor', 'coordinator'])) {
+      router.push('/dashboard/admin')
+    } else {
+      router.push('/login')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-white">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-white">
+      <main className="flex flex-col items-center justify-center text-center max-w-md mx-auto px-6">
+        {/* App Logo and Branding */}
+        <div className="flex items-center space-x-3 mb-8">
+          <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-primary to-primary-medium flex items-center justify-center">
+            <Calendar className="w-8 h-8 text-white" />
+          </div>
+          <div className="text-left">
+            <h1 className="text-3xl font-bold text-gray-900">AV Scheduler</h1>
+            <p className="text-sm text-gray-600">Audio Visual Management System</p>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Welcome Message */}
+        <div className="mb-8">
+          {user ? (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Welcome back, {user.name}!
+              </h2>
+              <p className="text-gray-600">
+                You are logged in as <span className="font-medium">{user.role}</span>
+              </p>
+            </div>
+          ) : (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Welcome to AV Scheduler
+              </h2>
+              <p className="text-gray-600">
+                Please sign in to access your dashboard
+              </p>
+            </div>
+          )}
         </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col space-y-3 w-full">
+          {user ? (
+            <>
+              {hasAnyRole(['admin', 'supervisor', 'coordinator']) && (
+                <Button 
+                  onClick={handleNavigateToDashboard}
+                  className="w-full bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
+                >
+                  Go to Admin Dashboard
+                </Button>
+              )}
+              
+              <Link href="/dashboard">
+                <Button variant="outline" className="w-full bg-white/80 backdrop-blur-xl border-gray-300/30">
+                  My Dashboard
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button className="w-full bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all">
+                  Sign In
+                </Button>
+              </Link>
+              
+              <Link href="/register">
+                <Button variant="outline" className="w-full bg-white/80 backdrop-blur-xl border-gray-300/30">
+                  Create Account
+                </Button>
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Quick Access for Testing */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <p className="text-xs text-yellow-800 font-medium mb-2">Development Mode</p>
+            <div className="flex space-x-2">
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="text-xs">
+                  Login Page
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button variant="ghost" size="sm" className="text-xs">
+                  Register Page
+                </Button>
+              </Link>
+              <Link href="/dashboard/admin">
+                <Button variant="ghost" size="sm" className="text-xs">
+                  Admin Dashboard
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </main>
     </div>
-  );
+  )
 }

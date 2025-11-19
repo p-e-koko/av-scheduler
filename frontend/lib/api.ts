@@ -342,3 +342,93 @@ export const formatAPIError = (error: unknown): string => {
   }
   return 'An unexpected error occurred';
 };
+
+// User management API
+export interface UsersListResponse {
+  data: User[];
+  meta: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+  };
+  links: {
+    first: string;
+    last: string;
+    prev: string | null;
+    next: string | null;
+  };
+}
+
+export interface UsersQueryParams {
+  page?: number;
+  per_page?: number;
+  role?: string;
+  search?: string;
+}
+
+export const userAPI = {
+  // Get all users with pagination and filters
+  async getUsers(params: UsersQueryParams = {}): Promise<UsersListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params.role) queryParams.append('role', params.role);
+    if (params.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/users?${queryString}` : '/users';
+    
+    return apiCall<UsersListResponse>(endpoint);
+  },
+
+  // Get specific user
+  async getUser(id: number): Promise<{ user: User }> {
+    return apiCall<{ user: User }>(`/users/${id}`);
+  },
+
+  // Create new user
+  async createUser(userData: Partial<User> & { password: string }): Promise<{ message: string; user: User }> {
+    return apiCall<{ message: string; user: User }>('/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  },
+
+  // Update user
+  async updateUser(id: number, userData: Partial<User>): Promise<{ message: string; user: User }> {
+    return apiCall<{ message: string; user: User }>(`/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
+  },
+
+  // Delete user (soft delete)
+  async deleteUser(id: number): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/users/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Restore user
+  async restoreUser(id: number): Promise<{ message: string; user: User }> {
+    return apiCall<{ message: string; user: User }>(`/users/${id}/restore`, {
+      method: 'POST',
+    });
+  },
+
+  // Get trashed users
+  async getTrashedUsers(params: UsersQueryParams = {}): Promise<UsersListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/users/trashed?${queryString}` : '/users/trashed';
+    
+    return apiCall<UsersListResponse>(endpoint);
+  }
+};
