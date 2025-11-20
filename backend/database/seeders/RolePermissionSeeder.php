@@ -35,6 +35,13 @@ class RolePermissionSeeder extends Seeder
             'check in users',
             'check out users',
 
+            // Position management permissions
+            'view positions',
+            'create positions',
+            'edit positions',
+            'delete positions',
+            'manage user positions',
+
             // Profile management
             'edit own profile',
             'upload profile picture',
@@ -49,15 +56,16 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create([
-                'id' => (string) \Illuminate\Support\Str::uuid(),
+            Permission::firstOrCreate([
                 'name' => $permission,
                 'guard_name' => 'web'
+            ], [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
             ]);
         }
 
         // Create roles and assign permissions
-        
+
         // Admin role - has all permissions
         $adminRole = Role::create([
             'id' => (string) \Illuminate\Support\Str::uuid(),
@@ -69,7 +77,7 @@ class RolePermissionSeeder extends Seeder
         // Supervisor role - can manage assignments and view users
         $supervisorRole = Role::create([
             'id' => (string) \Illuminate\Support\Str::uuid(),
-            'name' => 'supervisor', 
+            'name' => 'supervisor',
             'guard_name' => 'web'
         ]);
         $supervisorRole->givePermissionTo([
@@ -102,6 +110,11 @@ class RolePermissionSeeder extends Seeder
             'assign users to assignments',
             'check in users',
             'check out users',
+            'view positions',
+            'create positions',
+            'edit positions',
+            'delete positions',
+            'manage user positions',
             'view reports',
             'edit own profile',
             'upload profile picture',

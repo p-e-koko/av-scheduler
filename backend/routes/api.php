@@ -70,6 +70,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
             Route::post('/{assignment}/check-in-user', [AssignmentController::class, 'checkInUser']);
             Route::post('/{assignment}/check-out-user', [AssignmentController::class, 'checkOutUser']);
         });
+
+        // Position Management - Coordinator only
+        Route::apiResource('positions', \App\Http\Controllers\Api\PositionController::class);
+        Route::get('positions-active', [\App\Http\Controllers\Api\PositionController::class, 'active']);
     });
 
     // View Assignments - Supervisor, Coordinator, Students (Read-only access)

@@ -250,6 +250,13 @@ class AssignmentController extends Controller
      */
     public function updateUserPosition(Request $request, Assignment $assignment): JsonResponse
     {
+        // Check if user has permission to manage positions
+        if (!auth()->user()->hasRole('coordinator')) {
+            return response()->json([
+                'message' => 'Only coordinators can manage user positions'
+            ], 403);
+        }
+
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'position' => 'required|string|max:255'
