@@ -522,6 +522,13 @@ export const userAPI = {
     });
   },
 
+  // Force delete user (permanent)
+  async forceDeleteUser(id: number): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/users/${id}/force`, {
+      method: 'DELETE',
+    });
+  },
+
   // Get trashed users
   async getTrashedUsers(params: UsersQueryParams = {}): Promise<UsersListResponse> {
     const queryParams = new URLSearchParams();

@@ -6,31 +6,22 @@ import { useRouter } from "next/navigation"
 import { 
   Users, 
   Search, 
-  Filter, 
   Grid3X3, 
   List, 
   Calendar,
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Settings,
-  Plus,
-  Edit,
+  RotateCcw,
   Trash2,
-  Menu,
-  X,
   UserX
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
-import AddUserModal from "@/components/AddUserModal"
-import EditUserModal from "@/components/EditUserModal"
+import { Card, CardContent } from "@/components/ui/card"
 
 import { 
   userAPI, 
@@ -42,25 +33,22 @@ import {
   UsersListResponse
 } from "@/lib/api"
 
-export default function AdminDashboard() {
+export default function AccountRecovery() {
   const router = useRouter()
   const [viewMode, setViewMode] = useState<"card" | "list">("card")
   const [searchQuery, setSearchQuery] = useState("")
-  const [users, setUsers] = useState<User[]>([])
+  const [trashedUsers, setTrashedUsers] = useState<User[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<string>("")
-  const [showAddUserModal, setShowAddUserModal] = useState(false)
-  const [showEditUserModal, setShowEditUserModal] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
 
   // Check authentication and permissions
   useEffect(() => {
     const user = getStoredUser()
+    
     if (!user) {
       router.push('/login')
       return
@@ -74,45 +62,34 @@ export default function AdminDashboard() {
     setCurrentUser(user)
   }, [])
 
-  // Fetch users from backend
-  const fetchUsers = async () => {
+  // Fetch trashed users from backend
+  const fetchTrashedUsers = async () => {
     try {
       setLoading(true)
       setError(null)
       
-      const response = await userAPI.getUsers({
+      const response = await userAPI.getTrashedUsers({
         page: currentPage,
         per_page: 12,
-        search: searchQuery || undefined,
-        role: selectedRole || undefined
+        search: searchQuery || undefined
       })
       
-      // Temporary debug: Log Derek's user data
-      const derekUser = response.data.find(user => user.name.toLowerCase().includes('derek'))
-      if (derekUser) {
-        console.log('Derek found:', {
-          name: derekUser.name,
-          profile_picture: derekUser.profile_picture,
-          profile_picture_url: derekUser.profile_picture_url
-        })
-      }
-      
-      setUsers(response.data)
+      setTrashedUsers(response.data)
       setPagination(response.meta)
     } catch (err) {
-      console.error('Failed to fetch users:', err)
+      console.error('Failed to fetch trashed users:', err)
       setError(formatAPIError(err))
     } finally {
       setLoading(false)
     }
   }
 
-  // Initial load and search/filter changes
+  // Initial load and search changes
   useEffect(() => {
     if (currentUser) {
-      fetchUsers()
+      fetchTrashedUsers()
     }
-  }, [currentUser, currentPage, searchQuery, selectedRole])
+  }, [currentUser, currentPage, searchQuery])
 
   // Debounce search
   useEffect(() => {
@@ -120,7 +97,7 @@ export default function AdminDashboard() {
       if (currentPage !== 1) {
         setCurrentPage(1) // Reset to page 1 on search
       } else {
-        fetchUsers()
+        fetchTrashedUsers()
       }
     }, 300)
     
@@ -146,33 +123,30 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleDeleteUser = async (userId: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return
+  const handleRestoreUser = async (userId: number) => {
+    if (!confirm('Are you sure you want to restore this user account?')) return
     
     try {
-      await userAPI.deleteUser(userId)
-      fetchUsers() // Refresh the list
+      await userAPI.restoreUser(userId)
+      fetchTrashedUsers() // Refresh the list
     } catch (err) {
       alert(formatAPIError(err))
     }
   }
 
-  const handleAddUser = () => {
-    setShowAddUserModal(true)
+  const handlePermanentDelete = async (userId: number) => {
+    if (!confirm('Are you sure you want to permanently delete this user? This action cannot be undone!')) return
+    
+    try {
+      await userAPI.forceDeleteUser(userId)
+      fetchTrashedUsers() // Refresh the list
+    } catch (err) {
+      alert(formatAPIError(err))
+    }
   }
 
-  const handleUserAdded = () => {
-    fetchUsers() // Refresh the user list
-  }
-
-  const handleUserUpdated = () => {
-    fetchUsers() // Refresh the user list
-    setSelectedUser(null)
-  }
-
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user)
-    setShowEditUserModal(true)
+  const handleBackToUserManagement = () => {
+    router.push('/dashboard/admin')
   }
 
   if (!currentUser) {
@@ -216,16 +190,16 @@ export default function AdminDashboard() {
           {/* Sidebar Navigation */}
           <div className="flex-1 p-2">
             <nav className="space-y-1">
-              <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-primary bg-primary/10 hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-primary/20`}>
-                <Users className="w-5 h-5 flex-shrink-0 text-primary" />
-                {!sidebarCollapsed && <span className="font-medium text-primary">User Management</span>}
-              </div>
               <div 
-                onClick={() => router.push('/dashboard/admin/account-recovery')}
+                onClick={handleBackToUserManagement}
                 className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-gray-600 hover:bg-gray-100 rounded-lg p-2 cursor-pointer transition-colors`}
               >
-                <UserX className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span>Account Recovery</span>}
+                <Users className="w-5 h-5 flex-shrink-0" />
+                {!sidebarCollapsed && <span>User Management</span>}
+              </div>
+              <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-primary bg-primary/10 hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-primary/20`}>
+                <UserX className="w-5 h-5 flex-shrink-0 text-primary" />
+                {!sidebarCollapsed && <span className="font-medium text-primary">Account Recovery</span>}
               </div>
             </nav>
           </div>
@@ -283,18 +257,9 @@ export default function AdminDashboard() {
         <header className="bg-white/70 backdrop-blur-xl border-b border-gray-300/30 px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
-              <p className="text-sm text-gray-600 mt-1">Manage users, roles, and permissions</p>
+              <h1 className="text-2xl font-semibold text-gray-900">Account Recovery</h1>
+              <p className="text-sm text-gray-600 mt-1">Manage deleted user accounts - restore or permanently delete</p>
             </div>
-            {hasAnyRole(['admin']) && (
-              <Button 
-                className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
-                onClick={handleAddUser}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add User
-              </Button>
-            )}
           </div>
         </header>
 
@@ -326,28 +291,17 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Search and Filter */}
+            {/* Search */}
             <div className="flex items-center space-x-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder="Search users..."
+                  placeholder="Search deleted users..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 w-64 bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary"
                 />
               </div>
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-3 py-2 rounded-md border border-gray-300/30 bg-white/80 backdrop-blur-xl text-gray-700 text-sm"
-              >
-                <option value="">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="supervisor">Supervisor</option>
-                <option value="coordinator">Coordinator</option>
-                <option value="student">Student</option>
-              </select>
             </div>
           </div>
 
@@ -361,7 +315,7 @@ export default function AdminDashboard() {
           {/* Loading State */}
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-500">Loading users...</div>
+              <div className="text-gray-500">Loading deleted users...</div>
             </div>
           )}
 
@@ -371,14 +325,14 @@ export default function AdminDashboard() {
               {viewMode === "card" ? (
                 /* Card View */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {users.map((user) => (
-                    <Card key={user.id} className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all hover:scale-[1.01] h-32">
+                  {trashedUsers.map((user) => (
+                    <Card key={user.id} className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-red-100/50 hover:shadow-xl hover:shadow-red-200/50 transition-all hover:scale-[1.01] h-32">
                       <CardContent className="p-4 h-full">
                         <div className="flex items-center space-x-4 h-full">
                           {/* Profile Picture - Left Side */}
-                          <Avatar className="h-16 w-16 flex-shrink-0">
+                          <Avatar className="h-16 w-16 flex-shrink-0 opacity-75">
                             <AvatarImage src={user.profile_picture_url || ""} />
-                            <AvatarFallback className="bg-primary text-white font-semibold text-lg">
+                            <AvatarFallback className="bg-gray-400 text-white font-semibold text-lg">
                               {getInitials(user.name)}
                             </AvatarFallback>
                           </Avatar>
@@ -386,16 +340,17 @@ export default function AdminDashboard() {
                           {/* User Info - Right Side */}
                           <div className="flex-1 min-w-0 space-y-1">
                             <div>
-                              <h3 className="font-semibold text-gray-900 text-sm truncate">{user.name}</h3>
-                              <p className="text-xs text-gray-600 truncate">{user.student_id || 'No Student ID'}</p>
+                              <h3 className="font-semibold text-gray-700 text-sm truncate line-through">{user.name}</h3>
+                              <p className="text-xs text-gray-500 truncate">{user.student_id || 'No Student ID'}</p>
+                              <p className="text-xs text-gray-500 truncate">{user.email}</p>
                             </div>
                             
                             <div className="flex items-center gap-2">
-                              <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                              <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-red-100 text-red-700">
                                 {user.role}
                               </Badge>
-                              <Badge variant="hours" className="text-xs px-2 py-0.5">
-                                {user.promised_hours_per_week || '0'}h
+                              <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                                Deleted
                               </Badge>
                             </div>
                             
@@ -404,20 +359,20 @@ export default function AdminDashboard() {
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
-                                  className="h-6 px-2 text-xs text-gray-600 hover:text-primary hover:bg-primary/10"
-                                  onClick={() => handleEditUser(user)}
+                                  className="h-6 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                                  onClick={() => handleRestoreUser(user.id)}
                                 >
-                                  <Edit className="w-3 h-3 mr-1" />
-                                  Edit
+                                  <RotateCcw className="w-3 h-3 mr-1" />
+                                  Restore
                                 </Button>
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
-                                  className="h-6 px-2 text-xs text-gray-600 hover:text-red-600 hover:bg-red-50"
-                                  onClick={() => handleDeleteUser(user.id)}
+                                  className="h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handlePermanentDelete(user.id)}
                                 >
                                   <Trash2 className="w-3 h-3 mr-1" />
-                                  Delete
+                                  Delete Forever
                                 </Button>
                               </div>
                             )}
@@ -444,7 +399,7 @@ export default function AdminDashboard() {
                             Hours
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                            Created
+                            Deleted At
                           </th>
                           {hasAnyRole(['admin']) && (
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
@@ -454,35 +409,35 @@ export default function AdminDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200/50">
-                        {users.map((user) => (
-                          <tr key={user.id} className="hover:bg-gray-50/30 transition-colors">
+                        {trashedUsers.map((user) => (
+                          <tr key={user.id} className="hover:bg-gray-50/30 transition-colors opacity-75">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <Avatar className="h-10 w-10">
                                   <AvatarImage src={user.profile_picture_url || ""} />
-                                  <AvatarFallback className="bg-primary text-white font-semibold">
+                                  <AvatarFallback className="bg-gray-400 text-white font-semibold">
                                     {getInitials(user.name)}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                                  <div className="text-sm text-gray-600">{user.student_id || 'No Student ID'}</div>
+                                  <div className="text-sm font-medium text-gray-700 line-through">{user.name}</div>
+                                  <div className="text-sm text-gray-500">{user.student_id || 'No Student ID'}</div>
                                   <div className="text-xs text-gray-500">{user.email}</div>
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge variant="secondary" className="text-xs bg-red-100 text-red-700">
                                 {user.role}
                               </Badge>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant="hours" className="text-xs">
+                              <Badge variant="hours" className="text-xs bg-gray-100 text-gray-600">
                                 {user.promised_hours_per_week || '0'}h/week
                               </Badge>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                              {new Date(user.created_at).toLocaleDateString()}
+                              {user.deleted_at ? new Date(user.deleted_at).toLocaleDateString() : 'Unknown'}
                             </td>
                             {hasAnyRole(['admin']) && (
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -490,16 +445,16 @@ export default function AdminDashboard() {
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="h-8 w-8 p-0"
-                                    onClick={() => handleEditUser(user)}
+                                    className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                    onClick={() => handleRestoreUser(user.id)}
                                   >
-                                    <Edit className="w-4 h-4" />
+                                    <RotateCcw className="w-4 h-4" />
                                   </Button>
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                    onClick={() => handleDeleteUser(user.id)}
+                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    onClick={() => handlePermanentDelete(user.id)}
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
@@ -518,7 +473,7 @@ export default function AdminDashboard() {
               {pagination && pagination.last_page > 1 && (
                 <div className="mt-6 flex items-center justify-between">
                   <p className="text-sm text-gray-600">
-                    Showing {pagination.from} to {pagination.to} of {pagination.total} results
+                    Showing {pagination.from} to {pagination.to} of {pagination.total} deleted users
                   </p>
                   <div className="flex items-center space-x-2">
                     <Button
@@ -547,12 +502,12 @@ export default function AdminDashboard() {
               )}
 
               {/* Empty State */}
-              {users.length === 0 && (
+              {trashedUsers.length === 0 && (
                 <div className="text-center py-12">
-                  <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
+                  <UserX className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No deleted users found</h3>
                   <p className="text-gray-600">
-                    {searchQuery || selectedRole ? 'Try adjusting your search or filter criteria.' : 'Get started by adding your first user.'}
+                    {searchQuery ? 'Try adjusting your search criteria.' : 'There are no deleted user accounts to recover.'}
                   </p>
                 </div>
               )}
@@ -560,24 +515,6 @@ export default function AdminDashboard() {
           )}
         </main>
       </div>
-
-      {/* Add User Modal */}
-      <AddUserModal
-        isOpen={showAddUserModal}
-        onClose={() => setShowAddUserModal(false)}
-        onUserAdded={handleUserAdded}
-      />
-
-      {/* Edit User Modal */}
-      <EditUserModal
-        isOpen={showEditUserModal}
-        onClose={() => {
-          setShowEditUserModal(false)
-          setSelectedUser(null)
-        }}
-        onUserUpdated={handleUserUpdated}
-        user={selectedUser}
-      />
     </div>
   )
 }
