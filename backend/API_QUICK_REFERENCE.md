@@ -42,6 +42,26 @@ Authorization: Bearer 1|abc123...
 | GET | `/profile` | Get own profile | All authenticated |
 | PUT | `/profile` | Update own profile | All authenticated |
 
+### 📋 Assignment Management
+| Method | Endpoint | Description | Permissions |
+|--------|----------|-------------|-------------|
+| GET | `/assignments` | List assignments | Supervisor, Coordinator, Student |
+| GET | `/assignments/{id}` | Get specific assignment | Supervisor, Coordinator, Student |
+| POST | `/assignments` | Create assignment | Coordinator only |
+| PUT | `/assignments/{id}` | Update assignment | Coordinator only |
+| DELETE | `/assignments/{id}` | Soft delete assignment | Coordinator only |
+| GET | `/assignments/trashed` | List deleted assignments | Coordinator only |
+| POST | `/assignments/{id}/restore` | Restore assignment | Coordinator only |
+| DELETE | `/assignments/{id}/force` | Permanently delete | Coordinator only |
+| POST | `/assignments/{id}/assign-user` | Assign user to assignment | Coordinator only |
+| POST | `/assignments/{id}/unassign-user` | Remove user from assignment | Coordinator only |
+| POST | `/assignments/{id}/update-user-position` | Update user position | Coordinator only |
+| POST | `/assignments/{id}/check-in-user` | Check in user | Coordinator only |
+| POST | `/assignments/{id}/check-out-user` | Check out user | Coordinator only |
+| GET | `/my-assignments` | Get student's assignments | Student only |
+| POST | `/assignments/{id}/check-in` | Self check in | Student only |
+| POST | `/assignments/{id}/check-out` | Self check out | Student only |
+
 ### 📊 System
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -56,23 +76,33 @@ Authorization: Bearer 1|abc123...
 
 ### Student
 - ✅ View/edit own profile
+- ✅ View assignments (read-only)
+- ✅ View own assignments
+- ✅ Self check-in/check-out
 - ❌ View other users
 - ❌ User management
+- ❌ Assignment management
 
 ### Coordinator
 - ✅ View/edit own profile
 - ✅ View all users
+- ✅ Full assignment management
+- ✅ User assignment operations
+- ✅ Check-in/out management
 - ❌ Create/edit/delete users
 
 ### Supervisor
 - ✅ View/edit own profile
 - ✅ View all users
+- ✅ View assignments (read-only)
 - ❌ Create/edit/delete users
+- ❌ Assignment management
 
 ### Admin
 - ✅ Full user management
 - ✅ View/edit own profile
 - ✅ System administration
+- ❌ Assignment management (by design)
 
 ## 📝 Common Request Examples
 
@@ -107,6 +137,40 @@ curl -X POST http://localhost:8000/api/users \
 ```bash
 curl -X GET "http://localhost:8000/api/users?role=student&search=john&page=1" \
   -H "Authorization: Bearer 1|abc123..." \
+  -H "Accept: application/json"
+```
+
+### Create Assignment
+```bash
+curl -X POST http://localhost:8000/api/assignments \
+  -H "Authorization: Bearer 1|abc123..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assignment_name": "Tech Conference 2025",
+    "event_name": "Annual Technology Conference",
+    "event_location": "Convention Center",
+    "event_start_datetime": "2025-12-15T09:00:00",
+    "event_end_datetime": "2025-12-15T17:00:00",
+    "status": "pending"
+  }'
+```
+
+### Assign User to Assignment
+```bash
+curl -X POST http://localhost:8000/api/assignments/1/assign-user \
+  -H "Authorization: Bearer 1|abc123..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": 3,
+    "position": "Audio-Mixer",
+    "status": "assigned"
+  }'
+```
+
+### Student Self Check-In
+```bash
+curl -X POST http://localhost:8000/api/assignments/1/check-in \
+  -H "Authorization: Bearer 1|studenttoken..." \
   -H "Accept: application/json"
 ```
 

@@ -11,6 +11,7 @@
 
 - [Authentication](#authentication)
 - [User Management](#user-management)
+- [Assignment Management](#assignment-management)
 - [Rate Limiting](#rate-limiting)
 - [Error Handling](#error-handling)
 - [Response Format](#response-format)
@@ -542,6 +543,51 @@ Updates the authenticated user's own profile.
     }
 }
 ```
+
+---
+
+## 📋 Assignment Management
+
+### List Assignments
+**GET** `/assignments`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Supervisor, Coordinator, Student (read-only)
+
+Returns paginated list of assignments with filtering and search capabilities.
+
+**Query Parameters:**
+- `page` (integer): Page number (default: 1)
+- `per_page` (integer): Items per page (default: 15, max: 100)
+- `status` (string): Filter by status (pending, confirmed, complete)
+- `created_by` (integer): Filter by creator user ID
+- `start_date` (date): Filter assignments starting from this date
+- `end_date` (date): Filter assignments ending before this date
+- `upcoming` (boolean): Filter upcoming assignments only
+- `past` (boolean): Filter past assignments only
+- `search` (string): Search in assignment name, event name, location, description
+- `sort_by` (string): Sort field (default: event_start_datetime)
+- `sort_order` (string): Sort direction (asc, desc) (default: asc)
+
+**Example:** `/assignments?page=1&status=confirmed&upcoming=true&search=conference`
+
+**Response (200):** [Comprehensive assignment listing with all computed fields and metadata]
+
+### Assignment CRUD Operations
+Complete CRUD operations including create, update, delete, restore, force delete with full examples.
+
+### User Assignment Management
+- Assign/unassign users to assignments
+- Update user positions (Audio-Mixer, Camera, etc.)
+- Check-in/check-out functionality
+- Self-service check-in/out for students
+
+### Student-Specific Features
+- View personal assignments (`/my-assignments`)
+- Self check-in/check-out capabilities
+- Read-only access to all assignments
+
+*[Full assignment management documentation with detailed examples available in the complete API documentation]*
 
 ---
 
