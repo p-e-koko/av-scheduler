@@ -71,7 +71,7 @@ class User extends Authenticatable
     public function assignments()
     {
         return $this->belongsToMany(Assignment::class, 'assignment_users', 'user_id', 'assignment_id')
-                    ->withPivot('status', 'checked_in')
+                    ->withPivot('status', 'checked_in', 'position')
                     ->withTimestamps();
     }
 
