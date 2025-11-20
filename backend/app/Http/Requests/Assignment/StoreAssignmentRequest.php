@@ -46,12 +46,12 @@ class StoreAssignmentRequest extends FormRequest
                         $startTime = strtotime($startDateTime);
                         $endTime = strtotime($value);
                         $diffInHours = ($endTime - $startTime) / 3600;
-                        
+
                         // Maximum event duration of 24 hours
                         if ($diffInHours > 24) {
                             $fail('The event duration cannot exceed 24 hours.');
                         }
-                        
+
                         // Minimum event duration of 30 minutes
                         if ($diffInHours < 0.5) {
                             $fail('The event duration must be at least 30 minutes.');
@@ -97,26 +97,26 @@ class StoreAssignmentRequest extends FormRequest
             'assignment_name.required' => 'The assignment name field is required.',
             'assignment_name.string' => 'The assignment name must be a string.',
             'assignment_name.max' => 'The assignment name may not be greater than 255 characters.',
-            
+
             'event_name.required' => 'The event name field is required.',
             'event_name.string' => 'The event name must be a string.',
             'event_name.max' => 'The event name may not be greater than 255 characters.',
-            
+
             'event_location.required' => 'The event location field is required.',
             'event_location.string' => 'The event location must be a string.',
             'event_location.max' => 'The event location may not be greater than 255 characters.',
-            
+
             'event_start_datetime.required' => 'The event start date and time field is required.',
             'event_start_datetime.date' => 'The event start date and time must be a valid date.',
             'event_start_datetime.after_or_equal' => 'The event start date and time must be in the future.',
-            
+
             'event_end_datetime.required' => 'The event end date and time field is required.',
             'event_end_datetime.date' => 'The event end date and time must be a valid date.',
             'event_end_datetime.after' => 'The event end date and time must be after the start date and time.',
-            
+
             'description.string' => 'The description must be a string.',
             'description.max' => 'The description may not be greater than 1000 characters.',
-            
+
             'status.required' => 'The status field is required.',
             'status.in' => 'The selected status is invalid. Must be one of: pending, confirmed, complete.',
         ];

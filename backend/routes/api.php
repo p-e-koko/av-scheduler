@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -50,6 +51,45 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::middleware(['role:admin,supervisor,coordinator'])->group(function () {
         Route::get('/users', [UserController::class, 'index']);
         Route::get('/users/{user}', [UserController::class, 'show']);
+    });
+
+    // Assignment Management Routes - Role-Based Access Control
+
+    // Assignment Management - Coordinator only (Full CRUD access)
+    Route::middleware(['role:coordinator', 'throttle:sensitive'])->group(function () {
+        Route::apiResource('assignments', AssignmentController::class)->except(['index', 'show']);
+        Route::prefix('assignments')->group(function () {
+            Route::get('/trashed', [AssignmentController::class, 'trashed']);
+            Route::post('/{id}/restore', [AssignmentController::class, 'restore']);
+            Route::delete('/{id}/force', [AssignmentController::class, 'forceDelete']);
+
+            // User assignment management
+            Route::post('/{assignment}/assign-user', [AssignmentController::class, 'assignUser']);
+            Route::post('/{assignment}/unassign-user', [AssignmentController::class, 'unassignUser']);
+            Route::post('/{assignment}/update-user-position', [AssignmentController::class, 'updateUserPosition']);
+            Route::post('/{assignment}/check-in-user', [AssignmentController::class, 'checkInUser']);
+            Route::post('/{assignment}/check-out-user', [AssignmentController::class, 'checkOutUser']);
+        });
+    });
+
+    // View Assignments - Supervisor, Coordinator, Students (Read-only access)
+    Route::middleware(['role:supervisor,coordinator,student'])->group(function () {
+        Route::get('/assignments', [AssignmentController::class, 'index']);
+        Route::get('/assignments/{assignment}', [AssignmentController::class, 'show']);
+    });
+
+    // Student-specific assignment routes
+    Route::middleware(['role:student'])->group(function () {
+        Route::get('/my-assignments', [AssignmentController::class, 'myAssignments']);
+        // Students can check themselves in/out of their own assignments
+        Route::post('/assignments/{assignment}/check-in', function (Request $request, \App\Models\Assignment $assignment) {
+            $request->merge(['user_id' => $request->user()->id]);
+            return app(AssignmentController::class)->checkInUser($request, $assignment);
+        });
+        Route::post('/assignments/{assignment}/check-out', function (Request $request, \App\Models\Assignment $assignment) {
+            $request->merge(['user_id' => $request->user()->id]);
+            return app(AssignmentController::class)->checkOutUser($request, $assignment);
+        });
     });
 
     // User can view and edit own profile
