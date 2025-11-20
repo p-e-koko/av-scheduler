@@ -15,14 +15,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed roles and permissions first
-        $this->call(RoleAndPermissionSeeder::class);
+        // Seed roles and permissions first (only if not exists)
+        if (!\Spatie\Permission\Models\Role::where('name', 'student')->exists()) {
+            $this->call(RolePermissionSeeder::class);
+        }
 
-        // User::factory(10)->create();
-
-        User::factory()->create([
+        // Create test user with UUID
+        $user = \App\Models\User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'role' => 'student'
         ]);
+        
+        // Assign student role to test user
+        $user->assignRole('student');
     }
 }

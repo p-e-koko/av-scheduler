@@ -12,13 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('availability', function (Blueprint $table) {
-            $table->id('availability_id');
-            $table->foreignId('student_id')->constrained('users')->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->uuid('student_id');
             $table->date('date');
             $table->time('start_time');
             $table->time('end_time');
             $table->enum('status', ['available', 'unavailable', 'class'])->default('available');
             $table->timestamps();
+
+            $table->foreign('student_id')->references('id')->on('users')->onDelete('cascade');
 
             // Ensure no overlapping availability for the same student
             $table->unique(['student_id', 'date', 'start_time']);

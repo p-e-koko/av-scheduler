@@ -12,12 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('assignment_users', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('assignment_id')->constrained('assignments', 'assignment_id')->onDelete('cascade');
-            $table->foreignId('user_id')->constrained('users', 'id')->onDelete('cascade');
+            $table->uuid('id')->primary();
+            $table->uuid('assignment_id');
+            $table->uuid('user_id');
             $table->enum('status', ['assigned', 'completed'])->nullable();
             $table->boolean('checked_in')->default(false);
             $table->timestamps();
+
+            $table->foreign('assignment_id')->references('id')->on('assignments')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 
             // Ensure unique combination of assignment and user
             $table->unique(['assignment_id', 'user_id']);

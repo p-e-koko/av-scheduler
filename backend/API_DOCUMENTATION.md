@@ -45,7 +45,7 @@ Creates a new user account.
 {
     "message": "User registered successfully",
     "user": {
-        "id": 1,
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "student_id": "STU001",
         "username": "johndoe",
         "name": "John Doe",
@@ -86,7 +86,7 @@ Authenticates user and returns access token.
 {
     "message": "Login successful",
     "user": {
-        "id": 1,
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "student_id": "STU001",
         "username": "johndoe",
         "name": "John Doe",
@@ -146,7 +146,7 @@ Returns the authenticated user's information.
 ```json
 {
     "user": {
-        "id": 1,
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "student_id": "STU001",
         "username": "johndoe",
         "name": "John Doe",
@@ -254,7 +254,7 @@ Returns paginated list of users.
 {
     "data": [
         {
-            "id": 1,
+            "id": "550e8400-e29b-41d4-a716-446655440000",
             "student_id": "STU001",
             "username": "johndoe",
             "name": "John Doe",
@@ -692,7 +692,7 @@ Retry-After: 60
 ### User Object
 ```json
 {
-    "id": 1,
+    "id": "550e8400-e29b-41d4-a716-446655440000",
     "student_id": "STU001",
     "username": "johndoe",
     "name": "John Doe",

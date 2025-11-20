@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('assignments', function (Blueprint $table) {
-            $table->id('assignment_id');
+            $table->uuid('id')->primary();
             $table->string('assignment_name');
             $table->string('event_name');
             $table->string('event_location');
@@ -20,9 +20,11 @@ return new class extends Migration
             $table->datetime('event_end_datetime');
             $table->text('description')->nullable();
             $table->enum('status', ['pending', 'confirmed', 'complete'])->default('pending');
-            $table->foreignId('created_by')->constrained('users', 'id')->onDelete('cascade');
+            $table->uuid('created_by');
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
