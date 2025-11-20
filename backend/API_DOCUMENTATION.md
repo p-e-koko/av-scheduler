@@ -582,12 +582,94 @@ Complete CRUD operations including create, update, delete, restore, force delete
 - Check-in/check-out functionality
 - Self-service check-in/out for students
 
+### Position Management
+- Create, edit, and delete positions
+- Pre-defined positions: Audio-Mixer, Camera Operator, Lighting Technician, etc.
+- Flexible system allowing custom positions
+- Position validation and usage tracking
+- Coordinator-only access to position management
+
 ### Student-Specific Features
 - View personal assignments (`/my-assignments`)
 - Self check-in/check-out capabilities
 - Read-only access to all assignments
 
 *[Full assignment management documentation with detailed examples available in the complete API documentation]*
+
+---
+
+## 🎯 Position Management
+
+### List Positions
+**GET** `/positions`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Coordinator only
+
+Returns list of all positions with filtering capabilities.
+
+**Query Parameters:**
+- `active` (boolean): Filter by active status
+- `search` (string): Search in position name or description
+
+**Response:**
+```json
+{
+  "message": "Positions retrieved successfully",
+  "positions": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Audio-Mixer",
+      "description": "Responsible for managing audio equipment and sound mixing during events",
+      "is_active": true,
+      "created_at": "2024-11-17T10:30:00.000000Z",
+      "updated_at": "2024-11-17T10:30:00.000000Z"
+    }
+  ]
+}
+```
+
+### Create Position
+**POST** `/positions`
+
+**Headers:** `Authorization: Bearer {token}`, `Content-Type: application/json`
+**Permissions:** Coordinator only
+
+**Request Body:**
+```json
+{
+  "name": "Video Editor",
+  "description": "Handles post-production video editing",
+  "is_active": true
+}
+```
+
+**Validation Rules:**
+- `name`: required, string, max 255 chars, unique
+- `description`: optional, string, max 1000 chars
+- `is_active`: optional, boolean, default true
+
+### Update Position
+**PUT** `/positions/{id}`
+
+**Headers:** `Authorization: Bearer {token}`, `Content-Type: application/json`
+**Permissions:** Coordinator only
+
+### Delete Position
+**DELETE** `/positions/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Coordinator only
+
+**Note:** Cannot delete positions that are currently assigned to users.
+
+### Get Active Positions
+**GET** `/positions-active`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Coordinator only
+
+Returns simplified list of active positions for dropdown menus.
 
 ---
 

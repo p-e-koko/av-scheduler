@@ -62,6 +62,16 @@ Authorization: Bearer 1|abc123...
 | POST | `/assignments/{id}/check-in` | Self check in | Student only |
 | POST | `/assignments/{id}/check-out` | Self check out | Student only |
 
+### 🎯 Position Management
+| Method | Endpoint | Description | Permissions |
+|--------|----------|-------------|-------------|
+| GET | `/positions` | List all positions | Coordinator only |
+| POST | `/positions` | Create new position | Coordinator only |
+| GET | `/positions/{id}` | Get specific position | Coordinator only |
+| PUT | `/positions/{id}` | Update position | Coordinator only |
+| DELETE | `/positions/{id}` | Delete position | Coordinator only |
+| GET | `/positions-active` | Get active positions | Coordinator only |
+
 ### 📊 System
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -89,6 +99,9 @@ Authorization: Bearer 1|abc123...
 - ✅ Full assignment management
 - ✅ User assignment operations
 - ✅ Check-in/out management
+- ✅ Full position management
+- ✅ Create/edit/delete positions
+- ✅ Assign positions to users
 - ❌ Create/edit/delete users
 
 ### Supervisor
@@ -165,6 +178,36 @@ curl -X POST http://localhost:8000/api/assignments/1/assign-user \
     "position": "Audio-Mixer",
     "status": "assigned"
   }'
+```
+
+### Create New Position
+```bash
+curl -X POST http://localhost:8000/api/positions \
+  -H "Authorization: Bearer 1|coordinatortoken..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Video Editor",
+    "description": "Handles post-production video editing",
+    "is_active": true
+  }'
+```
+
+### Update User Position
+```bash
+curl -X POST http://localhost:8000/api/assignments/1/update-user-position \
+  -H "Authorization: Bearer 1|coordinatortoken..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": 3,
+    "position": "Camera Operator"
+  }'
+```
+
+### Get Active Positions
+```bash
+curl -X GET http://localhost:8000/api/positions-active \
+  -H "Authorization: Bearer 1|coordinatortoken..." \
+  -H "Accept: application/json"
 ```
 
 ### Student Self Check-In
