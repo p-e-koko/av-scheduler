@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
+import ConfirmationDialog from "@/components/ConfirmationDialog"
 
 import { 
   userAPI, 
@@ -44,6 +45,14 @@ export default function AccountRecovery() {
   const [pagination, setPagination] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    title: string
+    description: string
+    action: () => void
+    variant?: "default" | "destructive"
+  }>({ isOpen: false, title: "", description: "", action: () => {}, variant: "default" })
+  const [processingUsers, setProcessingUsers] = useState<Set<number>>(new Set())
 
   // Check authentication and permissions
   useEffect(() => {
@@ -63,9 +72,11 @@ export default function AccountRecovery() {
   }, [])
 
   // Fetch trashed users from backend
-  const fetchTrashedUsers = async () => {
+  const fetchTrashedUsers = async (showLoading = true) => {
     try {
-      setLoading(true)
+      if (showLoading) {
+        setLoading(true)
+      }
       setError(null)
       
       const response = await userAPI.getTrashedUsers({
@@ -80,7 +91,9 @@ export default function AccountRecovery() {
       console.error('Failed to fetch trashed users:', err)
       setError(formatAPIError(err))
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }
 
@@ -123,25 +136,85 @@ export default function AccountRecovery() {
     }
   }
 
-  const handleRestoreUser = async (userId: number) => {
-    if (!confirm('Are you sure you want to restore this user account?')) return
+  const handleRestoreUser = (userId: number, userName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Restore User Account",
+      description: `Are you sure you want to restore ${userName}'s account? They will regain access to the system.`,
+      action: () => performRestoreUser(userId),
+      variant: "default"
+    })
+  }
+
+  const performRestoreUser = async (userId: number) => {
+    setProcessingUsers(prev => new Set(prev).add(userId))
     
     try {
+      // Optimistically update UI
+      setTrashedUsers(prev => prev.filter(user => user.id !== userId))
+      
       await userAPI.restoreUser(userId)
-      fetchTrashedUsers() // Refresh the list
+      
+      // If successful, the user is already removed from the list
+      // Update pagination if needed
+      if (pagination && pagination.total > 0) {
+        setPagination((prev: any) => ({
+          ...prev,
+          total: prev.total - 1,
+          to: Math.max(prev.to - 1, 0)
+        }))
+      }
     } catch (err) {
-      alert(formatAPIError(err))
+      // Revert optimistic update on error
+      fetchTrashedUsers(false)
+      setError(formatAPIError(err))
+    } finally {
+      setProcessingUsers(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(userId)
+        return newSet
+      })
     }
   }
 
-  const handlePermanentDelete = async (userId: number) => {
-    if (!confirm('Are you sure you want to permanently delete this user? This action cannot be undone!')) return
+  const handlePermanentDelete = (userId: number, userName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Permanently Delete User",
+      description: `Are you sure you want to permanently delete ${userName}? This action cannot be undone and all user data will be lost forever.`,
+      action: () => performPermanentDelete(userId),
+      variant: "destructive"
+    })
+  }
+
+  const performPermanentDelete = async (userId: number) => {
+    setProcessingUsers(prev => new Set(prev).add(userId))
     
     try {
+      // Optimistically update UI
+      setTrashedUsers(prev => prev.filter(user => user.id !== userId))
+      
       await userAPI.forceDeleteUser(userId)
-      fetchTrashedUsers() // Refresh the list
+      
+      // If successful, the user is already removed from the list
+      // Update pagination if needed
+      if (pagination && pagination.total > 0) {
+        setPagination((prev: any) => ({
+          ...prev,
+          total: prev.total - 1,
+          to: Math.max(prev.to - 1, 0)
+        }))
+      }
     } catch (err) {
-      alert(formatAPIError(err))
+      // Revert optimistic update on error
+      fetchTrashedUsers(false)
+      setError(formatAPIError(err))
+    } finally {
+      setProcessingUsers(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(userId)
+        return newSet
+      })
     }
   }
 
@@ -360,19 +433,21 @@ export default function AccountRecovery() {
                                   variant="ghost" 
                                   size="sm" 
                                   className="h-6 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
-                                  onClick={() => handleRestoreUser(user.id)}
+                                  onClick={() => handleRestoreUser(user.id, user.name)}
+                                  disabled={processingUsers.has(user.id)}
                                 >
                                   <RotateCcw className="w-3 h-3 mr-1" />
-                                  Restore
+                                  {processingUsers.has(user.id) ? 'Restoring...' : 'Restore'}
                                 </Button>
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
                                   className="h-6 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  onClick={() => handlePermanentDelete(user.id)}
+                                  onClick={() => handlePermanentDelete(user.id, user.name)}
+                                  disabled={processingUsers.has(user.id)}
                                 >
                                   <Trash2 className="w-3 h-3 mr-1" />
-                                  Delete Forever
+                                  {processingUsers.has(user.id) ? 'Deleting...' : 'Delete Forever'}
                                 </Button>
                               </div>
                             )}
@@ -446,17 +521,21 @@ export default function AccountRecovery() {
                                     variant="ghost" 
                                     size="sm" 
                                     className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
-                                    onClick={() => handleRestoreUser(user.id)}
+                                    onClick={() => handleRestoreUser(user.id, user.name)}
+                                    disabled={processingUsers.has(user.id)}
+                                    title={processingUsers.has(user.id) ? 'Restoring...' : 'Restore user'}
                                   >
-                                    <RotateCcw className="w-4 h-4" />
+                                    <RotateCcw className={`w-4 h-4 ${processingUsers.has(user.id) ? 'animate-spin' : ''}`} />
                                   </Button>
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
                                     className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    onClick={() => handlePermanentDelete(user.id)}
+                                    onClick={() => handlePermanentDelete(user.id, user.name)}
+                                    disabled={processingUsers.has(user.id)}
+                                    title={processingUsers.has(user.id) ? 'Deleting...' : 'Delete permanently'}
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className={`w-4 h-4 ${processingUsers.has(user.id) ? 'animate-pulse' : ''}`} />
                                   </Button>
                                 </div>
                               </td>
@@ -515,6 +594,17 @@ export default function AccountRecovery() {
           )}
         </main>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.action}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant}
+        confirmText={confirmDialog.variant === "destructive" ? "Delete Forever" : "Confirm"}
+      />
     </div>
   )
 }

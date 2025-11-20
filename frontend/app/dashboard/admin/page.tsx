@@ -31,6 +31,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import AddUserModal from "@/components/AddUserModal"
 import EditUserModal from "@/components/EditUserModal"
+import ConfirmationDialog from "@/components/ConfirmationDialog"
 
 import { 
   userAPI, 
@@ -57,6 +58,14 @@ export default function AdminDashboard() {
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [showEditUserModal, setShowEditUserModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    title: string
+    description: string
+    action: () => void
+    variant?: "default" | "destructive"
+  }>({ isOpen: false, title: "", description: "", action: () => {}, variant: "default" })
+  const [processingUsers, setProcessingUsers] = useState<Set<number>>(new Set())
 
   // Check authentication and permissions
   useEffect(() => {
@@ -146,14 +155,43 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleDeleteUser = async (userId: number) => {
-    if (!confirm('Are you sure you want to delete this user?')) return
+  const handleDeleteUser = (userId: number, userName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Delete User Account",
+      description: `Are you sure you want to delete ${userName}? This will move the account to the recycle bin where it can be restored later.`,
+      action: () => performDeleteUser(userId),
+      variant: "destructive"
+    })
+  }
+
+  const performDeleteUser = async (userId: number) => {
+    setProcessingUsers(prev => new Set(prev).add(userId))
     
     try {
+      // Optimistically update UI
+      setUsers(prev => prev.filter(user => user.id !== userId))
+      
       await userAPI.deleteUser(userId)
-      fetchUsers() // Refresh the list
+      
+      // Update pagination if needed
+      if (pagination && pagination.total > 0) {
+        setPagination((prev: any) => ({
+          ...prev,
+          total: prev.total - 1,
+          to: Math.max(prev.to - 1, 0)
+        }))
+      }
     } catch (err) {
-      alert(formatAPIError(err))
+      // Revert optimistic update on error
+      fetchUsers()
+      setError(formatAPIError(err))
+    } finally {
+      setProcessingUsers(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(userId)
+        return newSet
+      })
     }
   }
 
@@ -406,6 +444,7 @@ export default function AdminDashboard() {
                                   size="sm" 
                                   className="h-6 px-2 text-xs text-gray-600 hover:text-primary hover:bg-primary/10"
                                   onClick={() => handleEditUser(user)}
+                                  disabled={processingUsers.has(user.id)}
                                 >
                                   <Edit className="w-3 h-3 mr-1" />
                                   Edit
@@ -414,10 +453,11 @@ export default function AdminDashboard() {
                                   variant="ghost" 
                                   size="sm" 
                                   className="h-6 px-2 text-xs text-gray-600 hover:text-red-600 hover:bg-red-50"
-                                  onClick={() => handleDeleteUser(user.id)}
+                                  onClick={() => handleDeleteUser(user.id, user.name)}
+                                  disabled={processingUsers.has(user.id)}
                                 >
                                   <Trash2 className="w-3 h-3 mr-1" />
-                                  Delete
+                                  {processingUsers.has(user.id) ? 'Deleting...' : 'Delete'}
                                 </Button>
                               </div>
                             )}
@@ -492,6 +532,7 @@ export default function AdminDashboard() {
                                     size="sm" 
                                     className="h-8 w-8 p-0"
                                     onClick={() => handleEditUser(user)}
+                                    disabled={processingUsers.has(user.id)}
                                   >
                                     <Edit className="w-4 h-4" />
                                   </Button>
@@ -499,9 +540,11 @@ export default function AdminDashboard() {
                                     variant="ghost" 
                                     size="sm" 
                                     className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                    onClick={() => handleDeleteUser(user.id)}
+                                    onClick={() => handleDeleteUser(user.id, user.name)}
+                                    disabled={processingUsers.has(user.id)}
+                                    title={processingUsers.has(user.id) ? 'Deleting...' : 'Delete user'}
                                   >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className={`w-4 h-4 ${processingUsers.has(user.id) ? 'animate-pulse' : ''}`} />
                                   </Button>
                                 </div>
                               </td>
@@ -577,6 +620,17 @@ export default function AdminDashboard() {
         }}
         onUserUpdated={handleUserUpdated}
         user={selectedUser}
+      />
+
+      {/* Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.action}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        variant={confirmDialog.variant}
+        confirmText={confirmDialog.variant === "destructive" ? "Delete" : "Confirm"}
       />
     </div>
   )
