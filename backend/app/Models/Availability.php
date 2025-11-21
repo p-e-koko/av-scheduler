@@ -10,6 +10,13 @@ class Availability extends Model
     use HasUuid;
 
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'availability';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<string>

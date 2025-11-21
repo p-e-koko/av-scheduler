@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AssignmentController;
+use App\Http\Controllers\Api\AvailabilityController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -94,6 +95,35 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
             $request->merge(['user_id' => $request->user()->id]);
             return app(AssignmentController::class)->checkOutUser($request, $assignment);
         });
+    });
+
+    // Availability Management Routes - Role-Based Access Control
+
+    // Student Availability Management - Students have full CRUD on own availability
+    Route::middleware(['role:student'])->group(function () {
+        Route::get('/my-availability', [AvailabilityController::class, 'myAvailability']);
+        Route::post('/my-availability', [AvailabilityController::class, 'store']);
+        Route::put('/my-availability/{availability}', [AvailabilityController::class, 'update'])
+            ->middleware('can:update,availability');
+        Route::delete('/my-availability/{availability}', [AvailabilityController::class, 'destroy'])
+            ->middleware('can:delete,availability');
+        Route::post('/my-availability/bulk', [AvailabilityController::class, 'bulkStore']);
+    });
+
+    // Coordinator Availability Management - Coordinators have full CRUD access
+    Route::middleware(['role:coordinator', 'throttle:sensitive'])->group(function () {
+        Route::apiResource('availability', AvailabilityController::class);
+        Route::prefix('availability')->group(function () {
+            Route::get('/schedule', [AvailabilityController::class, 'schedule']);
+            Route::post('/bulk', [AvailabilityController::class, 'bulkStore']);
+        });
+    });
+
+    // View Availability - Supervisor, Coordinator (Read-only access)
+    Route::middleware(['role:supervisor,coordinator'])->group(function () {
+        Route::get('/availability', [AvailabilityController::class, 'index']);
+        Route::get('/availability/{availability}', [AvailabilityController::class, 'show']);
+        Route::get('/availability/schedule', [AvailabilityController::class, 'schedule']);
     });
 
     // User can view and edit own profile

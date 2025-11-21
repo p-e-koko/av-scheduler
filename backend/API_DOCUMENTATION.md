@@ -12,6 +12,7 @@
 - [Authentication](#authentication)
 - [User Management](#user-management)
 - [Assignment Management](#assignment-management)
+- [Availability Management](#availability-management)
 - [Rate Limiting](#rate-limiting)
 - [Error Handling](#error-handling)
 - [Response Format](#response-format)
@@ -594,7 +595,542 @@ Complete CRUD operations including create, update, delete, restore, force delete
 - Self check-in/check-out capabilities
 - Read-only access to all assignments
 
-*[Full assignment management documentation with detailed examples available in the complete API documentation]*
+---
+
+## 📅 Availability Management
+
+The Availability Management system allows students to manage their schedules, indicating when they are available, unavailable, or have classes. The system operates on a 14-hour daily schedule (8:00 AM - 10:00 PM) with role-based access control.
+
+### Role-Based Access Control
+
+- **Students**: Full CRUD access to their own availability only
+- **Coordinators**: Full CRUD access to all student availability  
+- **Supervisors**: Read-only access to all student availability
+- **Admins**: No access (focus on user management)
+
+---
+
+### Get My Availability (Student)
+**GET** `/my-availability`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Student only
+
+Returns the authenticated student's availability records with pagination and filtering.
+
+**Query Parameters:**
+- `page` (integer): Page number (default: 1)
+- `per_page` (integer): Items per page (default: 15, max: 100)
+- `date` (string): Filter by specific date (YYYY-MM-DD)
+- `date_from` (string): Start date range filter (YYYY-MM-DD)
+- `date_to` (string): End date range filter (YYYY-MM-DD)
+- `status` (string): Filter by status (available, unavailable, class)
+
+**Example:** `/my-availability?date_from=2025-11-25&date_to=2025-12-01&status=available`
+
+**Response (200):**
+```json
+{
+    "data": [
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "student_id": "123e4567-e89b-12d3-a456-426614174000",
+            "date": "2025-11-25",
+            "start_time": "09:00:00",
+            "end_time": "12:00:00",
+            "status": "available",
+            "created_at": "2025-11-21T09:00:00.000000Z",
+            "updated_at": "2025-11-21T09:00:00.000000Z",
+            "user": {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "name": "John Doe",
+                "student_id": "STU001",
+                "email": "john.doe@university.edu",
+                "role": "student",
+                "profile_picture_url": "http://localhost:8000/storage/profile_pictures/john.jpg"
+            },
+            "duration_minutes": 180,
+            "formatted_time": "9:00 AM - 12:00 PM",
+            "is_past": false,
+            "is_today": false
+        }
+    ],
+    "meta": {
+        "total": 25,
+        "count": 15,
+        "per_page": 15,
+        "current_page": 1,
+        "total_pages": 2,
+        "has_more_pages": true
+    },
+    "links": {
+        "first": "http://localhost:8000/api/my-availability?page=1",
+        "last": "http://localhost:8000/api/my-availability?page=2",
+        "prev": null,
+        "next": "http://localhost:8000/api/my-availability?page=2"
+    }
+}
+```
+
+---
+
+### Create My Availability (Student)
+**POST** `/my-availability`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Student only
+
+Creates a new availability slot for the authenticated student.
+
+**Request Body:**
+```json
+{
+    "date": "2025-11-25",
+    "start_time": "09:00:00",
+    "end_time": "12:00:00",
+    "status": "available"
+}
+```
+
+**Validation Rules:**
+- `date`: required, valid date format (YYYY-MM-DD)
+- `start_time`: required, time format (HH:MM:SS), must be 08:00:00 or later
+- `end_time`: required, time format (HH:MM:SS), must be after start_time, must be 22:00:00 or earlier
+- `status`: required, one of: available, unavailable, class
+- No overlapping time slots allowed for the same date
+
+**Response (201):**
+```json
+{
+    "message": "Availability created successfully",
+    "availability": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "student_id": "123e4567-e89b-12d3-a456-426614174000",
+        "date": "2025-11-25",
+        "start_time": "09:00:00",
+        "end_time": "12:00:00",
+        "status": "available",
+        "created_at": "2025-11-21T09:00:00.000000Z",
+        "updated_at": "2025-11-21T09:00:00.000000Z",
+        "user": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "name": "John Doe",
+            "student_id": "STU001",
+            "email": "john.doe@university.edu",
+            "role": "student",
+            "profile_picture_url": "http://localhost:8000/storage/profile_pictures/john.jpg"
+        },
+        "duration_minutes": 180,
+        "formatted_time": "9:00 AM - 12:00 PM",
+        "is_past": false,
+        "is_today": false
+    }
+}
+```
+
+**Error Response (422) - Validation:**
+```json
+{
+    "message": "The given data was invalid.",
+    "errors": {
+        "start_time": [
+            "Start time cannot be before 8:00 AM."
+        ],
+        "time_overlap": [
+            "This time slot overlaps with an existing availability entry."
+        ]
+    }
+}
+```
+
+---
+
+### Update My Availability (Student)
+**PUT** `/my-availability/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Student only (own availability)
+
+Updates an existing availability slot for the authenticated student.
+
+**Request Body:** (all fields optional)
+```json
+{
+    "start_time": "10:00:00",
+    "end_time": "14:00:00",
+    "status": "class"
+}
+```
+
+**Response (200):**
+```json
+{
+    "message": "Availability updated successfully",
+    "availability": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "student_id": "123e4567-e89b-12d3-a456-426614174000",
+        "date": "2025-11-25",
+        "start_time": "10:00:00",
+        "end_time": "14:00:00",
+        "status": "class",
+        "created_at": "2025-11-21T09:00:00.000000Z",
+        "updated_at": "2025-11-21T09:15:00.000000Z",
+        "user": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "name": "John Doe",
+            "student_id": "STU001",
+            "email": "john.doe@university.edu",
+            "role": "student",
+            "profile_picture_url": "http://localhost:8000/storage/profile_pictures/john.jpg"
+        },
+        "duration_minutes": 240,
+        "formatted_time": "10:00 AM - 2:00 PM",
+        "is_past": false,
+        "is_today": false
+    }
+}
+```
+
+---
+
+### Delete My Availability (Student)
+**DELETE** `/my-availability/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Student only (own availability)
+
+Deletes an availability slot for the authenticated student.
+
+**Response (200):**
+```json
+{
+    "message": "Availability deleted successfully"
+}
+```
+
+---
+
+### Bulk Create My Availability (Student)
+**POST** `/my-availability/bulk`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Student only
+
+Creates multiple availability slots in a single request for the authenticated student.
+
+**Request Body:**
+```json
+{
+    "availability": [
+        {
+            "date": "2025-11-25",
+            "start_time": "09:00:00",
+            "end_time": "12:00:00",
+            "status": "available"
+        },
+        {
+            "date": "2025-11-25",
+            "start_time": "13:00:00",
+            "end_time": "15:00:00",
+            "status": "class"
+        },
+        {
+            "date": "2025-11-26",
+            "start_time": "16:00:00",
+            "end_time": "20:00:00",
+            "status": "available"
+        }
+    ]
+}
+```
+
+**Response (201):**
+```json
+{
+    "message": "Availability slots created successfully",
+    "availability": [
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "student_id": "123e4567-e89b-12d3-a456-426614174000",
+            "date": "2025-11-25",
+            "start_time": "09:00:00",
+            "end_time": "12:00:00",
+            "status": "available",
+            "created_at": "2025-11-21T09:00:00.000000Z",
+            "updated_at": "2025-11-21T09:00:00.000000Z",
+            "user": { /* user object */ },
+            "duration_minutes": 180,
+            "formatted_time": "9:00 AM - 12:00 PM",
+            "is_past": false,
+            "is_today": false
+        }
+        // ... other created slots
+    ],
+    "count": 3
+}
+```
+
+---
+
+### Get All Availability (Coordinator/Supervisor)
+**GET** `/availability`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Coordinator (full access), Supervisor (read-only)
+
+Returns availability records for all students with advanced filtering and search capabilities.
+
+**Query Parameters:**
+- `page` (integer): Page number (default: 1)
+- `per_page` (integer): Items per page (default: 15, max: 100)
+- `student_id` (string): Filter by specific student UUID
+- `date` (string): Filter by specific date (YYYY-MM-DD)
+- `date_from` (string): Start date range filter (YYYY-MM-DD)
+- `date_to` (string): End date range filter (YYYY-MM-DD)
+- `status` (string): Filter by status (available, unavailable, class)
+
+**Example:** `/availability?student_id=123e4567-e89b-12d3-a456-426614174000&date_from=2025-11-25&status=available`
+
+**Response (200):** Same format as student endpoint, but includes availability from all students.
+
+---
+
+### Create Availability (Coordinator)
+**POST** `/availability`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Coordinator only
+
+Creates availability for any student (coordinators can manage all student schedules).
+
+**Request Body:**
+```json
+{
+    "student_id": "123e4567-e89b-12d3-a456-426614174000",
+    "date": "2025-11-25",
+    "start_time": "09:00:00",
+    "end_time": "12:00:00",
+    "status": "available"
+}
+```
+
+**Validation Rules:** Same as student endpoint, plus:
+- `student_id`: required, valid student UUID that exists in the system
+
+**Response (201):** Same format as student create endpoint.
+
+---
+
+### Get Specific Availability (Coordinator/Supervisor)
+**GET** `/availability/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Coordinator (full access), Supervisor (read-only)
+
+Returns details of a specific availability record.
+
+**Response (200):**
+```json
+{
+    "availability": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "student_id": "123e4567-e89b-12d3-a456-426614174000",
+        "date": "2025-11-25",
+        "start_time": "09:00:00",
+        "end_time": "12:00:00",
+        "status": "available",
+        "created_at": "2025-11-21T09:00:00.000000Z",
+        "updated_at": "2025-11-21T09:00:00.000000Z",
+        "user": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "name": "John Doe",
+            "student_id": "STU001",
+            "email": "john.doe@university.edu",
+            "role": "student",
+            "profile_picture_url": "http://localhost:8000/storage/profile_pictures/john.jpg"
+        },
+        "duration_minutes": 180,
+        "formatted_time": "9:00 AM - 12:00 PM",
+        "is_past": false,
+        "is_today": false
+    }
+}
+```
+
+---
+
+### Update Availability (Coordinator)
+**PUT** `/availability/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Coordinator only
+
+Updates any availability record (coordinators can modify all student schedules).
+
+**Request Body:** (all fields optional)
+```json
+{
+    "student_id": "456e7890-e89b-12d3-a456-426614174000",
+    "date": "2025-11-26",
+    "start_time": "10:00:00",
+    "end_time": "14:00:00",
+    "status": "class"
+}
+```
+
+**Response (200):** Same format as create response.
+
+---
+
+### Delete Availability (Coordinator)
+**DELETE** `/availability/{id}`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Coordinator only
+
+Deletes any availability record.
+
+**Response (200):**
+```json
+{
+    "message": "Availability deleted successfully"
+}
+```
+
+---
+
+### Get Schedule Overview
+**GET** `/availability/schedule`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Coordinator (full access), Supervisor (read-only)
+
+Returns a comprehensive schedule overview for planning and assignment purposes.
+
+**Query Parameters:**
+- `date_from` (required): Start date (YYYY-MM-DD)
+- `date_to` (required): End date (YYYY-MM-DD)
+- `student_ids` (array): Filter by specific student UUIDs (optional)
+
+**Example:** `/availability/schedule?date_from=2025-11-25&date_to=2025-12-01&student_ids[]=123e4567-e89b-12d3-a456-426614174000`
+
+**Response (200):**
+```json
+{
+    "schedule": {
+        "2025-11-25": {
+            "123e4567-e89b-12d3-a456-426614174000": [
+                {
+                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                    "student_id": "123e4567-e89b-12d3-a456-426614174000",
+                    "date": "2025-11-25",
+                    "start_time": "09:00:00",
+                    "end_time": "12:00:00",
+                    "status": "available",
+                    "user": { /* user object */ },
+                    "duration_minutes": 180,
+                    "formatted_time": "9:00 AM - 12:00 PM",
+                    "is_past": false,
+                    "is_today": false
+                }
+                // ... other slots for this student on this date
+            ]
+        }
+        // ... other dates
+    },
+    "date_from": "2025-11-25",
+    "date_to": "2025-12-01"
+}
+```
+
+---
+
+### Bulk Create Availability (Coordinator)
+**POST** `/availability/bulk`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Coordinator only
+
+Creates multiple availability slots for any students in a single request.
+
+**Request Body:**
+```json
+{
+    "availability": [
+        {
+            "student_id": "123e4567-e89b-12d3-a456-426614174000",
+            "date": "2025-11-25",
+            "start_time": "09:00:00",
+            "end_time": "12:00:00",
+            "status": "available"
+        },
+        {
+            "student_id": "456e7890-e89b-12d3-a456-426614174000",
+            "date": "2025-11-25",
+            "start_time": "13:00:00",
+            "end_time": "17:00:00",
+            "status": "available"
+        }
+    ]
+}
+```
+
+**Response (201):** Same format as student bulk create.
+
+---
+
+### Availability Status Definitions
+
+| Status | Description | Use Case |
+|--------|-------------|----------|
+| `available` | Student is free and available for work assignments | Default state for open time slots |
+| `unavailable` | Student is busy with personal commitments | Study time, appointments, personal events |
+| `class` | Student has scheduled academic classes | Lectures, labs, seminars, academic obligations |
+
+### Time Constraints
+
+- **Operating Hours**: 8:00 AM - 10:00 PM (14-hour window)
+- **Minimum Duration**: No minimum enforced (can be 5 minutes)
+- **Maximum Duration**: 14 hours (full day)
+- **Overlap Prevention**: No overlapping slots allowed for same student on same date
+- **Time Format**: 24-hour format (HH:MM:SS)
+- **Date Format**: ISO 8601 format (YYYY-MM-DD)
+
+### Common Error Responses
+
+**Time Overlap (422):**
+```json
+{
+    "message": "The given data was invalid.",
+    "errors": {
+        "time_overlap": [
+            "This time slot overlaps with an existing availability entry."
+        ]
+    }
+}
+```
+
+**Invalid Time Range (422):**
+```json
+{
+    "message": "The given data was invalid.",
+    "errors": {
+        "start_time": [
+            "Start time cannot be before 8:00 AM."
+        ],
+        "end_time": [
+            "End time cannot be after 10:00 PM."
+        ]
+    }
+}
+```
+
+**Permission Denied (403):**
+```json
+{
+    "message": "This action is unauthorized."
+}
+```
 
 ---
 

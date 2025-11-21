@@ -62,6 +62,22 @@ Authorization: Bearer 1|abc123...
 | POST | `/assignments/{id}/check-in` | Self check in | Student only |
 | POST | `/assignments/{id}/check-out` | Self check out | Student only |
 
+### 📅 Availability Management
+| Method | Endpoint | Description | Permissions |
+|--------|----------|-------------|-------------|
+| GET | `/my-availability` | Get student's own availability | Student only |
+| POST | `/my-availability` | Create student's availability | Student only |
+| PUT | `/my-availability/{id}` | Update student's availability | Student only (own) |
+| DELETE | `/my-availability/{id}` | Delete student's availability | Student only (own) |
+| POST | `/my-availability/bulk` | Bulk create student's availability | Student only |
+| GET | `/availability` | Get all availability | Coordinator, Supervisor |
+| POST | `/availability` | Create availability for any student | Coordinator only |
+| GET | `/availability/{id}` | Get specific availability | Coordinator, Supervisor |
+| PUT | `/availability/{id}` | Update any availability | Coordinator only |
+| DELETE | `/availability/{id}` | Delete any availability | Coordinator only |
+| GET | `/availability/schedule` | Get schedule overview | Coordinator, Supervisor |
+| POST | `/availability/bulk` | Bulk create availability | Coordinator only |
+
 ### 🎯 Position Management
 | Method | Endpoint | Description | Permissions |
 |--------|----------|-------------|-------------|
@@ -89,9 +105,12 @@ Authorization: Bearer 1|abc123...
 - ✅ View assignments (read-only)
 - ✅ View own assignments
 - ✅ Self check-in/check-out
+- ✅ Full CRUD on own availability
+- ✅ Bulk create own availability
 - ❌ View other users
 - ❌ User management
 - ❌ Assignment management
+- ❌ View other students' availability
 
 ### Coordinator
 - ✅ View/edit own profile
@@ -102,20 +121,27 @@ Authorization: Bearer 1|abc123...
 - ✅ Full position management
 - ✅ Create/edit/delete positions
 - ✅ Assign positions to users
+- ✅ Full CRUD on all student availability
+- ✅ View schedule overview
+- ✅ Bulk availability operations
 - ❌ Create/edit/delete users
 
 ### Supervisor
 - ✅ View/edit own profile
 - ✅ View all users
 - ✅ View assignments (read-only)
+- ✅ View all student availability (read-only)
+- ✅ View schedule overview (read-only)
 - ❌ Create/edit/delete users
 - ❌ Assignment management
+- ❌ Availability management
 
 ### Admin
 - ✅ Full user management
 - ✅ View/edit own profile
 - ✅ System administration
 - ❌ Assignment management (by design)
+- ❌ Availability management (by design)
 
 ## 📝 Common Request Examples
 
@@ -215,6 +241,77 @@ curl -X GET http://localhost:8000/api/positions-active \
 curl -X POST http://localhost:8000/api/assignments/1/check-in \
   -H "Authorization: Bearer 1|studenttoken..." \
   -H "Accept: application/json"
+```
+
+### Get My Availability
+```bash
+curl -X GET "http://localhost:8000/api/my-availability?date_from=2025-11-25&status=available" \
+  -H "Authorization: Bearer 1|studenttoken..." \
+  -H "Accept: application/json"
+```
+
+### Create My Availability
+```bash
+curl -X POST http://localhost:8000/api/my-availability \
+  -H "Authorization: Bearer 1|studenttoken..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "date": "2025-11-25",
+    "start_time": "09:00:00",
+    "end_time": "12:00:00",
+    "status": "available"
+  }'
+```
+
+### Bulk Create Availability
+```bash
+curl -X POST http://localhost:8000/api/my-availability/bulk \
+  -H "Authorization: Bearer 1|studenttoken..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "availability": [
+      {
+        "date": "2025-11-25",
+        "start_time": "09:00:00",
+        "end_time": "12:00:00",
+        "status": "available"
+      },
+      {
+        "date": "2025-11-25",
+        "start_time": "13:00:00",
+        "end_time": "15:00:00",
+        "status": "class"
+      }
+    ]
+  }'
+```
+
+### Get All Availability (Coordinator)
+```bash
+curl -X GET "http://localhost:8000/api/availability?student_id=123e4567-e89b-12d3-a456-426614174000" \
+  -H "Authorization: Bearer 1|coordinatortoken..." \
+  -H "Accept: application/json"
+```
+
+### Get Schedule Overview
+```bash
+curl -X GET "http://localhost:8000/api/availability/schedule?date_from=2025-11-25&date_to=2025-12-01" \
+  -H "Authorization: Bearer 1|coordinatortoken..." \
+  -H "Accept: application/json"
+```
+
+### Create Availability for Student (Coordinator)
+```bash
+curl -X POST http://localhost:8000/api/availability \
+  -H "Authorization: Bearer 1|coordinatortoken..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "student_id": "123e4567-e89b-12d3-a456-426614174000",
+    "date": "2025-11-25",
+    "start_time": "14:00:00",
+    "end_time": "18:00:00",
+    "status": "available"
+  }'
 ```
 
 ## 🚨 Error Responses
