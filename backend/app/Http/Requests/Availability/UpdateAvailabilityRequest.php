@@ -44,11 +44,18 @@ class UpdateAvailabilityRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            $user = $this->user();
             $availability = $this->route('availability');
             $studentId = $this->input('student_id') ?? $availability->student_id;
             $date = $this->input('date') ?? $availability->date;
             $startTime = $this->input('start_time') ?? $availability->start_time;
             $endTime = $this->input('end_time') ?? $availability->end_time;
+
+            // Ensure students can only update their own availability
+            if ($user->role === 'student' && $this->has('student_id') && $this->input('student_id') !== $user->id) {
+                $validator->errors()->add('student_id', 'Students can only update their own availability.');
+                return;
+            }
 
             if ($studentId && $date && $startTime && $endTime) {
                 // Check for overlapping availability (excluding current record)

@@ -70,6 +70,7 @@ Authorization: Bearer 1|abc123...
 | PUT | `/my-availability/{id}` | Update student's availability | Student only (own) |
 | DELETE | `/my-availability/{id}` | Delete student's availability | Student only (own) |
 | POST | `/my-availability/bulk` | Bulk create student's availability | Student only |
+| GET | `/my-availability/schedule` | Get student's own schedule | Student only |
 | GET | `/availability` | Get all availability | Coordinator, Supervisor |
 | POST | `/availability` | Create availability for any student | Coordinator only |
 | GET | `/availability/{id}` | Get specific availability | Coordinator, Supervisor |
@@ -284,6 +285,13 @@ curl -X POST http://localhost:8000/api/my-availability/bulk \
       }
     ]
   }'
+```
+
+### Get My Schedule (Student)
+```bash
+curl -X GET "http://localhost:8000/api/my-availability/schedule?date_from=2025-11-25&date_to=2025-12-01" \
+  -H "Authorization: Bearer 1|studenttoken..." \
+  -H "Accept: application/json"
 ```
 
 ### Get All Availability (Coordinator)

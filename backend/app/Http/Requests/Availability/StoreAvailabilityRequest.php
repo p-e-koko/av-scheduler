@@ -44,10 +44,17 @@ class StoreAvailabilityRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $studentId = $this->input('student_id') ?? $this->user()->id;
+            $user = $this->user();
+            $studentId = $this->input('student_id') ?? $user->id;
             $date = $this->input('date');
             $startTime = $this->input('start_time');
             $endTime = $this->input('end_time');
+
+            // Ensure students can only create availability for themselves
+            if ($user->role === 'student' && $this->has('student_id') && $this->input('student_id') !== $user->id) {
+                $validator->errors()->add('student_id', 'Students can only create availability for themselves.');
+                return;
+            }
 
             if ($studentId && $date && $startTime && $endTime) {
                 // Check for overlapping availability

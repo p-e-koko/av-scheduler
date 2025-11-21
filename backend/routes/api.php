@@ -108,6 +108,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::delete('/my-availability/{availability}', [AvailabilityController::class, 'destroy'])
             ->middleware('can:delete,availability');
         Route::post('/my-availability/bulk', [AvailabilityController::class, 'bulkStore']);
+        Route::get('/my-availability/schedule', [AvailabilityController::class, 'schedule']);
     });
 
     // Coordinator Availability Management - Coordinators have full CRUD access

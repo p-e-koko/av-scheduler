@@ -603,9 +603,9 @@ The Availability Management system allows students to manage their schedules, in
 
 ### Role-Based Access Control
 
-- **Students**: Full CRUD access to their own availability only
-- **Coordinators**: Full CRUD access to all student availability  
-- **Supervisors**: Read-only access to all student availability
+- **Students**: Full CRUD access to their **own availability only** (cannot view or modify other students' schedules)
+- **Coordinators**: Full CRUD access to **all student availability** (can manage schedules for any student)  
+- **Supervisors**: Read-only access to **all student availability** (can view but not modify schedules)
 - **Admins**: No access (focus on user management)
 
 ---
@@ -872,6 +872,51 @@ Creates multiple availability slots in a single request for the authenticated st
 
 ---
 
+### Get My Schedule (Student)
+**GET** `/my-availability/schedule`
+
+**Headers:** `Authorization: Bearer {token}`
+**Permissions:** Student only
+
+Returns the authenticated student's schedule overview for a specific date range (student can only see their own schedule).
+
+**Query Parameters:**
+- `date_from` (required): Start date (YYYY-MM-DD)
+- `date_to` (required): End date (YYYY-MM-DD)
+
+**Example:** `/my-availability/schedule?date_from=2025-11-25&date_to=2025-12-01`
+
+**Response (200):**
+```json
+{
+    "schedule": {
+        "2025-11-25": {
+            "123e4567-e89b-12d3-a456-426614174000": [
+                {
+                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                    "student_id": "123e4567-e89b-12d3-a456-426614174000",
+                    "date": "2025-11-25",
+                    "start_time": "09:00:00",
+                    "end_time": "12:00:00",
+                    "status": "available",
+                    "user": { /* user object */ },
+                    "duration_minutes": 180,
+                    "formatted_time": "9:00 AM - 12:00 PM",
+                    "is_past": false,
+                    "is_today": false
+                }
+                // ... other slots for this student on this date
+            ]
+        }
+        // ... other dates
+    },
+    "date_from": "2025-11-25",
+    "date_to": "2025-12-01"
+}
+```
+
+---
+
 ### Get All Availability (Coordinator/Supervisor)
 **GET** `/availability`
 
@@ -999,13 +1044,13 @@ Deletes any availability record.
 
 ---
 
-### Get Schedule Overview
+### Get Schedule Overview (Coordinator/Supervisor)
 **GET** `/availability/schedule`
 
 **Headers:** `Authorization: Bearer {token}`
 **Permissions:** Coordinator (full access), Supervisor (read-only)
 
-Returns a comprehensive schedule overview for planning and assignment purposes.
+Returns a comprehensive schedule overview for planning and assignment purposes. **Note:** Students have their own endpoint at `/my-availability/schedule` and can only see their own schedules.
 
 **Query Parameters:**
 - `date_from` (required): Start date (YYYY-MM-DD)
@@ -1129,6 +1174,18 @@ Creates multiple availability slots for any students in a single request.
 ```json
 {
     "message": "This action is unauthorized."
+}
+```
+
+**Student Access Restriction (422):**
+```json
+{
+    "message": "The given data was invalid.",
+    "errors": {
+        "student_id": [
+            "Students can only create availability for themselves."
+        ]
+    }
 }
 ```
 

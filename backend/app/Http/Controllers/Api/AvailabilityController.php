@@ -9,11 +9,13 @@ use App\Http\Resources\AvailabilityCollection;
 use App\Http\Resources\AvailabilityResource;
 use App\Models\Availability;
 use App\Models\User;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AvailabilityController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of the resource.
      */
@@ -115,6 +117,9 @@ class AvailabilityController extends Controller
      */
     public function show(Availability $availability): JsonResponse
     {
+        // Authorize access using policy
+        $this->authorize('view', $availability);
+        
         $availability->load('user');
 
         return response()->json([
@@ -127,6 +132,9 @@ class AvailabilityController extends Controller
      */
     public function update(UpdateAvailabilityRequest $request, Availability $availability): JsonResponse
     {
+        // Authorize access using policy
+        $this->authorize('update', $availability);
+        
         $availabilityData = $request->validated();
         $availability->update($availabilityData);
         $availability->load('user');
@@ -142,6 +150,9 @@ class AvailabilityController extends Controller
      */
     public function destroy(Availability $availability): JsonResponse
     {
+        // Authorize access using policy
+        $this->authorize('delete', $availability);
+        
         $availability->delete();
 
         return response()->json([
@@ -165,8 +176,15 @@ class AvailabilityController extends Controller
             ->where('date', '>=', $request->date_from)
             ->where('date', '<=', $request->date_to);
 
-        if ($request->has('student_ids') && !empty($request->student_ids)) {
-            $query->whereIn('student_id', $request->student_ids);
+        // If user is a student, restrict to their own availability only
+        if ($request->user()->role === 'student') {
+            $query->where('student_id', $request->user()->id);
+            // Ignore student_ids parameter for students
+        } else {
+            // For coordinators/supervisors, allow filtering by student_ids
+            if ($request->has('student_ids') && !empty($request->student_ids)) {
+                $query->whereIn('student_id', $request->student_ids);
+            }
         }
 
         $availability = $query->orderBy('date', 'asc')
@@ -197,11 +215,20 @@ class AvailabilityController extends Controller
 
         $availabilityData = $request->input('availability');
         $created = [];
+        $currentUser = $request->user();
 
         foreach ($availabilityData as $data) {
             // Set student_id to current user if not provided (for students)
             if (!isset($data['student_id'])) {
-                $data['student_id'] = $request->user()->id;
+                $data['student_id'] = $currentUser->id;
+            }
+
+            // If user is a student, ensure they can only create for themselves
+            if ($currentUser->role === 'student' && $data['student_id'] !== $currentUser->id) {
+                return response()->json([
+                    'message' => 'Students can only create availability for themselves.',
+                    'error' => 'Unauthorized student_id specified'
+                ], 403);
             }
 
             $availability = Availability::create($data);
