@@ -60,16 +60,25 @@ export interface RegisterData {
   profile_picture?: File;
 }
 
-// Helper function to get stored token
-export const getAuthToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem('auth_token');
+// Helper function to get CSRF token
+export const getCSRFToken = async (): Promise<string | null> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/csrf-token`, {
+      credentials: 'include',
+    });
+    const data = await response.json();
+    return data.csrf_token;
+  } catch (error) {
+    console.error('Failed to get CSRF token:', error);
+    return null;
+  }
 };
 
-// Helper function to store token
+// Helper function to store token (legacy - for removing stored tokens)
 export const setAuthToken = (token: string): void => {
+  // No longer needed for session-based auth, but kept for cleanup
   if (typeof window !== 'undefined') {
-    localStorage.setItem('auth_token', token);
+    localStorage.removeItem('auth_token');
   }
 };
 
@@ -101,7 +110,6 @@ async function apiCall<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  const token = getAuthToken();
 
   console.log('Making API call to:', url);
 
@@ -110,12 +118,17 @@ async function apiCall<T>(
     'Accept': 'application/json',
   };
 
-  if (token) {
-    defaultHeaders.Authorization = `Bearer ${token}`;
+  // Get CSRF token for state-changing requests
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(options.method?.toUpperCase() || 'GET')) {
+    const csrfToken = await getCSRFToken();
+    if (csrfToken) {
+      defaultHeaders['X-CSRF-TOKEN'] = csrfToken;
+    }
   }
 
   const config: RequestInit = {
     ...options,
+    credentials: 'include', // Include cookies for session authentication
     headers: {
       ...defaultHeaders,
       ...options.headers,
@@ -138,7 +151,7 @@ async function apiCall<T>(
 
     // Handle unauthorized
     if (response.status === 401) {
-      removeAuthToken();
+      removeAuthToken(); // Clean up any stored tokens
       throw new APIError('Invalid credentials. Please check your email and password.', 401);
     }
 
@@ -197,9 +210,8 @@ export const authAPI = {
       body: JSON.stringify(credentials),
     });
 
-    // Store token and user data
-    if (response.access_token && response.user) {
-      setAuthToken(response.access_token);
+    // Store user data (no token needed for session auth)
+    if (response.user) {
       setStoredUser(response.user);
     }
 
@@ -217,14 +229,24 @@ export const authAPI = {
     if (isFormData) {
       // For FormData, don't set Content-Type header - let browser set it
       config.body = userData;
-      const token = getAuthToken();
       config.headers = {
         'Accept': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
       };
 
+      // Get CSRF token for form data
+      const csrfToken = await getCSRFToken();
+      if (csrfToken) {
+        config.headers = {
+          ...config.headers,
+          'X-CSRF-TOKEN': csrfToken,
+        };
+      }
+
       const url = `${API_BASE_URL}/auth/register`;
-      const response = await fetch(url, config);
+      const response = await fetch(url, {
+        ...config,
+        credentials: 'include',
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -237,9 +259,8 @@ export const authAPI = {
 
       const result = await response.json();
       
-      // Store token and user data
-      if (result.access_token && result.user) {
-        setAuthToken(result.access_token);
+      // Store user data
+      if (result.user) {
         setStoredUser(result.user);
       }
 
@@ -251,9 +272,8 @@ export const authAPI = {
         body: JSON.stringify(userData),
       });
 
-      // Store token and user data
-      if (response.access_token && response.user) {
-        setAuthToken(response.access_token);
+      // Store user data
+      if (response.user) {
         setStoredUser(response.user);
       }
 
@@ -270,7 +290,7 @@ export const authAPI = {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      removeAuthToken();
+      removeAuthToken(); // Clean up any stored user data
     }
   },
 
@@ -283,15 +303,11 @@ export const authAPI = {
     return response.user;
   },
 
-  // Refresh token
+  // Refresh session
   async refreshToken(): Promise<ApiResponse> {
     const response = await apiCall<ApiResponse>('/auth/refresh', {
       method: 'POST',
     });
-
-    if (response.access_token) {
-      setAuthToken(response.access_token);
-    }
 
     return response;
   },
@@ -349,9 +365,11 @@ export const api = {
   },
 };
 
-// Check if user is authenticated
+// Check if user is authenticated (now relies on stored user data and server session)
 export const isAuthenticated = (): boolean => {
-  return !!getAuthToken();
+  // For session-based auth, we check if there's stored user data
+  // The actual authentication is verified on each API call
+  return !!getStoredUser();
 };
 
 // Get user role
@@ -442,14 +460,24 @@ export const userAPI = {
     if (isFormData) {
       // For FormData with file uploads, use the special file upload endpoint
       config.body = userData;
-      const token = getAuthToken();
       config.headers = {
         'Accept': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
       };
 
+      // Get CSRF token for form data
+      const csrfToken = await getCSRFToken();
+      if (csrfToken) {
+        config.headers = {
+          ...config.headers,
+          'X-CSRF-TOKEN': csrfToken,
+        };
+      }
+
       const url = `${API_BASE_URL}/users/create-with-files`;
-      const response = await fetch(url, config);
+      const response = await fetch(url, {
+        ...config,
+        credentials: 'include',
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -476,18 +504,28 @@ export const userAPI = {
     
     if (isFormData) {
       // For FormData with file uploads, use the special file upload endpoint
-      const token = getAuthToken();
       const config: RequestInit = {
         method: 'POST',
         body: userData,
         headers: {
           'Accept': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
         }
       };
 
+      // Get CSRF token for form data
+      const csrfToken = await getCSRFToken();
+      if (csrfToken) {
+        config.headers = {
+          ...config.headers,
+          'X-CSRF-TOKEN': csrfToken,
+        };
+      }
+
       const url = `${API_BASE_URL}/users/${id}/update-with-files`;
-      const response = await fetch(url, config);
+      const response = await fetch(url, {
+        ...config,
+        credentials: 'include',
+      });
 
       if (!response.ok) {
         const errorData = await response.json();

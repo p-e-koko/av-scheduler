@@ -1,61 +1,47 @@
-import { api } from './api';
+import { api, authAPI, getStoredUser, setStoredUser, removeAuthToken, type User } from './api';
 
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  email_verified_at?: string;
-  created_at: string;
-  updated_at: string;
-}
+export type { User };
 
 export const auth = {
   async login(email: string, password: string) {
-    const response = await api.post('/login', { email, password });
+    const response = await authAPI.login({ email, password });
     
-    if (response.token) {
-      localStorage.setItem('auth-token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-    }
-    
+    // User data is automatically stored in authAPI.login
     return response;
   },
 
   async register(name: string, email: string, password: string, password_confirmation: string) {
-    const response = await api.post('/register', { 
+    const response = await authAPI.register({ 
       name, 
       email, 
       password, 
       password_confirmation 
     });
     
-    if (response.token) {
-      localStorage.setItem('auth-token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
-    }
-    
+    // User data is automatically stored in authAPI.register
     return response;
   },
 
   async logout() {
     try {
-      await api.post('/logout');
+      await authAPI.logout();
     } finally {
-      localStorage.removeItem('auth-token');
-      localStorage.removeItem('user');
+      // Clean up any stored user data
+      removeAuthToken();
     }
   },
 
   getCurrentUser(): User | null {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    return getStoredUser();
   },
 
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('auth-token');
+    // For session-based auth, we check if there's stored user data
+    // The actual authentication is verified on each API call
+    return !!getStoredUser();
   },
 
   async getProfile() {
-    return api.get('/profile');
+    return authAPI.getCurrentUser();
   },
 };

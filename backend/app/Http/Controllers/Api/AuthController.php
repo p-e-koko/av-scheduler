@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -40,18 +41,17 @@ class AuthController extends Controller
 
         $user = User::create($userData);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // Login the user with session instead of creating token
+        Auth::login($user);
 
         return response()->json([
             'message' => 'User registered successfully',
             'user' => new UserResource($user),
-            'access_token' => $token,
-            'token_type' => 'Bearer',
         ], 201);
     }
 
     /**
-     * Login user and create token.
+     * Login user and create session.
      */
     public function login(LoginRequest $request): JsonResponse
     {
@@ -69,22 +69,23 @@ class AuthController extends Controller
             ]);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // Login the user with session
+        Auth::login($user);
 
         return response()->json([
             'message' => 'Login successful',
             'user' => new UserResource($user),
-            'access_token' => $token,
-            'token_type' => 'Bearer',
         ]);
     }
 
     /**
-     * Logout user (revoke token).
+     * Logout user (destroy session).
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json([
             'message' => 'Logged out successfully'
@@ -96,23 +97,34 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
+        if (!Auth::check()) {
+            return response()->json([
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
         return response()->json([
-            'user' => new UserResource($request->user())
+            'user' => new UserResource(Auth::user())
         ]);
     }
 
     /**
-     * Refresh token.
+     * Refresh session.
      */
     public function refresh(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $user->currentAccessToken()->delete();
-        $token = $user->createToken('auth_token')->plainTextToken;
+        if (!Auth::check()) {
+            return response()->json([
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // Regenerate session ID for security
+        $request->session()->regenerate();
 
         return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
+            'message' => 'Session refreshed successfully',
+            'user' => new UserResource(Auth::user())
         ]);
     }
 

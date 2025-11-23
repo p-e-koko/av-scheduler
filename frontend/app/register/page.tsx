@@ -107,7 +107,7 @@ export default function RegisterPage() {
       
       const response = await authAPI.register(submitData)
       
-      if (response.access_token && response.user) {
+      if (response.user) {
         // Redirect based on user role
         const redirectPath = response.user.role === 'admin' 
           ? '/dashboard/admin' 

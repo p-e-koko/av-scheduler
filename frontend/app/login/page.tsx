@@ -40,7 +40,7 @@ export default function LoginPage() {
     try {
       const response = await authAPI.login({ email, password })
       
-      if (response.access_token && response.user) {
+      if (response.user) {
         // Redirect based on user role
         const redirectPath = response.user.role === 'admin' 
           ? '/dashboard/admin' 

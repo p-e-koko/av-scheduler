@@ -4,8 +4,10 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\AvailabilityController;
 use App\Http\Controllers\Api\UserController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,15 +28,20 @@ Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
+// CSRF Token Route
+Route::get('/csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+});
+
 // Protected Authentication Routes
-Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
+Route::middleware('web')->prefix('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
 });
 
 // Protected User Management Routes - Role-Based Access Control
-Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+Route::middleware(['web', 'throttle:api'])->group(function () {
 
     // User Management - Admin only with sensitive rate limiting
     Route::middleware(['role:admin', 'throttle:sensitive'])->group(function () {
@@ -130,7 +137,12 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // User can view and edit own profile
     Route::get('/profile', [AuthController::class, 'me']);
     Route::put('/profile', function (Request $request) {
-        $user = $request->user();
+        if (!Auth::check()) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+        
+        /** @var User $user */
+        $user = Auth::user();
         $user->update($request->only(['name', 'email', 'student_id', 'username']));
         return response()->json(['user' => new \App\Http\Resources\UserResource($user)]);
     });
