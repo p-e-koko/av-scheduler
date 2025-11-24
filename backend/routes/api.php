@@ -28,20 +28,24 @@ Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-// CSRF Token Route
+// CSRF Token Route - Available to all stateful domains
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->noContent();
+});
+
 Route::get('/csrf-token', function () {
     return response()->json(['csrf_token' => csrf_token()]);
 });
 
 // Protected Authentication Routes
-Route::middleware('web')->prefix('auth')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
 });
 
 // Protected User Management Routes - Role-Based Access Control
-Route::middleware(['web', 'throttle:api'])->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     // User Management - Admin only with sensitive rate limiting
     Route::middleware(['role:admin', 'throttle:sensitive'])->group(function () {

@@ -60,9 +60,24 @@ export interface RegisterData {
   profile_picture?: File;
 }
 
+// Helper function to initialize Sanctum CSRF cookie
+export const initializeSanctum = async (): Promise<void> => {
+  try {
+    await fetch(`${API_BASE_URL}/sanctum/csrf-cookie`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+  } catch (error) {
+    console.error('Failed to initialize Sanctum:', error);
+  }
+};
+
 // Helper function to get CSRF token
 export const getCSRFToken = async (): Promise<string | null> => {
   try {
+    // Initialize Sanctum first
+    await initializeSanctum();
+    
     const response = await fetch(`${API_BASE_URL}/csrf-token`, {
       credentials: 'include',
     });
@@ -147,6 +162,11 @@ async function apiCall<T>(
         `Too many requests. Please try again in ${retryAfter} seconds.`,
         429
       );
+    }
+
+    // Handle CSRF token mismatch
+    if (response.status === 419) {
+      throw new APIError('CSRF token mismatch.', 419);
     }
 
     // Handle unauthorized
