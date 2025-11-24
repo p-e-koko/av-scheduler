@@ -1,9 +1,9 @@
-// Simple navigation helper
 "use client"
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getStoredUser, hasAnyRole } from '@/lib/api'
+import { getStoredUser } from '@/lib/api'
+import { getRoleBasedDashboardPath } from '@/lib/role-routing'
 
 export default function DashboardRedirect() {
   const router = useRouter()
@@ -16,18 +16,17 @@ export default function DashboardRedirect() {
       return
     }
     
-    // Redirect admin users to admin dashboard
-    if (hasAnyRole(['admin', 'supervisor', 'coordinator'])) {
-      router.push('/dashboard/admin')
-    } else {
-      // Regular users can go to a student dashboard (to be created later)
-      router.push('/login') // For now, redirect to login
-    }
+    // Redirect to role-based dashboard
+    const dashboardPath = getRoleBasedDashboardPath(user.role)
+    router.push(dashboardPath)
   }, [router])
 
   return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="text-gray-500">Redirecting...</div>
+    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-white">
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-600">Redirecting to your dashboard...</p>
+      </div>
     </div>
   )
 }

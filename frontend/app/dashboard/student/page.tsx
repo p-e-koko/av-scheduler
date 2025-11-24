@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { 
   User, 
-  Search, 
+  Search,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Switch } from "@/components/ui/switch"
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 
 import { 
   authAPI,
@@ -44,7 +44,7 @@ import {
   type Availability
 } from "@/lib/api"
 
-export default function StudentDashboard() {
+function StudentDashboard() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<UserType | null>(null)
   const [activeTab, setActiveTab] = useState<"profile" | "assignments" | "schedule">("profile")
@@ -774,5 +774,13 @@ export default function StudentDashboard() {
         </main>
       </div>
     </div>
+  )
+}
+
+export default function ProtectedStudentDashboard() {
+  return (
+    <RoleProtectedRoute allowedRoles={['student', 'admin']}>
+      <StudentDashboard />
+    </RoleProtectedRoute>
   )
 }

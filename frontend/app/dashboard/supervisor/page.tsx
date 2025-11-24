@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 
 import { 
   authAPI,
@@ -39,7 +40,7 @@ import {
   type Availability
 } from "@/lib/api"
 
-export default function SupervisorDashboard() {
+function SupervisorDashboard() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [activeTab, setActiveTab] = useState<"dashboard" | "student-schedules" | "assignment-schedules">("dashboard")
@@ -456,7 +457,11 @@ export default function SupervisorDashboard() {
                         .sort((a, b) => (b.hours_completion_percentage || 0) - (a.hours_completion_percentage || 0))
                         .slice(0, 4)
                         .map((student, index) => (
-                          <div key={student.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-lg">
+                          <div 
+                            key={student.id} 
+                            className="flex items-center justify-between p-4 bg-gray-50/50 rounded-lg hover:bg-gray-100/50 cursor-pointer transition-colors"
+                            onClick={() => router.push(`/student/${student.id}`)}
+                          >
                             <div className="flex items-center space-x-4">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
                                 index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-orange-500' : 'bg-gray-300'
@@ -692,5 +697,13 @@ export default function SupervisorDashboard() {
         </main>
       </div>
     </div>
+  )
+}
+
+export default function ProtectedSupervisorDashboard() {
+  return (
+    <RoleProtectedRoute allowedRoles={['supervisor', 'admin']}>
+      <SupervisorDashboard />
+    </RoleProtectedRoute>
   )
 }

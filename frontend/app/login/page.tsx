@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { authAPI, formatAPIError, testConnection } from "@/lib/api"
+import { getRoleBasedDashboardPath } from "@/lib/role-routing"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -41,12 +42,9 @@ export default function LoginPage() {
       const response = await authAPI.login({ email, password })
       
       if (response.user) {
-        // Redirect based on user role
-        const redirectPath = response.user.role === 'admin' 
-          ? '/dashboard/admin' 
-          : '/dashboard'
-        
-        router.push(redirectPath)
+        // Redirect based on user role using role-based routing
+        const redirectPath = getRoleBasedDashboardPath(response.user.role);
+        router.push(redirectPath);
       }
     } catch (error) {
       setError(formatAPIError(error))

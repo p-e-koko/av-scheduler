@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { getStoredUser, hasAnyRole } from '@/lib/api'
+import { getRoleBasedDashboardPath } from '@/lib/role-routing'
 
 export default function Home() {
   const router = useRouter()
@@ -19,8 +20,9 @@ export default function Home() {
   }, [])
 
   const handleNavigateToDashboard = () => {
-    if (user && hasAnyRole(['admin', 'supervisor', 'coordinator'])) {
-      router.push('/dashboard/admin')
+    if (user) {
+      const dashboardPath = getRoleBasedDashboardPath(user.role)
+      router.push(dashboardPath)
     } else {
       router.push('/login')
     }
@@ -75,18 +77,16 @@ export default function Home() {
         <div className="flex flex-col space-y-3 w-full">
           {user ? (
             <>
-              {hasAnyRole(['admin', 'supervisor', 'coordinator']) && (
-                <Button 
-                  onClick={handleNavigateToDashboard}
-                  className="w-full bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
-                >
-                  Go to Admin Dashboard
-                </Button>
-              )}
+              <Button 
+                onClick={handleNavigateToDashboard}
+                className="w-full bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
+              >
+                Go to My Dashboard
+              </Button>
               
               <Link href="/dashboard">
                 <Button variant="outline" className="w-full bg-white/80 backdrop-blur-xl border-gray-300/30">
-                  My Dashboard
+                  Quick Access
                 </Button>
               </Link>
             </>

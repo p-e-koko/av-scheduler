@@ -33,6 +33,7 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 
 import { 
   authAPI,
@@ -51,7 +52,7 @@ import {
   type UsersQueryParams
 } from "@/lib/api"
 
-export default function CoordinatorDashboard() {
+function CoordinatorDashboard() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [activeTab, setActiveTab] = useState<"assignments" | "students" | "schedules" | "positions">("assignments")
@@ -338,6 +339,7 @@ export default function CoordinatorDashboard() {
             </div>
             <Button 
               className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
+              onClick={() => router.push('/student')}
             >
               <Plus className="w-4 h-4 mr-2" />
               {activeTab === "assignments" && "Add Assignment"}
@@ -470,7 +472,11 @@ export default function CoordinatorDashboard() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {students.map((student) => (
-                    <Card key={student.id} className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all">
+                    <Card 
+                      key={student.id} 
+                      className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all cursor-pointer"
+                      onClick={() => router.push(`/student/${student.id}`)}
+                    >
                       <CardContent className="p-4">
                         <div className="flex items-center space-x-4">
                           <Avatar className="h-16 w-16">
@@ -484,7 +490,7 @@ export default function CoordinatorDashboard() {
                             <p className="text-sm text-gray-600">Student ID: {student.student_id || 'N/A'}</p>
                             <div className="flex items-center gap-2 mt-2">
                               <Badge variant="secondary">Student</Badge>
-                              <Badge variant="hours">{student.promised_hours_per_week || '0'}h/week</Badge>
+                              <Badge variant="secondary">{student.promised_hours_per_week || '0'}h/week</Badge>
                             </div>
                           </div>
                         </div>
@@ -565,5 +571,13 @@ export default function CoordinatorDashboard() {
         </main>
       </div>
     </div>
+  )
+}
+
+export default function ProtectedCoordinatorDashboard() {
+  return (
+    <RoleProtectedRoute allowedRoles={['coordinator', 'admin']}>
+      <CoordinatorDashboard />
+    </RoleProtectedRoute>
   )
 }

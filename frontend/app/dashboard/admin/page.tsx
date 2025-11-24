@@ -29,6 +29,7 @@ import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import AddUserModal from "@/components/AddUserModal"
 import EditUserModal from "@/components/EditUserModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
@@ -43,7 +44,7 @@ import {
   UsersListResponse
 } from "@/lib/api"
 
-export default function AdminDashboard() {
+function AdminDashboard() {
   const router = useRouter()
   const [viewMode, setViewMode] = useState<"card" | "list">("card")
   const [searchQuery, setSearchQuery] = useState("")
@@ -325,13 +326,23 @@ export default function AdminDashboard() {
               <p className="text-sm text-gray-600 mt-1">Manage users, roles, and permissions</p>
             </div>
             {hasAnyRole(['admin']) && (
-              <Button 
-                className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
-                onClick={handleAddUser}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add User
-              </Button>
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => router.push('/student')}
+                  className="bg-white/80 backdrop-blur-xl border-gray-300/30"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  All Students
+                </Button>
+                <Button 
+                  className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
+                  onClick={handleAddUser}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add User
+                </Button>
+              </div>
             )}
           </div>
         </header>
@@ -410,7 +421,13 @@ export default function AdminDashboard() {
                 /* Card View */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {users.map((user) => (
-                    <Card key={user.id} className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all hover:scale-[1.01] h-32">
+                    <Card 
+                      key={user.id} 
+                      className={`bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all hover:scale-[1.01] h-32 ${
+                        user.role === 'student' ? 'cursor-pointer' : ''
+                      }`}
+                      onClick={() => user.role === 'student' ? router.push(`/student/${user.id}`) : undefined}
+                    >
                       <CardContent className="p-4 h-full">
                         <div className="flex items-center space-x-4 h-full">
                           {/* Profile Picture - Left Side */}
@@ -633,5 +650,13 @@ export default function AdminDashboard() {
         confirmText={confirmDialog.variant === "destructive" ? "Delete" : "Confirm"}
       />
     </div>
+  )
+}
+
+export default function ProtectedAdminDashboard() {
+  return (
+    <RoleProtectedRoute allowedRoles={['admin']}>
+      <AdminDashboard />
+    </RoleProtectedRoute>
   )
 }
