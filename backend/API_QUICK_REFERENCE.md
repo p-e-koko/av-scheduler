@@ -11,8 +11,11 @@ http://localhost:8000/api
 POST /auth/login
 Body: {"email": "user@email.com", "password": "password123"}
 
-# Use token in headers
-Authorization: Bearer 1|abc123...
+# Get CSRF token for state-changing requests
+GET /csrf-token
+Header: X-CSRF-TOKEN: {csrf_token}
+
+# Authentication is handled via HTTP-only session cookies
 ```
 
 ## 📋 Quick Endpoints Reference
@@ -22,11 +25,12 @@ Authorization: Bearer 1|abc123...
 |--------|----------|-------------|------|
 | POST | `/auth/register` | Register new user | ❌ |
 | POST | `/auth/login` | Login user | ❌ |
-| POST | `/auth/logout` | Logout user | ✅ |
-| GET | `/auth/me` | Get current user | ✅ |
-| POST | `/auth/refresh` | Refresh token | ✅ |
+| POST | `/auth/logout` | Logout user | 🍪 |
+| GET | `/auth/me` | Get current user | 🍪 |
+| POST | `/auth/refresh` | Refresh session | 🍪 |
 | POST | `/auth/forgot-password` | Request reset token | ❌ |
 | POST | `/auth/reset-password` | Reset password | ❌ |
+| GET | `/csrf-token` | Get CSRF token | ❌ |
 
 ### 👥 User Management
 | Method | Endpoint | Description | Permissions |
@@ -153,18 +157,30 @@ curl -X POST http://localhost:8000/api/auth/login \
   -d '{"email":"admin@test.com","password":"password123"}'
 ```
 
-### Get Users (with token)
+### Get Users (with session)
 ```bash
 curl -X GET http://localhost:8000/api/users \
-  -H "Authorization: Bearer 1|abc123..." \
-  -H "Accept: application/json"
+  -H "Accept: application/json" \
+  --cookie-jar cookies.txt \
+  --cookie cookies.txt
 ```
 
 ### Create User
 ```bash
+# First get CSRF token
+CSRF_TOKEN=$(curl -X GET http://localhost:8000/api/csrf-token \
+  -H "Accept: application/json" \
+  --cookie-jar cookies.txt \
+  --cookie cookies.txt \
+  -s | jq -r '.csrf_token')
+
+# Then create user
 curl -X POST http://localhost:8000/api/users \
-  -H "Authorization: Bearer 1|abc123..." \
+  -H "X-CSRF-TOKEN: $CSRF_TOKEN" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  --cookie-jar cookies.txt \
+  --cookie cookies.txt \
   -d '{
     "name": "New User",
     "email": "new@example.com",
@@ -360,39 +376,57 @@ curl -X POST http://localhost:8000/api/availability \
 
 ```javascript
 // api.js
-import axios from 'axios';
+const API_BASE_URL = 'http://localhost:8000/api';
 
-const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
-  headers: {
+// Get CSRF token
+const getCSRFToken = async () => {
+  const response = await fetch(`${API_BASE_URL}/csrf-token`, {
+    credentials: 'include'
+  });
+  const data = await response.json();
+  return data.csrf_token;
+};
+
+// Generic API call
+const apiCall = async (endpoint, options = {}) => {
+  const defaultHeaders = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-  },
-  withCredentials: true,
-});
-
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  };
+  
+  // Add CSRF token for state-changing requests
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(options.method?.toUpperCase())) {
+    const csrfToken = await getCSRFToken();
+    if (csrfToken) {
+      defaultHeaders['X-CSRF-TOKEN'] = csrfToken;
+    }
   }
-  return config;
-});
+  
+  return fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    credentials: 'include', // Include cookies
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+  });
+};
 
-export default api;
+export { apiCall };
 ```
 
 ## 🎯 Quick Integration Checklist
 
-- [ ] Set up axios with base URL and interceptors
-- [ ] Implement login/logout functionality
-- [ ] Store and use authentication tokens
+- [ ] Set up fetch API with credentials: 'include' for session cookies
+- [ ] Implement CSRF token handling for state-changing requests
+- [ ] Implement login/logout functionality with session management
+- [ ] Store user data (not tokens) for UI state management
 - [ ] Handle rate limiting (429 responses)
 - [ ] Implement error handling for all status codes
 - [ ] Set up role-based UI components
-- [ ] Configure CORS for your frontend domain
+- [ ] Configure CORS with credentials support for your frontend domain
 - [ ] Test all endpoints with different user roles
+- [ ] Verify session persistence across browser tabs
 
 ## 📞 Support
 

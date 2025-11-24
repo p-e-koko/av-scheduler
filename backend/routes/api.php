@@ -140,7 +140,7 @@ Route::middleware(['web', 'throttle:api'])->group(function () {
         if (!Auth::check()) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
-        
+
         /** @var User $user */
         $user = Auth::user();
         $user->update($request->only(['name', 'email', 'student_id', 'username']));

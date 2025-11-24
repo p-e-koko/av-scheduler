@@ -3,9 +3,10 @@
 ## Base Information
 
 - **Base URL**: `http://localhost:8000/api`
-- **Authentication**: Bearer Token (Sanctum)
+- **Authentication**: Session-based with HTTP-only cookies
 - **Content-Type**: `application/json`
 - **Accept**: `application/json`
+- **CSRF Protection**: Required for state-changing requests
 
 ## 📋 Table of Contents
 
@@ -61,9 +62,7 @@ Creates a new user account.
         "created_at": "2025-11-17T10:30:00.000000Z",
         "updated_at": "2025-11-17T10:30:00.000000Z",
         "deleted_at": null
-    },
-    "access_token": "1|abc123def456...",
-    "token_type": "Bearer"
+    }
 }
 ```
 
@@ -102,9 +101,7 @@ Authenticates user and returns access token.
         "created_at": "2025-11-17T10:30:00.000000Z",
         "updated_at": "2025-11-17T11:30:00.000000Z",
         "deleted_at": null
-    },
-    "access_token": "2|xyz789uvw456...",
-    "token_type": "Bearer"
+    }
 }
 ```
 
@@ -123,9 +120,9 @@ Authenticates user and returns access token.
 ### Logout
 **POST** `/auth/logout`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 
-Revokes the current access token.
+Destroys the current session.
 
 **Response (200):**
 ```json
@@ -139,7 +136,7 @@ Revokes the current access token.
 ### Get Current User
 **GET** `/auth/me`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 
 Returns the authenticated user's information.
 
@@ -168,18 +165,27 @@ Returns the authenticated user's information.
 
 ---
 
-### Refresh Token
+### Refresh Session
 **POST** `/auth/refresh`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 
-Refreshes the access token.
+Refreshes the session for security.
 
 **Response (200):**
 ```json
 {
-    "access_token": "3|newtoken123...",
-    "token_type": "Bearer"
+    "message": "Session refreshed successfully",
+    "user": {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "student_id": "STU001",
+        "username": "johndoe",
+        "name": "John Doe",
+        "email": "john@example.com",
+        "role": "student",
+        "created_at": "2025-11-17T10:30:00.000000Z",
+        "updated_at": "2025-11-17T11:30:00.000000Z"
+    }
 }
 ```
 
@@ -232,12 +238,26 @@ Resets password using the reset token.
 
 ---
 
+### Get CSRF Token
+**GET** `/csrf-token`
+
+Returns a CSRF token for state-changing requests.
+
+**Response (200):**
+```json
+{
+    "csrf_token": "abc123def456..."
+}
+```
+
+---
+
 ## 👥 User Management
 
 ### List Users
 **GET** `/users`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Admin, Supervisor, Coordinator
 
 Returns paginated list of users.
@@ -294,7 +314,7 @@ Returns paginated list of users.
 ### Get User
 **GET** `/users/{id}`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Admin, Supervisor, Coordinator
 
 Returns specific user details.
@@ -331,7 +351,8 @@ Returns specific user details.
 ### Create User
 **POST** `/users`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Admin only
 
 Creates a new user.
@@ -379,7 +400,8 @@ Creates a new user.
 ### Update User
 **PUT** `/users/{id}`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Admin only
 
 Updates an existing user.
@@ -427,7 +449,8 @@ Updates an existing user.
 ### Delete User (Soft Delete)
 **DELETE** `/users/{id}`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Admin only
 
 Soft deletes a user (can be restored).
@@ -444,7 +467,7 @@ Soft deletes a user (can be restored).
 ### List Trashed Users
 **GET** `/users/trashed`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Admin only
 
 Returns paginated list of soft-deleted users.
@@ -507,7 +530,8 @@ Permanently deletes a user (cannot be restored).
 ### Update Profile
 **PUT** `/profile`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** All authenticated users
 
 Updates the authenticated user's own profile.
@@ -552,7 +576,7 @@ Updates the authenticated user's own profile.
 ### List Assignments
 **GET** `/assignments`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Supervisor, Coordinator, Student (read-only)
 
 Returns paginated list of assignments with filtering and search capabilities.
@@ -613,7 +637,7 @@ The Availability Management system allows students to manage their schedules, in
 ### Get My Availability (Student)
 **GET** `/my-availability`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Student only
 
 Returns the authenticated student's availability records with pagination and filtering.
@@ -677,7 +701,8 @@ Returns the authenticated student's availability records with pagination and fil
 ### Create My Availability (Student)
 **POST** `/my-availability`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Student only
 
 Creates a new availability slot for the authenticated student.
@@ -748,7 +773,8 @@ Creates a new availability slot for the authenticated student.
 ### Update My Availability (Student)
 **PUT** `/my-availability/{id}`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Student only (own availability)
 
 Updates an existing availability slot for the authenticated student.
@@ -796,7 +822,8 @@ Updates an existing availability slot for the authenticated student.
 ### Delete My Availability (Student)
 **DELETE** `/my-availability/{id}`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Student only (own availability)
 
 Deletes an availability slot for the authenticated student.
@@ -813,7 +840,8 @@ Deletes an availability slot for the authenticated student.
 ### Bulk Create My Availability (Student)
 **POST** `/my-availability/bulk`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Student only
 
 Creates multiple availability slots in a single request for the authenticated student.
@@ -875,7 +903,7 @@ Creates multiple availability slots in a single request for the authenticated st
 ### Get My Schedule (Student)
 **GET** `/my-availability/schedule`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Student only
 
 Returns the authenticated student's schedule overview for a specific date range (student can only see their own schedule).
@@ -920,7 +948,7 @@ Returns the authenticated student's schedule overview for a specific date range 
 ### Get All Availability (Coordinator/Supervisor)
 **GET** `/availability`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Coordinator (full access), Supervisor (read-only)
 
 Returns availability records for all students with advanced filtering and search capabilities.
@@ -943,7 +971,8 @@ Returns availability records for all students with advanced filtering and search
 ### Create Availability (Coordinator)
 **POST** `/availability`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Coordinator only
 
 Creates availability for any student (coordinators can manage all student schedules).
@@ -969,7 +998,7 @@ Creates availability for any student (coordinators can manage all student schedu
 ### Get Specific Availability (Coordinator/Supervisor)
 **GET** `/availability/{id}`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Coordinator (full access), Supervisor (read-only)
 
 Returns details of a specific availability record.
@@ -1007,7 +1036,8 @@ Returns details of a specific availability record.
 ### Update Availability (Coordinator)
 **PUT** `/availability/{id}`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Coordinator only
 
 Updates any availability record (coordinators can modify all student schedules).
@@ -1030,7 +1060,8 @@ Updates any availability record (coordinators can modify all student schedules).
 ### Delete Availability (Coordinator)
 **DELETE** `/availability/{id}`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Coordinator only
 
 Deletes any availability record.
@@ -1047,7 +1078,7 @@ Deletes any availability record.
 ### Get Schedule Overview (Coordinator/Supervisor)
 **GET** `/availability/schedule`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Coordinator (full access), Supervisor (read-only)
 
 Returns a comprehensive schedule overview for planning and assignment purposes. **Note:** Students have their own endpoint at `/my-availability/schedule` and can only see their own schedules.
@@ -1093,7 +1124,8 @@ Returns a comprehensive schedule overview for planning and assignment purposes. 
 ### Bulk Create Availability (Coordinator)
 **POST** `/availability/bulk`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Coordinator only
 
 Creates multiple availability slots for any students in a single request.
@@ -1196,7 +1228,7 @@ Creates multiple availability slots for any students in a single request.
 ### List Positions
 **GET** `/positions`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Coordinator only
 
 Returns list of all positions with filtering capabilities.
@@ -1225,7 +1257,8 @@ Returns list of all positions with filtering capabilities.
 ### Create Position
 **POST** `/positions`
 
-**Headers:** `Authorization: Bearer {token}`, `Content-Type: application/json`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Coordinator only
 
 **Request Body:**
@@ -1245,13 +1278,15 @@ Returns list of all positions with filtering capabilities.
 ### Update Position
 **PUT** `/positions/{id}`
 
-**Headers:** `Authorization: Bearer {token}`, `Content-Type: application/json`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Coordinator only
 
 ### Delete Position
 **DELETE** `/positions/{id}`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
+**CSRF Token:** Required in `X-CSRF-TOKEN` header
 **Permissions:** Coordinator only
 
 **Note:** Cannot delete positions that are currently assigned to users.
@@ -1259,7 +1294,7 @@ Returns list of all positions with filtering capabilities.
 ### Get Active Positions
 **GET** `/positions-active`
 
-**Headers:** `Authorization: Bearer {token}`
+**Authentication:** Session-based (automatic via cookies)
 **Permissions:** Coordinator only
 
 Returns simplified list of active positions for dropdown menus.
@@ -1396,9 +1431,10 @@ Retry-After: 60
 ## 🔒 Security Features
 
 ### Authentication
-- **Bearer Token**: Include `Authorization: Bearer {token}` in headers
-- **Token Expiration**: Tokens don't expire but can be revoked
-- **Refresh Tokens**: Use `/auth/refresh` to get new tokens
+- **Session Cookies**: Authentication handled automatically via HTTP-only cookies
+- **CSRF Protection**: Include `X-CSRF-TOKEN` header for POST/PUT/DELETE requests
+- **Session Persistence**: Sessions remain active until explicit logout or expiration
+- **Automatic Refresh**: Sessions regenerated on refresh endpoint for security
 
 ### CORS
 - Configured for Next.js frontend (`localhost:3000`, `localhost:3001`)
@@ -1450,9 +1486,15 @@ APP_URL=http://localhost:8000
 FRONTEND_URL=http://localhost:3000
 SANCTUM_STATEFUL_DOMAINS=localhost:3000,localhost:3001
 
-# Session
+# Session Configuration
+SESSION_DRIVER=database
 SESSION_DOMAIN=localhost
-SESSION_SAME_SITE=none
+SESSION_SAME_SITE=lax
+SESSION_HTTP_ONLY=true
+SESSION_SECURE_COOKIE=false
+
+# CORS
+CORS_SUPPORTS_CREDENTIALS=true
 
 # Database
 DB_CONNECTION=sqlite
