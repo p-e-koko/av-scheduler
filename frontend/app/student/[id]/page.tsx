@@ -57,9 +57,9 @@ function StudentProfile() {
 
         // Fetch all data in parallel for better performance
         const [studentResponse, assignmentsResponse, availabilityResponse] = await Promise.all([
-          userAPI.getUser(parseInt(studentId)),
+          userAPI.getUser(studentId),
           assignmentAPI.getAssignments({ per_page: 50 }),
-          availabilityAPI.getAvailability({ student_id: parseInt(studentId), per_page: 50 })
+          availabilityAPI.getAvailability({ student_id: studentId, per_page: 50 })
         ])
         
         if (studentResponse.user.role !== 'student') {
@@ -72,7 +72,7 @@ function StudentProfile() {
         
         // Filter assignments for this specific student
         const studentAssignments = assignmentsResponse.data.filter(assignment => 
-          assignment.users?.some(user => user.id === parseInt(studentId))
+          assignment.users?.some(user => user.id === studentId)
         )
         setAssignments(studentAssignments)
         setAvailability(availabilityResponse.data)
@@ -100,7 +100,7 @@ function StudentProfile() {
 
   const handleSaveEdit = async () => {
     try {
-      const updatedStudent = await userAPI.updateUser(parseInt(studentId), editData)
+      const updatedStudent = await userAPI.updateUser(studentId, editData)
       setStudent(updatedStudent.user)
       setIsEditing(false)
     } catch (err) {

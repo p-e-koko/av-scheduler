@@ -23,7 +23,7 @@ export interface ApiResponse<T = any> {
 }
 
 export interface User {
-  id: number;
+  id: string;
   student_id?: string;
   username?: string;
   name: string;
@@ -51,7 +51,7 @@ export interface Assignment {
   event_end_datetime: string;
   description?: string;
   status: 'pending' | 'confirmed' | 'complete';
-  created_by: number;
+  created_by: string;
   creator?: User;
   users?: User[];
   created_at: string;
@@ -61,7 +61,7 @@ export interface Assignment {
 
 export interface Availability {
   id: number;
-  student_id: number;
+  student_id: string;
   date: string;
   start_time: string;
   end_time: string;
@@ -558,7 +558,7 @@ export interface AssignmentsQueryParams {
 export interface AvailabilityQueryParams {
   page?: number;
   per_page?: number;
-  student_id?: number;
+  student_id?: string;
   date_from?: string;
   date_to?: string;
   status?: string;
@@ -581,7 +581,7 @@ export const userAPI = {
   },
 
   // Get specific user
-  async getUser(id: number): Promise<{ user: User }> {
+  async getUser(id: string): Promise<{ user: User }> {
     return apiCall<{ user: User }>(`/users/${id}`);
   },
 
@@ -635,7 +635,7 @@ export const userAPI = {
   },
 
   // Update user
-  async updateUser(id: number, userData: Partial<User> | FormData): Promise<{ message: string; user: User }> {
+  async updateUser(id: string, userData: Partial<User> | FormData): Promise<{ message: string; user: User }> {
     const isFormData = userData instanceof FormData;
     
     if (isFormData) {
@@ -683,7 +683,7 @@ export const userAPI = {
   },
 
   // Delete user (soft delete)
-  async deleteUser(id: number): Promise<{ message: string }> {
+  async deleteUser(id: string): Promise<{ message: string }> {
     return apiCall<{ message: string }>(`/users/${id}`, {
       method: 'DELETE',
     });
@@ -697,7 +697,7 @@ export const userAPI = {
   },
 
   // Force delete user (permanent)
-  async forceDeleteUser(id: number): Promise<{ message: string }> {
+  async forceDeleteUser(id: string): Promise<{ message: string }> {
     return apiCall<{ message: string }>(`/users/${id}/force`, {
       method: 'DELETE',
     });
