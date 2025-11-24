@@ -42,6 +42,44 @@ export interface User {
   deleted_at?: string | null;
 }
 
+export interface Assignment {
+  id: number;
+  assignment_name: string;
+  event_name: string;
+  event_location: string;
+  event_start_datetime: string;
+  event_end_datetime: string;
+  description?: string;
+  status: 'pending' | 'confirmed' | 'complete';
+  created_by: number;
+  creator?: User;
+  users?: User[];
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface Availability {
+  id: number;
+  student_id: number;
+  date: string;
+  start_time: string;
+  end_time: string;
+  status: 'available' | 'busy' | 'tentative';
+  user?: User;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Position {
+  id: number;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -442,11 +480,89 @@ export interface UsersListResponse {
   };
 }
 
+export interface AssignmentsListResponse {
+  data: Assignment[];
+  meta: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+  };
+  links: {
+    first: string;
+    last: string;
+    prev: string | null;
+    next: string | null;
+  };
+}
+
+export interface AvailabilityListResponse {
+  data: Availability[];
+  meta: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+  };
+  links: {
+    first: string;
+    last: string;
+    prev: string | null;
+    next: string | null;
+  };
+}
+
+export interface PositionsListResponse {
+  data: Position[];
+  meta?: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+    from: number;
+    to: number;
+  };
+  links?: {
+    first: string;
+    last: string;
+    prev: string | null;
+    next: string | null;
+  };
+}
+
 export interface UsersQueryParams {
   page?: number;
   per_page?: number;
   role?: string;
   search?: string;
+}
+
+export interface AssignmentsQueryParams {
+  page?: number;
+  per_page?: number;
+  status?: string;
+  created_by?: number;
+  start_date?: string;
+  end_date?: string;
+  upcoming?: boolean;
+  past?: boolean;
+  search?: string;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+}
+
+export interface AvailabilityQueryParams {
+  page?: number;
+  per_page?: number;
+  student_id?: number;
+  date_from?: string;
+  date_to?: string;
+  status?: string;
+  date?: string;
 }
 
 export const userAPI = {
@@ -598,5 +714,219 @@ export const userAPI = {
     const endpoint = queryString ? `/users/trashed?${queryString}` : '/users/trashed';
     
     return apiCall<UsersListResponse>(endpoint);
+  }
+};
+
+// Assignment management API
+export const assignmentAPI = {
+  // Get all assignments with pagination and filters
+  async getAssignments(params: AssignmentsQueryParams = {}): Promise<AssignmentsListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params.status) queryParams.append('status', params.status);
+    if (params.created_by) queryParams.append('created_by', params.created_by.toString());
+    if (params.start_date) queryParams.append('start_date', params.start_date);
+    if (params.end_date) queryParams.append('end_date', params.end_date);
+    if (params.upcoming) queryParams.append('upcoming', 'true');
+    if (params.past) queryParams.append('past', 'true');
+    if (params.search) queryParams.append('search', params.search);
+    if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+    if (params.sort_order) queryParams.append('sort_order', params.sort_order);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/assignments?${queryString}` : '/assignments';
+    
+    return apiCall<AssignmentsListResponse>(endpoint);
+  },
+
+  // Get my assignments (for students)
+  async getMyAssignments(params: AssignmentsQueryParams = {}): Promise<AssignmentsListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params.status) queryParams.append('status', params.status);
+    if (params.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/my-assignments?${queryString}` : '/my-assignments';
+    
+    return apiCall<AssignmentsListResponse>(endpoint);
+  },
+
+  // Get specific assignment
+  async getAssignment(id: number): Promise<{ assignment: Assignment }> {
+    return apiCall<{ assignment: Assignment }>(`/assignments/${id}`);
+  },
+
+  // Create new assignment (coordinator only)
+  async createAssignment(assignmentData: Partial<Assignment>): Promise<{ message: string; assignment: Assignment }> {
+    return apiCall<{ message: string; assignment: Assignment }>('/assignments', {
+      method: 'POST',
+      body: JSON.stringify(assignmentData),
+    });
+  },
+
+  // Update assignment (coordinator only)
+  async updateAssignment(id: number, assignmentData: Partial<Assignment>): Promise<{ message: string; assignment: Assignment }> {
+    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(assignmentData),
+    });
+  },
+
+  // Delete assignment (coordinator only)
+  async deleteAssignment(id: number): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/assignments/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Assign user to assignment (coordinator only)
+  async assignUser(assignmentId: number, userId: number, data: { status?: string; position?: string } = {}): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/assignments/${assignmentId}/assign-user`, {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, ...data }),
+    });
+  },
+
+  // Check in user (students can check themselves in)
+  async checkInUser(assignmentId: number, userId?: number): Promise<{ message: string }> {
+    const endpoint = userId 
+      ? `/assignments/${assignmentId}/check-in-user`
+      : `/assignments/${assignmentId}/check-in`;
+    
+    const body = userId ? { user_id: userId } : {};
+    
+    return apiCall<{ message: string }>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
+
+  // Check out user (students can check themselves out)
+  async checkOutUser(assignmentId: number, userId?: number): Promise<{ message: string }> {
+    const endpoint = userId 
+      ? `/assignments/${assignmentId}/check-out-user`
+      : `/assignments/${assignmentId}/check-out`;
+    
+    const body = userId ? { user_id: userId } : {};
+    
+    return apiCall<{ message: string }>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+};
+
+// Availability management API
+export const availabilityAPI = {
+  // Get all availability (coordinator/supervisor)
+  async getAvailability(params: AvailabilityQueryParams = {}): Promise<AvailabilityListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params.student_id) queryParams.append('student_id', params.student_id.toString());
+    if (params.date_from) queryParams.append('date_from', params.date_from);
+    if (params.date_to) queryParams.append('date_to', params.date_to);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.date) queryParams.append('date', params.date);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/availability?${queryString}` : '/availability';
+    
+    return apiCall<AvailabilityListResponse>(endpoint);
+  },
+
+  // Get my availability (for students)
+  async getMyAvailability(params: AvailabilityQueryParams = {}): Promise<AvailabilityListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params.date_from) queryParams.append('date_from', params.date_from);
+    if (params.date_to) queryParams.append('date_to', params.date_to);
+    if (params.status) queryParams.append('status', params.status);
+    if (params.date) queryParams.append('date', params.date);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/my-availability?${queryString}` : '/my-availability';
+    
+    return apiCall<AvailabilityListResponse>(endpoint);
+  },
+
+  // Create availability (students and coordinators)
+  async createAvailability(availabilityData: Partial<Availability>): Promise<{ message: string; availability: Availability }> {
+    const endpoint = availabilityData.student_id ? '/availability' : '/my-availability';
+    return apiCall<{ message: string; availability: Availability }>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(availabilityData),
+    });
+  },
+
+  // Update availability
+  async updateAvailability(id: number, availabilityData: Partial<Availability>): Promise<{ message: string; availability: Availability }> {
+    const endpoint = availabilityData.student_id ? `/availability/${id}` : `/my-availability/${id}`;
+    return apiCall<{ message: string; availability: Availability }>(endpoint, {
+      method: 'PUT',
+      body: JSON.stringify(availabilityData),
+    });
+  },
+
+  // Delete availability
+  async deleteAvailability(id: number, isMyAvailability = false): Promise<{ message: string }> {
+    const endpoint = isMyAvailability ? `/my-availability/${id}` : `/availability/${id}`;
+    return apiCall<{ message: string }>(endpoint, {
+      method: 'DELETE',
+    });
+  },
+
+  // Bulk create availability
+  async bulkCreateAvailability(availabilityData: Partial<Availability>[], isMyAvailability = false): Promise<{ message: string }> {
+    const endpoint = isMyAvailability ? '/my-availability/bulk' : '/availability/bulk';
+    return apiCall<{ message: string }>(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ availability: availabilityData }),
+    });
+  }
+};
+
+// Position management API
+export const positionAPI = {
+  // Get all positions
+  async getPositions(): Promise<PositionsListResponse> {
+    return apiCall<PositionsListResponse>('/positions');
+  },
+
+  // Get active positions only
+  async getActivePositions(): Promise<PositionsListResponse> {
+    return apiCall<PositionsListResponse>('/positions-active');
+  },
+
+  // Get specific position
+  async getPosition(id: number): Promise<{ position: Position }> {
+    return apiCall<{ position: Position }>(`/positions/${id}`);
+  },
+
+  // Create new position (coordinator only)
+  async createPosition(positionData: Partial<Position>): Promise<{ message: string; position: Position }> {
+    return apiCall<{ message: string; position: Position }>('/positions', {
+      method: 'POST',
+      body: JSON.stringify(positionData),
+    });
+  },
+
+  // Update position (coordinator only)
+  async updatePosition(id: number, positionData: Partial<Position>): Promise<{ message: string; position: Position }> {
+    return apiCall<{ message: string; position: Position }>(`/positions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(positionData),
+    });
+  },
+
+  // Delete position (coordinator only)
+  async deletePosition(id: number): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/positions/${id}`, {
+      method: 'DELETE',
+    });
   }
 };
