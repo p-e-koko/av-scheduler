@@ -60,6 +60,12 @@ function CoordinatorDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Student View State
+  const [viewMode, setViewMode] = useState<"card" | "list">("card")
+  const [studentSearchQuery, setStudentSearchQuery] = useState("")
+  const [studentPagination, setStudentPagination] = useState<any>(null)
+  const [studentCurrentPage, setStudentCurrentPage] = useState(1)
+
   // Data states
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [students, setStudents] = useState<User[]>([])
@@ -89,72 +95,100 @@ function CoordinatorDashboard() {
     setLoading(false)
   }, [])
 
-  // Fetch data based on active tab
-  useEffect(() => {
+  // Fetch data function
+  const fetchData = async () => {
     if (!currentUser) return
 
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        setError(null)
+    try {
+      setLoading(true)
+      setError(null)
 
-        switch (activeTab) {
-          case 'assignments':
-            const assignmentsResponse = await assignmentAPI.getAssignments({ per_page: 50 })
-            setAssignments(assignmentsResponse.data)
+      switch (activeTab) {
+        case 'assignments':
+          const assignmentsResponse = await assignmentAPI.getAssignments({ per_page: 50 })
+          setAssignments(assignmentsResponse.data)
+          
+          // Calculate stats
+          const stats = assignmentsResponse.data.reduce((acc, assignment) => {
+            switch (assignment.status) {
+              case 'confirmed':
+                acc.active++
+                break
+              case 'complete':
+                acc.completed++
+                break
+              case 'pending':
+                acc.pending++
+                break
+              default:
+                break
+            }
             
-            // Calculate stats
-            const stats = assignmentsResponse.data.reduce((acc, assignment) => {
-              switch (assignment.status) {
-                case 'confirmed':
-                  acc.active++
-                  break
-                case 'complete':
-                  acc.completed++
-                  break
-                case 'pending':
-                  acc.pending++
-                  break
-                default:
-                  break
-              }
-              
-              // Check if overdue (past end time and not complete)
-              const endDate = new Date(assignment.event_end_datetime)
-              if (endDate < new Date() && assignment.status !== 'complete') {
-                acc.overdue++
-              }
-              
-              return acc
-            }, { active: 0, completed: 0, pending: 0, overdue: 0 })
+            // Check if overdue (past end time and not complete)
+            const endDate = new Date(assignment.event_end_datetime)
+            if (endDate < new Date() && assignment.status !== 'complete') {
+              acc.overdue++
+            }
             
-            setAssignmentStats(stats)
-            break
+            return acc
+          }, { active: 0, completed: 0, pending: 0, overdue: 0 })
+          
+          setAssignmentStats(stats)
+          break
 
-          case 'students':
-            const studentsResponse = await userAPI.getUsers({ role: 'student', per_page: 50 })
-            setStudents(studentsResponse.data)
-            break
+        case 'students':
+          const studentsResponse = await userAPI.getUsers({ 
+            role: 'student', 
+            per_page: 12,
+            page: studentCurrentPage,
+            search: studentSearchQuery || undefined
+          })
+          setStudents(studentsResponse.data)
+          setStudentPagination(studentsResponse.meta)
+          break
 
-          case 'schedules':
-            const availabilityResponse = await availabilityAPI.getAvailability({ per_page: 100 })
-            setAvailability(availabilityResponse.data)
-            break
+        case 'schedules':
+          const availabilityResponse = await availabilityAPI.getAvailability({ per_page: 100 })
+          setAvailability(availabilityResponse.data)
+          break
 
-          case 'positions':
-            const positionsResponse = await positionAPI.getPositions()
-            setPositions(positionsResponse.data)
-            break
-        }
-      } catch (err) {
-        setError(formatAPIError(err))
-      } finally {
-        setLoading(false)
+        case 'positions':
+          const positionsResponse = await positionAPI.getPositions()
+          setPositions(positionsResponse.data)
+          break
       }
+    } catch (err) {
+      setError(formatAPIError(err))
+    } finally {
+      setLoading(false)
     }
+  }
 
+  // Initial load and tab change
+  useEffect(() => {
     fetchData()
   }, [currentUser, activeTab])
+
+  // Student pagination change
+  useEffect(() => {
+    if (activeTab === 'students') {
+      fetchData()
+    }
+  }, [studentCurrentPage])
+
+  // Student search debounce
+  useEffect(() => {
+    if (activeTab === 'students') {
+      const timeout = setTimeout(() => {
+        if (studentCurrentPage !== 1) {
+          setStudentCurrentPage(1)
+        } else {
+          fetchData()
+        }
+      }, 300)
+      return () => clearTimeout(timeout)
+    }
+  }, [studentSearchQuery])
 
   const getInitials = (name: string) => {
     return name
@@ -465,42 +499,181 @@ function CoordinatorDashboard() {
           {/* Students Tab */}
           {activeTab === "students" && (
             <div className="space-y-6">
+              {/* Controls */}
+              <div className="flex items-center justify-between mb-6">
+                {/* View Toggle */}
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-xl rounded-lg p-1 border border-gray-300/30">
+                    <Button
+                      variant={viewMode === "card" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setViewMode("card")}
+                      className={viewMode === "card" ? "bg-primary text-white" : "text-gray-700 hover:text-gray-900"}
+                    >
+                      <Grid3X3 className="w-4 h-4 mr-1" />
+                      Cards
+                    </Button>
+                    <Button
+                      variant={viewMode === "list" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setViewMode("list")}
+                      className={viewMode === "list" ? "bg-primary text-white" : "text-gray-700 hover:text-gray-900"}
+                    >
+                      <List className="w-4 h-4 mr-1" />
+                      List
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Search */}
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Search students..."
+                      value={studentSearchQuery}
+                      onChange={(e) => setStudentSearchQuery(e.target.value)}
+                      className="pl-10 w-64 bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {loading ? (
                 <div className="text-center py-8 text-gray-500">Loading students...</div>
               ) : error ? (
                 <div className="text-center py-8 text-red-500">{error}</div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {(students || []).map((student) => (
-                    <Card 
-                      key={student.id} 
-                      className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all cursor-pointer"
-                      onClick={() => router.push(`/student/${student.id}`)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center space-x-4">
-                          <Avatar className="h-16 w-16">
-                            <AvatarImage src={student.profile_picture_url || ""} />
-                            <AvatarFallback className="bg-primary text-white font-semibold text-lg">
-                              {getInitials(student.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-900">{student.name}</h3>
-                            <p className="text-sm text-gray-600">Student ID: {student.student_id || 'N/A'}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="secondary">Student</Badge>
-                              <Badge variant="secondary">{student.promised_hours_per_week || '0'}h/week</Badge>
+                <>
+                  {viewMode === "card" ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {(students || []).map((student) => (
+                        <Card 
+                          key={student.id} 
+                          className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all cursor-pointer h-32"
+                          onClick={() => router.push(`/student/${student.id}`)}
+                        >
+                          <CardContent className="p-4 h-full">
+                            <div className="flex items-center space-x-4 h-full">
+                              <Avatar className="h-16 w-16 flex-shrink-0">
+                                <AvatarImage src={student.profile_picture_url || ""} />
+                                <AvatarFallback className="bg-primary text-white font-semibold text-lg">
+                                  {getInitials(student.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0 space-y-1">
+                                <div>
+                                  <h3 className="font-semibold text-gray-900 text-sm truncate">{student.name}</h3>
+                                  <p className="text-xs text-gray-600 truncate">Student ID: {student.student_id || 'N/A'}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary" className="text-xs px-2 py-0.5">Student</Badge>
+                                  <Badge variant="hours" className="text-xs px-2 py-0.5">{student.promised_hours_per_week || '0'}h/week</Badge>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-white/80 backdrop-blur-xl rounded-lg border border-gray-300/30 overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-gray-50/50">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                Student
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                Role
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                Hours
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                Email
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-200/50">
+                            {(students || []).map((student) => (
+                              <tr 
+                                key={student.id} 
+                                className="hover:bg-gray-50/30 transition-colors cursor-pointer"
+                                onClick={() => router.push(`/student/${student.id}`)}
+                              >
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center">
+                                    <Avatar className="h-10 w-10">
+                                      <AvatarImage src={student.profile_picture_url || ""} />
+                                      <AvatarFallback className="bg-primary text-white font-semibold">
+                                        {getInitials(student.name)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="ml-4">
+                                      <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                                      <div className="text-sm text-gray-600">{student.student_id || 'No Student ID'}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <Badge variant="secondary" className="text-xs">
+                                    Student
+                                  </Badge>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <Badge variant="hours" className="text-xs">
+                                    {student.promised_hours_per_week || '0'}h/week
+                                  </Badge>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                  {student.email}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pagination */}
+                  {studentPagination && studentPagination.last_page > 1 && (
+                    <div className="mt-6 flex items-center justify-between">
+                      <p className="text-sm text-gray-600">
+                        Showing {studentPagination.from} to {studentPagination.to} of {studentPagination.total} results
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={studentCurrentPage === 1}
+                          onClick={() => setStudentCurrentPage(studentCurrentPage - 1)}
+                          className="bg-white/80 backdrop-blur-xl border-gray-300/30"
+                        >
+                          Previous
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          Page {studentCurrentPage} of {studentPagination.last_page}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={studentCurrentPage === studentPagination.last_page}
+                          onClick={() => setStudentCurrentPage(studentCurrentPage + 1)}
+                          className="bg-white/80 backdrop-blur-xl border-gray-300/30"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {students.length === 0 && (
                     <div className="col-span-full text-center py-8 text-gray-500">No students found</div>
                   )}
-                </div>
+                </>
               )}
             </div>
           )}
