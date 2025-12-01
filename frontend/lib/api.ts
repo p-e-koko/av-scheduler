@@ -347,8 +347,9 @@ export const authAPI = {
       });
     } catch (error) {
       console.error('Logout error:', error);
+      // Don't throw error - we still want to clean up local storage
     } finally {
-      removeAuthToken(); // Clean up any stored user data
+      removeAuthToken(); // Clean up both token and user data
     }
   },
 

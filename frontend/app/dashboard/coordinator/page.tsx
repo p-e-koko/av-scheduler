@@ -424,7 +424,7 @@ function CoordinatorDashboard() {
                     <div className="text-center py-8 text-red-500">{error}</div>
                   ) : (
                     <div className="space-y-4">
-                      {assignments.slice(0, 5).map((assignment) => (
+                      {(assignments || []).slice(0, 5).map((assignment) => (
                         <div key={assignment.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-lg">
                           <div className="flex items-center space-x-4">
                             <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -432,7 +432,7 @@ function CoordinatorDashboard() {
                             </div>
                             <div>
                               <h4 className="font-medium text-gray-900">{assignment.assignment_name}</h4>
-                              <p className="text-sm text-gray-600">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString()}</p>
+                              <p className="text-sm text-gray-600">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString('en-US')}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -471,7 +471,7 @@ function CoordinatorDashboard() {
                 <div className="text-center py-8 text-red-500">{error}</div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {students.map((student) => (
+                  {(students || []).map((student) => (
                     <Card 
                       key={student.id} 
                       className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all cursor-pointer"
@@ -541,7 +541,7 @@ function CoordinatorDashboard() {
                 <div className="text-center py-8 text-red-500">{error}</div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {positions.map((position) => (
+                  {(positions || []).map((position) => (
                     <Card key={position.id} className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -561,7 +561,7 @@ function CoordinatorDashboard() {
                       </CardContent>
                     </Card>
                   ))}
-                  {positions.length === 0 && (
+                  {(positions || []).length === 0 && (
                     <div className="col-span-full text-center py-8 text-gray-500">No positions found</div>
                   )}
                 </div>
