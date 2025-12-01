@@ -205,14 +205,14 @@ function StudentDashboard() {
       const startDateTime = new Date(`${dateStr}T${slot.start_time}`)
       const endDateTime = new Date(`${dateStr}T${slot.end_time}`)
       
-      let color = "bg-blue-100 text-blue-800 border-blue-200"
+      let color = "bg-green-100 text-green-800 border-green-200"
       let title = "Available"
       
       if (slot.status === 'unavailable') {
         color = "bg-red-100 text-red-800 border-red-200"
         title = "Unavailable"
       } else if (slot.status === 'class') {
-        color = "bg-yellow-100 text-yellow-800 border-yellow-200"
+        color = "bg-blue-100 text-blue-800 border-blue-200"
         title = "Class"
       }
       
@@ -236,12 +236,12 @@ function StudentDashboard() {
       case 'pending':
         return 'bg-orange-100 text-orange-800'
       case 'available':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-green-100 text-green-800'
       case 'unavailable':
       case 'busy':
         return 'bg-red-100 text-red-800'
       case 'class':
-        return 'bg-purple-100 text-purple-800'
+        return 'bg-blue-100 text-blue-800'
       case 'tentative':
         return 'bg-yellow-100 text-yellow-800'
       default:
