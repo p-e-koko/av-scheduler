@@ -29,6 +29,8 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
     end_time: "",
     status: "available" as "available" | "unavailable" | "class"
   })
+  const [repeatType, setRepeatType] = useState<"none" | "daily" | "weekly" | "weekday">("none")
+  const [endsOn, setEndsOn] = useState("")
 
   // Generate time slots
   const timeSlots = []
@@ -48,12 +50,58 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
       const startTimeWithSeconds = formData.start_time.length === 5 ? `${formData.start_time}:00` : formData.start_time
       const endTimeWithSeconds = formData.end_time.length === 5 ? `${formData.end_time}:00` : formData.end_time
 
-      await availabilityAPI.createAvailability({
-        date: formData.date,
-        start_time: startTimeWithSeconds,
-        end_time: endTimeWithSeconds,
-        status: formData.status
-      })
+      const availabilities = []
+      
+      if (repeatType === "none") {
+        availabilities.push({
+          date: formData.date,
+          start_time: startTimeWithSeconds,
+          end_time: endTimeWithSeconds,
+          status: formData.status
+        })
+      } else {
+        if (!endsOn) throw new Error("Please select an end date for the recurring availability.")
+        
+        const startDate = new Date(formData.date)
+        const endDate = new Date(endsOn)
+        
+        if (endDate < startDate) throw new Error("End date must be after start date.")
+
+        const currentDate = new Date(startDate)
+
+        while (currentDate <= endDate) {
+          let shouldAdd = true
+          
+          if (repeatType === "weekday") {
+            const day = currentDate.getDay()
+            if (day === 0 || day === 6) shouldAdd = false // 0 is Sunday, 6 is Saturday
+          }
+
+          if (shouldAdd) {
+            availabilities.push({
+              date: currentDate.toISOString().split('T')[0],
+              start_time: startTimeWithSeconds,
+              end_time: endTimeWithSeconds,
+              status: formData.status
+            })
+          }
+
+          // Increment date
+          if (repeatType === "weekly") {
+            currentDate.setDate(currentDate.getDate() + 7)
+          } else {
+            currentDate.setDate(currentDate.getDate() + 1)
+          }
+        }
+      }
+
+      if (availabilities.length === 0) {
+          throw new Error("No valid dates generated with the selected options.")
+      }
+
+      // Use bulkCreateAvailability with isMyAvailability = true
+      await availabilityAPI.bulkCreateAvailability(availabilities, true)
+
       onSuccess()
       onClose()
       // Reset form
@@ -63,6 +111,8 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
         end_time: "",
         status: "available"
       })
+      setRepeatType("none")
+      setEndsOn("")
     } catch (err: any) {
       setError(err.message || "Failed to add availability")
     } finally {
@@ -100,6 +150,49 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
                 />
               </div>
             </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="repeat" className="text-right">
+                Repeat
+              </Label>
+              <div className="col-span-3 relative">
+                <select
+                  id="repeat"
+                  value={repeatType}
+                  onChange={(e) => setRepeatType(e.target.value as any)}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ring-offset-background placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                >
+                  <option value="none">Does not repeat</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="weekday">Every weekday (Monday to Friday)</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {repeatType !== "none" && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="endsOn" className="text-right">
+                  Ends On
+                </Label>
+                <div className="col-span-3">
+                  <Input
+                    id="endsOn"
+                    type="date"
+                    value={endsOn}
+                    onChange={(e) => setEndsOn(e.target.value)}
+                    className="w-full cursor-pointer bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
+                    required={true}
+                    min={formData.date}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="start_time" className="text-right">
