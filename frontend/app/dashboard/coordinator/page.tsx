@@ -34,6 +34,7 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
+import { CreateAssignmentModal } from "@/components/CreateAssignmentModal"
 
 import { 
   authAPI,
@@ -59,6 +60,7 @@ function CoordinatorDashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false)
 
   // Student View State
   const [viewMode, setViewMode] = useState<"card" | "list">("card")
@@ -163,7 +165,7 @@ function CoordinatorDashboard() {
 
         case 'positions':
           const positionsResponse = await positionAPI.getPositions()
-          setPositions(positionsResponse.data)
+          setPositions(positionsResponse.positions)
           break
       }
     } catch (err) {
@@ -383,7 +385,13 @@ function CoordinatorDashboard() {
             {activeTab !== "schedules" && (
               <Button 
                 className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
-                onClick={() => router.push('/student')}
+                onClick={() => {
+                  if (activeTab === "assignments") {
+                    setIsCreateAssignmentModalOpen(true)
+                  } else {
+                    router.push('/student')
+                  }
+                }}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 {activeTab === "assignments" && "Add Assignment"}
@@ -861,6 +869,11 @@ function CoordinatorDashboard() {
           )}
         </main>
       </div>
+      <CreateAssignmentModal 
+        isOpen={isCreateAssignmentModalOpen} 
+        onClose={() => setIsCreateAssignmentModalOpen(false)} 
+        onAssignmentCreated={fetchData}
+      />
     </div>
   )
 }

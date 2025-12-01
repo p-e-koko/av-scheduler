@@ -518,21 +518,8 @@ export interface AvailabilityListResponse {
 }
 
 export interface PositionsListResponse {
-  data: Position[];
-  meta?: {
-    total: number;
-    per_page: number;
-    current_page: number;
-    last_page: number;
-    from: number;
-    to: number;
-  };
-  links?: {
-    first: string;
-    last: string;
-    prev: string | null;
-    next: string | null;
-  };
+  positions: Position[];
+  message?: string;
 }
 
 export interface UsersQueryParams {
@@ -784,7 +771,7 @@ export const assignmentAPI = {
   },
 
   // Assign user to assignment (coordinator only)
-  async assignUser(assignmentId: number, userId: number, data: { status?: string; position?: string } = {}): Promise<{ message: string }> {
+  async assignUser(assignmentId: number, userId: string | number, data: { status?: string; position?: string } = {}): Promise<{ message: string }> {
     return apiCall<{ message: string }>(`/assignments/${assignmentId}/assign-user`, {
       method: 'POST',
       body: JSON.stringify({ user_id: userId, ...data }),
