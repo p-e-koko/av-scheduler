@@ -103,6 +103,16 @@ function StudentDashboard() {
         setError(null)
 
         switch (activeTab) {
+          case 'profile':
+            // Fetch assignments and availability for profile view
+            const [profileAssignmentsResponse, profileAvailabilityResponse] = await Promise.all([
+              assignmentAPI.getMyAssignments({ per_page: 50 }),
+              availabilityAPI.getMyAvailability({ per_page: 50 })
+            ])
+            setMyAssignments(profileAssignmentsResponse.data)
+            setAvailability(profileAvailabilityResponse.data)
+            break
+
           case 'assignments':
             // Fetch both all assignments and my assignments
             const [allAssignmentsResponse, myAssignmentsResponse] = await Promise.all([
@@ -149,6 +159,59 @@ function StudentDashboard() {
 
     fetchData()
   }, [currentUser, activeTab])
+
+  // Calculate hours data
+  const hoursData = React.useMemo(() => {
+    if (!currentUser) return { promised: 0, worked: 0, remaining: 0, percentage: 0 }
+    
+    const promised = parseFloat(currentUser.promised_hours_per_week || '0')
+    
+    // Get start and end of current week
+    const now = new Date()
+    const startOfWeek = new Date(now)
+    const day = now.getDay() || 7 // Get current day number, converting Sun (0) to 7
+    if (day !== 1) startOfWeek.setHours(-24 * (day - 1)) // Set to Monday
+    else startOfWeek.setHours(0, 0, 0, 0)
+    
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6)
+    endOfWeek.setHours(23, 59, 59, 999)
+
+    // Use myAssignments if available, otherwise empty array
+    const worked = myAssignments
+      .filter(a => {
+        const eventDate = new Date(a.event_start_datetime)
+        return a.status === 'complete' && eventDate >= startOfWeek && eventDate <= endOfWeek
+      })
+      .reduce((acc, curr) => {
+        const start = new Date(curr.event_start_datetime)
+        const end = new Date(curr.event_end_datetime)
+        return acc + (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+      }, 0)
+
+    const remaining = Math.max(0, promised - worked)
+    const percentage = promised > 0 ? Math.min(100, (worked / promised) * 100) : 0
+
+    return { promised, worked, remaining, percentage }
+  }, [currentUser, myAssignments])
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+      case 'complete':
+        return 'bg-green-100 text-green-800'
+      case 'pending':
+        return 'bg-orange-100 text-orange-800'
+      case 'available':
+        return 'bg-blue-100 text-blue-800'
+      case 'busy':
+        return 'bg-red-100 text-red-800'
+      case 'tentative':
+        return 'bg-yellow-100 text-yellow-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
 
   const getInitials = (name: string) => {
     return name
@@ -340,104 +403,150 @@ function StudentDashboard() {
         <main className="flex-1 overflow-auto p-4 md:p-6">
           {/* Profile Tab */}
           {activeTab === "profile" && (
-            <div className="space-y-6">
-              {/* Profile Header Card */}
-              <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
-                    {/* Profile Picture */}
-                    <div className="relative">
-                      <Avatar className="h-24 w-24 md:h-32 md:w-32">
-                        <AvatarImage src={currentUser.profile_picture_url || ""} />
-                        <AvatarFallback className="bg-primary text-white font-semibold text-2xl">
-                          {getInitials(currentUser.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <Button
-                        size="icon"
-                        className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-primary hover:bg-primary-dark"
-                      >
-                        <Camera className="h-4 w-4 text-white" />
-                      </Button>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Profile Info */}
+              <div className="lg:col-span-1 space-y-6">
+                {/* Profile Card */}
+                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="text-center mb-6">
+                      <div className="relative inline-block">
+                        <Avatar className="h-24 w-24 mx-auto">
+                          <AvatarImage src={currentUser.profile_picture_url || ""} />
+                          <AvatarFallback className="bg-primary text-white text-2xl font-semibold">
+                            {getInitials(currentUser.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <Button
+                          size="icon"
+                          className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-primary hover:bg-primary-dark"
+                        >
+                          <Camera className="h-4 w-4 text-white" />
+                        </Button>
+                      </div>
+                      
+                      <h3 className="text-xl font-semibold text-gray-900 mt-4">{currentUser.name}</h3>
+                      <p className="text-gray-600">{currentUser.email}</p>
+                      {currentUser.student_id && (
+                        <p className="text-sm text-gray-500 mt-1">ID: {currentUser.student_id}</p>
+                      )}
                     </div>
-                    
-                    {/* Profile Info */}
-                    <div className="flex-1 space-y-3">
-                      <div>
-                        <h2 className="text-2xl font-bold text-gray-900">{currentUser.name}</h2>
-                        <p className="text-gray-600">{currentUser.student_id}</p>
-                        <p className="text-sm text-gray-500">{currentUser.email}</p>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Status</span>
+                        <Badge className="bg-green-100 text-green-800">Active Student</Badge>
                       </div>
                       
-                      <div className="flex flex-wrap gap-2">
-                        <Badge className="bg-primary/10 text-primary">Student</Badge>
-                        <Badge className="bg-green-100 text-green-800">
-                          {currentUser.promised_hours_per_week || '0'}h promised/week
-                        </Badge>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Role</span>
+                        <Badge variant="secondary">Student</Badge>
                       </div>
                       
-                      <div className="flex space-x-2">
-                        <Button className="bg-primary hover:bg-primary-dark">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Promised Hours/Week</span>
+                        <span className="font-medium text-gray-900">{currentUser.promised_hours_per_week || '0'}h</span>
+                      </div>
+
+                      <div className="pt-4 space-y-2">
+                        <Button className="w-full bg-primary hover:bg-primary-dark">
                           <Edit className="w-4 h-4 mr-2" />
                           Edit Profile
                         </Button>
-                        <Button variant="outline">
+                        <Button variant="outline" className="w-full">
                           <Star className="w-4 h-4 mr-2" />
                           Update Skills
                         </Button>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
 
-              {/* Skills Section */}
-              <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    My Skills
-                    <Button size="sm" variant="outline">
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add Skill
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="text-sm px-3 py-1">Audio Equipment</Badge>
-                    <Badge variant="secondary" className="text-sm px-3 py-1">Video Production</Badge>
-                    <Badge variant="secondary" className="text-sm px-3 py-1">Live Streaming</Badge>
-                    <Badge variant="secondary" className="text-sm px-3 py-1">Lighting Setup</Badge>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Right Column - Hours & Availability */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Hours Summary Card */}
+                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-gray-900">
+                      <Clock className="w-5 h-5 mr-2 text-primary" />
+                      Hours Summary (This Week)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div className="p-4 bg-blue-50 rounded-lg">
+                          <p className="text-sm text-gray-600 mb-1">Promised</p>
+                          <p className="text-2xl font-bold text-blue-700">{hoursData.promised}h</p>
+                        </div>
+                        <div className="p-4 bg-green-50 rounded-lg">
+                          <p className="text-sm text-gray-600 mb-1">Worked</p>
+                          <p className="text-2xl font-bold text-green-700">{hoursData.worked.toFixed(1)}h</p>
+                        </div>
+                        <div className="p-4 bg-orange-50 rounded-lg">
+                          <p className="text-sm text-gray-600 mb-1">Remaining</p>
+                          <p className="text-2xl font-bold text-orange-700">{hoursData.remaining.toFixed(1)}h</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>Progress</span>
+                          <span>{Math.round(hoursData.percentage)}%</span>
+                        </div>
+                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-primary transition-all duration-500 ease-out"
+                            style={{ width: `${hoursData.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* Weekly Hours Overview */}
-              <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle>Weekly Hours Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-primary/5 rounded-lg">
-                      <p className="text-2xl font-bold text-primary">{currentUser.promised_hours_per_week || '0'}</p>
-                      <p className="text-sm text-gray-600">Promised Hours</p>
-                    </div>
-                    <div className="text-center p-4 bg-green-50 rounded-lg">
-                      <p className="text-2xl font-bold text-green-600">{currentUser.hours_worked_this_week || '0'}</p>
-                      <p className="text-sm text-gray-600">Worked This Week</p>
-                    </div>
-                    <div className="text-center p-4 bg-orange-50 rounded-lg">
-                      <p className="text-2xl font-bold text-orange-600">{currentUser.remaining_hours_this_week || '0'}</p>
-                      <p className="text-sm text-gray-600">Remaining Hours</p>
-                    </div>
-                    <div className="text-center p-4 bg-primary/5 rounded-lg">
-                      <p className="text-2xl font-bold text-primary">{currentUser.hours_completion_percentage || '0'}%</p>
-                      <p className="text-sm text-gray-600">Completion Rate</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                {/* Availability Schedule */}
+                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Calendar className="w-5 h-5 mr-2 text-primary" />
+                      Availability Schedule
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {availability.length > 0 ? (
+                      <div className="space-y-3">
+                        {availability.slice(0, 5).map((slot) => (
+                          <div key={slot.id} className="p-4 bg-gray-50/50 rounded-lg">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="flex items-center space-x-4">
+                                  <span className="font-medium text-gray-900">
+                                    {new Date(slot.date).toLocaleDateString('en-US', { 
+                                      weekday: 'long',
+                                      month: 'short', 
+                                      day: 'numeric' 
+                                    })}
+                                  </span>
+                                  <span className="text-gray-600">
+                                    {slot.start_time} - {slot.end_time}
+                                  </span>
+                                </div>
+                              </div>
+                              <Badge className={getStatusColor(slot.status)}>
+                                {slot.status}
+                              </Badge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-center text-gray-500 py-8">No availability schedule found</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           )}
 

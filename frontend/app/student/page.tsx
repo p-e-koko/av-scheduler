@@ -19,8 +19,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
+import { auth } from "@/lib/auth"
+import { StudentProfileContent } from "@/components/StudentProfileContent"
 
 import { 
   userAPI,
@@ -29,7 +31,11 @@ import {
   type UsersQueryParams
 } from "@/lib/api"
 
-function StudentsPage() {
+function StudentProfileView({ currentUser }: { currentUser: UserType }) {
+  return <StudentProfileContent studentId={currentUser.id} />
+}
+
+function StudentListView() {
   const router = useRouter()
   const [students, setStudents] = useState<UserType[]>([])
   const [loading, setLoading] = useState(true)
@@ -78,7 +84,7 @@ function StudentsPage() {
   // Use API search results directly (no client-side filtering needed)
   const filteredStudents = students
 
-  const handleStudentClick = (studentId: number) => {
+  const handleStudentClick = (studentId: string) => {
     router.push(`/student/${studentId}`)
   }
 
@@ -90,8 +96,8 @@ function StudentsPage() {
           <div className="flex items-center space-x-4">
             <Button 
               onClick={() => router.back()} 
-              variant="outline"
-              className="bg-white/80 backdrop-blur-xl border-gray-300/30"
+              variant="ghost"
+              className="bg-white/80 backdrop-blur-xl hover:bg-gray-100 text-gray-900 hover:text-gray-900"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
@@ -314,10 +320,37 @@ function StudentsPage() {
   )
 }
 
+function StudentPageHandler() {
+  const [currentUser, setCurrentUser] = useState<UserType | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const user = auth.getCurrentUser()
+    setCurrentUser(user)
+    setLoading(false)
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-white">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  if (!currentUser) return null
+
+  if (currentUser.role === 'student') {
+    return <StudentProfileView currentUser={currentUser} />
+  }
+
+  return <StudentListView />
+}
+
 export default function ProtectedStudentsPage() {
   return (
-    <RoleProtectedRoute allowedRoles={['admin', 'coordinator', 'supervisor']}>
-      <StudentsPage />
+    <RoleProtectedRoute allowedRoles={['admin', 'coordinator', 'supervisor', 'student']}>
+      <StudentPageHandler />
     </RoleProtectedRoute>
   )
 }

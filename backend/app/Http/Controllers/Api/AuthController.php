@@ -87,7 +87,7 @@ class AuthController extends Controller
         if ($request->user() && $request->user()->currentAccessToken()) {
             $request->user()->currentAccessToken()->delete();
         }
-        
+
         // Also handle session-based logout if present
         if ($request->hasSession()) {
             $request->session()->invalidate();
