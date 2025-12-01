@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
 
 import { 
   userAPI,
@@ -95,6 +96,35 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
       .toUpperCase()
       .slice(0, 2)
   }
+
+  const calendarEvents = React.useMemo(() => {
+    return availability.map(slot => {
+      const dateStr = slot.date.split('T')[0]
+      const startDateTime = new Date(`${dateStr}T${slot.start_time}`)
+      const endDateTime = new Date(`${dateStr}T${slot.end_time}`)
+      
+      let color = "bg-blue-100 text-blue-800 border-blue-200"
+      let title = "Available"
+      
+      if (slot.status === 'unavailable') {
+        color = "bg-red-100 text-red-800 border-red-200"
+        title = "Unavailable"
+      } else if (slot.status === 'class') {
+        color = "bg-yellow-100 text-yellow-800 border-yellow-200"
+        title = "Class"
+      }
+      
+      return {
+        id: slot.id.toString(),
+        title: title,
+        start: startDateTime,
+        end: endDateTime,
+        type: slot.status,
+        color: color,
+        description: `${slot.start_time} - ${slot.end_time}`
+      } as CalendarEvent
+    })
+  }, [availability])
 
   const handleSaveEdit = async () => {
     try {
@@ -385,45 +415,21 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
             </Card>
 
             {/* Availability Schedule */}
-            <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center text-gray-900">
+            <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden">
+              <div className="p-6 border-b border-gray-100">
+                <h3 className="text-lg font-semibold flex items-center text-gray-900">
                   <Calendar className="w-5 h-5 mr-2 text-primary" />
                   Availability Schedule
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {availability.length > 0 ? (
-                  <div className="space-y-3">
-                    {availability.slice(0, 5).map((slot) => (
-                      <div key={slot.id} className="p-4 bg-gray-50/50 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center space-x-4">
-                              <span className="font-medium text-gray-900">
-                                {new Date(slot.date).toLocaleDateString('en-US', { 
-                                  weekday: 'long',
-                                  month: 'short', 
-                                  day: 'numeric' 
-                                })}
-                              </span>
-                              <span className="text-gray-600">
-                                {slot.start_time} - {slot.end_time}
-                              </span>
-                            </div>
-                          </div>
-                          <Badge className={getStatusColor(slot.status)}>
-                            {slot.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-500 py-8">No availability schedule found</p>
-                )}
-              </CardContent>
-            </Card>
+                </h3>
+              </div>
+              <div className="p-0">
+                <CalendarComponent
+                  events={calendarEvents}
+                  view="day"
+                  className="border-0 shadow-none h-[400px]"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

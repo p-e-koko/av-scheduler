@@ -65,7 +65,7 @@ export interface Availability {
   date: string;
   start_time: string;
   end_time: string;
-  status: 'available' | 'busy' | 'tentative';
+  status: 'available' | 'unavailable' | 'class';
   user?: User;
   created_at: string;
   updated_at: string;

@@ -83,13 +83,15 @@ export function CalendarComponent({
     const endDate = new Date(lastDay)
 
     // Adjust to start from Monday
-    startDate.setDate(startDate.getDate() - (startDate.getDay() + 6) % 7)
-    endDate.setDate(endDate.getDate() + (7 - endDate.getDay()) % 7)
+    const day = startDate.getDay()
+    const diff = startDate.getDate() - day + (day === 0 ? -6 : 1)
+    startDate.setDate(diff)
 
     const days = []
     const current = new Date(startDate)
     
-    while (current <= endDate) {
+    // Generate 42 days (6 weeks) to ensure consistent height
+    for (let i = 0; i < 42; i++) {
       days.push(new Date(current))
       current.setDate(current.getDate() + 1)
     }
@@ -99,7 +101,10 @@ export function CalendarComponent({
 
   const getWeekDays = () => {
     const startOfWeek = new Date(currentDate)
-    startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() + 6) % 7)
+    const day = startOfWeek.getDay()
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
+    startOfWeek.setDate(diff)
+    startOfWeek.setHours(0, 0, 0, 0)
     
     const days = []
     for (let i = 0; i < 7; i++) {
@@ -134,12 +139,14 @@ export function CalendarComponent({
     }
     
     if (view === "week") {
-      const weekStart = new Date(currentDate)
-      weekStart.setDate(currentDate.getDate() - (currentDate.getDay() + 6) % 7)
-      const weekEnd = new Date(weekStart)
-      weekEnd.setDate(weekStart.getDate() + 6)
+      const days = getWeekDays()
+      const start = days[0]
+      const end = days[6]
       
-      return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+      if (start.getMonth() === end.getMonth()) {
+        return `${start.toLocaleDateString('en-US', { month: 'long' })} ${start.getFullYear()}`
+      }
+      return `${start.toLocaleDateString('en-US', { month: 'short' })} - ${end.toLocaleDateString('en-US', { month: 'short' })} ${end.getFullYear()}`
     }
     
     return currentDate.toLocaleDateString('en-US', options)
@@ -150,16 +157,18 @@ export function CalendarComponent({
     const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
     return (
-      <div className="space-y-2">
+      <div className="flex flex-col h-full">
         {/* Day headers */}
-        <div className={`grid grid-cols-7 gap-1 ${isMobile ? 'text-xs' : 'text-sm'} font-semibold text-gray-600`}>
+        <div className="grid grid-cols-7 border-b border-gray-200">
           {dayNames.map(day => (
-            <div key={day} className="text-center p-2">{day}</div>
+            <div key={day} className="text-center py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              {day}
+            </div>
           ))}
         </div>
         
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 grid-rows-6 flex-1 border-l border-gray-200">
           {days.map((day, index) => {
             const dayEvents = getEventsForDate(day)
             const isCurrentMonth = day.getMonth() === currentDate.getMonth()
@@ -170,22 +179,21 @@ export function CalendarComponent({
                 key={index}
                 onClick={() => onDateClick?.(day)}
                 className={cn(
-                  "border rounded-lg cursor-pointer transition-colors hover:bg-gray-50",
-                  isMobile ? "min-h-[60px] p-1" : "min-h-[100px] p-2",
-                  !isCurrentMonth && "text-gray-400 bg-gray-50/50",
-                  isToday && "bg-blue-50 border-blue-200"
+                  "min-h-[100px] border-b border-r border-gray-200 p-1 transition-colors hover:bg-gray-50 cursor-pointer relative",
+                  !isCurrentMonth && "bg-gray-50/30 text-gray-400"
                 )}
               >
-                <div className={cn(
-                  "font-semibold",
-                  isMobile ? "text-xs" : "text-sm",
-                  isToday && "text-blue-600"
-                )}>
-                  {day.getDate()}
+                <div className="flex justify-center mb-1">
+                  <span className={cn(
+                    "text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full",
+                    isToday ? "bg-blue-600 text-white" : "text-gray-700"
+                  )}>
+                    {day.getDate()}
+                  </span>
                 </div>
                 
-                <div className="space-y-1 mt-1">
-                  {dayEvents.slice(0, isMobile ? 1 : 3).map(event => (
+                <div className="space-y-1 overflow-hidden">
+                  {dayEvents.slice(0, 4).map(event => (
                     <div
                       key={event.id}
                       onClick={(e) => {
@@ -193,23 +201,113 @@ export function CalendarComponent({
                         onEventClick?.(event)
                       }}
                       className={cn(
-                        "text-xs px-1 py-0.5 rounded truncate",
-                        event.color || "bg-blue-100 text-blue-800"
+                        "text-[10px] px-1.5 py-0.5 rounded truncate font-medium",
+                        event.color || "bg-blue-100 text-blue-700"
                       )}
                       title={event.title}
                     >
                       {event.title}
                     </div>
                   ))}
-                  {dayEvents.length > (isMobile ? 1 : 3) && (
-                    <div className="text-xs text-gray-500">
-                      +{dayEvents.length - (isMobile ? 1 : 3)} more
+                  {dayEvents.length > 4 && (
+                    <div className="text-[10px] text-gray-500 pl-1">
+                      {dayEvents.length - 4} more...
                     </div>
                   )}
                 </div>
               </div>
             )
           })}
+        </div>
+      </div>
+    )
+  }
+
+  const renderTimeGrid = (days: Date[]) => {
+    const hours = Array.from({ length: 24 }, (_, i) => i)
+    
+    return (
+      <div className="flex flex-col h-full overflow-y-auto relative scrollbar-hide">
+        <div className="flex min-w-full">
+          {/* Time labels column */}
+          <div className="w-16 flex-shrink-0 border-r border-gray-200 bg-white sticky left-0 z-10">
+            <div className="h-10 border-b border-gray-200"></div> {/* Header spacer */}
+            {hours.map(hour => (
+              <div key={hour} className="h-12 relative">
+                <span className="absolute -top-2.5 right-2 text-xs text-gray-500">
+                  {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Days columns */}
+          <div className="flex-1 flex min-w-0">
+            {days.map((day, dayIndex) => {
+              const isToday = day.toDateString() === new Date().toDateString()
+              const dayEvents = getEventsForDate(day)
+
+              return (
+                <div key={dayIndex} className="flex-1 min-w-[100px] border-r border-gray-200 relative">
+                  {/* Day Header */}
+                  <div className="h-10 border-b border-gray-200 flex flex-col items-center justify-center sticky top-0 bg-white z-10">
+                    <span className={cn("text-xs font-medium uppercase", isToday ? "text-blue-600" : "text-gray-500")}>
+                      {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                    </span>
+                    <span className={cn(
+                      "text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full mt-0.5",
+                      isToday ? "bg-blue-600 text-white" : "text-gray-900"
+                    )}>
+                      {day.getDate()}
+                    </span>
+                  </div>
+
+                  {/* Time slots background */}
+                  <div className="relative">
+                    {hours.map(hour => (
+                      <div key={hour} className="h-12 border-b border-gray-100"></div>
+                    ))}
+
+                    {/* Events */}
+                    {dayEvents.map(event => {
+                      const startHour = event.start.getHours()
+                      const startMin = event.start.getMinutes()
+                      const endHour = event.end.getHours()
+                      const endMin = event.end.getMinutes()
+                      
+                      const top = (startHour * 48) + (startMin * 48 / 60) // 48px per hour (h-12 = 3rem = 48px)
+                      const durationMinutes = ((endHour * 60) + endMin) - ((startHour * 60) + startMin)
+                      const height = (durationMinutes * 48 / 60)
+
+                      return (
+                        <div
+                          key={event.id}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onEventClick?.(event)
+                          }}
+                          className={cn(
+                            "absolute left-0.5 right-0.5 rounded px-2 py-1 text-xs cursor-pointer overflow-hidden border-l-4 shadow-sm hover:brightness-95 transition-all z-0",
+                            event.color || "bg-blue-100 border-blue-500 text-blue-700"
+                          )}
+                          style={{
+                            top: `${top}px`,
+                            height: `${Math.max(height, 20)}px` // Minimum height for visibility
+                          }}
+                        >
+                          <div className="font-semibold truncate">{event.title}</div>
+                          <div className="text-[10px] opacity-90 truncate">
+                            {event.start.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})} - 
+                            {event.end.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     )
@@ -217,126 +315,67 @@ export function CalendarComponent({
 
   const renderWeekView = () => {
     const days = getWeekDays()
-    const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-    return (
-      <div className="space-y-2">
-        <div className={`grid grid-cols-7 gap-2 ${isMobile ? 'text-xs' : 'text-sm'} font-semibold text-gray-600`}>
-          {days.map((day, index) => (
-            <div key={index} className="text-center">
-              <div>{dayNames[index]}</div>
-              <div className={cn(
-                "mt-1 rounded-full w-8 h-8 flex items-center justify-center mx-auto",
-                day.toDateString() === new Date().toDateString() && "bg-blue-600 text-white"
-              )}>
-                {day.getDate()}
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="grid grid-cols-7 gap-2">
-          {days.map((day, index) => {
-            const dayEvents = getEventsForDate(day)
-            
-            return (
-              <div
-                key={index}
-                onClick={() => onDateClick?.(day)}
-                className={cn(
-                  "border rounded-lg cursor-pointer transition-colors hover:bg-gray-50",
-                  isMobile ? "min-h-[120px] p-2" : "min-h-[200px] p-3"
-                )}
-              >
-                <div className="space-y-1">
-                  {dayEvents.map(event => (
-                    <div
-                      key={event.id}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onEventClick?.(event)
-                      }}
-                      className={cn(
-                        "text-xs px-2 py-1 rounded cursor-pointer",
-                        event.color || "bg-blue-100 text-blue-800"
-                      )}
-                    >
-                      <div className="font-semibold truncate">{event.title}</div>
-                      <div className="opacity-75">
-                        {event.start.toLocaleTimeString('en-US', { 
-                          hour: 'numeric', 
-                          minute: '2-digit', 
-                          hour12: true 
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
+    return renderTimeGrid(days)
   }
 
   const renderDayView = () => {
     const dayEvents = getEventsForDate(currentDate)
+    dayEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
     
+    const getEventColor = (event: CalendarEvent) => {
+      if (event.type === 'unavailable') return "bg-red-500"
+      if (event.type === 'class') return "bg-yellow-500"
+      return "bg-blue-500" // default/available
+    }
+
     return (
-      <div className="space-y-4">
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900">
-            {currentDate.toLocaleDateString('en-US', { 
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric'
-            })}
-          </h3>
-        </div>
-        
-        <div className="space-y-2">
-          {dayEvents.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No events scheduled for this day
-            </div>
-          ) : (
-            dayEvents.map(event => (
-              <div
-                key={event.id}
-                onClick={() => onEventClick?.(event)}
-                className={cn(
-                  "p-4 rounded-lg border cursor-pointer transition-colors hover:bg-gray-50",
-                  event.color || "bg-blue-50 border-blue-200"
-                )}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">{event.title}</h4>
-                    <p className="text-sm text-gray-600">
-                      {event.start.toLocaleTimeString('en-US', { 
-                        hour: 'numeric', 
-                        minute: '2-digit', 
-                        hour12: true 
-                      })} - {event.end.toLocaleTimeString('en-US', { 
-                        hour: 'numeric', 
-                        minute: '2-digit', 
-                        hour12: true 
-                      })}
-                    </p>
-                    {event.description && (
-                      <p className="text-sm text-gray-500 mt-1">{event.description}</p>
-                    )}
+      <div className="flex flex-col h-full overflow-y-auto bg-white">
+        <div className="p-4">
+          <div className="mb-6 flex items-center">
+             {currentDate.toDateString() === new Date().toDateString() && (
+              <span className="px-2 py-1 rounded bg-gray-800 text-xs font-medium text-grey-900 mr-2">
+                Today
+              </span>
+             )}
+             <span className="font-semibold text-gray-900">
+               {currentDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
+             </span>
+          </div>
+
+          <div className="space-y-1">
+            {dayEvents.length === 0 ? (
+               <div className="text-center text-gray-500 py-12">No events scheduled</div>
+            ) : (
+              dayEvents.map(event => (
+                <div 
+                  key={event.id} 
+                  className="flex group cursor-pointer hover:bg-gray-50 rounded-lg p-3 -mx-3 transition-colors"
+                  onClick={() => onEventClick?.(event)}
+                >
+                  {/* Time */}
+                  <div className="w-14 flex-shrink-0 pt-1">
+                    <div className="text-sm font-bold text-gray-900">
+                      {event.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: false }).replace(/^0/, '')}
+                    </div>
                   </div>
-                  {event.type && (
-                    <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                      {event.type}
-                    </span>
-                  )}
+
+                  {/* Indicator & Content */}
+                  <div className="flex-1 flex gap-3 relative">
+                    {/* Vertical Color Bar */}
+                    <div className={cn("w-1 rounded-full flex-shrink-0", getEventColor(event))} />
+                    
+                    <div className="pb-1">
+                      <h4 className="text-base font-medium text-gray-900 leading-tight">{event.title}</h4>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {event.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })} - 
+                        {event.end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
       </div>
     )
@@ -345,71 +384,82 @@ export function CalendarComponent({
   const navigate = getNavigationHandler()
 
   return (
-    <Card className={cn("bg-white/90 backdrop-blur-xl border-0 shadow-lg", className)}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center space-x-4">
-            <span>{formatDateHeader()}</span>
-          </CardTitle>
-          
-          <div className="flex items-center space-x-2">
-            {onViewChange && !isMobile && (
-              <div className="flex items-center bg-white/80 backdrop-blur-xl rounded-lg p-1 border border-gray-300/30 mr-2">
-                <Button
-                  variant={view === "month" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => onViewChange("month")}
-                  className="text-xs"
-                >
-                  Month
-                </Button>
-                <Button
-                  variant={view === "week" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => onViewChange("week")}
-                  className="text-xs"
-                >
-                  Week
-                </Button>
-                <Button
-                  variant={view === "day" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => onViewChange("day")}
-                  className="text-xs"
-                >
-                  Day
-                </Button>
-              </div>
-            )}
-            
-            <div className="flex items-center space-x-1">
+    <Card className={cn("bg-white border shadow-sm overflow-hidden flex flex-col h-full", className)}>
+      <CardHeader className="border-b border-gray-200 px-4 py-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => navigate("prev")}
+                className="h-7 w-7 p-0 hover:bg-white rounded-md"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4 text-black" />
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => setCurrentDate(new Date())}
+                className="h-7 px-3 text-xs font-medium hover:bg-white text-black rounded-md"
               >
                 Today
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 onClick={() => navigate("next")}
+                className="h-7 w-7 p-0 hover:bg-white rounded-md"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 text-black" />
               </Button>
             </div>
+            <CardTitle className="text-lg font-semibold text-gray-900">
+              {formatDateHeader()}
+            </CardTitle>
           </div>
+          
+          {onViewChange && (
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <Button
+                variant={view === "month" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => onViewChange("month")}
+                className={cn(
+                  "h-7 text-xs font-medium rounded-md px-3",
+                  view === "month" ? "bg-white shadow-sm text-gray-900" : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                Month
+              </Button>
+              <Button
+                variant={view === "week" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => onViewChange("week")}
+                className={cn(
+                  "h-7 text-xs font-medium rounded-md px-3",
+                  view === "week" ? "bg-white shadow-sm text-gray-900" : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                Week
+              </Button>
+              <Button
+                variant={view === "day" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => onViewChange("day")}
+                className={cn(
+                  "h-7 text-xs font-medium rounded-md px-3",
+                  view === "day" ? "bg-white shadow-sm text-gray-900" : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                Day
+              </Button>
+            </div>
+          )}
         </div>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="p-0 flex-1 overflow-hidden">
         {view === "month" && renderMonthView()}
         {view === "week" && renderWeekView()}
         {view === "day" && renderDayView()}

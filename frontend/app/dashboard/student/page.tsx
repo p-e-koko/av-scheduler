@@ -31,6 +31,8 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
+import { AddAvailabilityModal } from "@/components/AddAvailabilityModal"
+import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
 
 import { 
   authAPI,
@@ -53,6 +55,7 @@ function StudentDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [assignmentFilter, setAssignmentFilter] = useState<"all" | "me">("all")
   const [viewMode, setViewMode] = useState<"card" | "list">("card")
+  const [isAddAvailabilityModalOpen, setIsAddAvailabilityModalOpen] = useState(false)
 
   // Data states
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -195,6 +198,36 @@ function StudentDashboard() {
     return { promised, worked, remaining, percentage }
   }, [currentUser, myAssignments])
 
+  const calendarEvents = React.useMemo(() => {
+    return availability.map(slot => {
+      // Parse date and time
+      const dateStr = slot.date.split('T')[0] // Ensure we have YYYY-MM-DD
+      const startDateTime = new Date(`${dateStr}T${slot.start_time}`)
+      const endDateTime = new Date(`${dateStr}T${slot.end_time}`)
+      
+      let color = "bg-blue-100 text-blue-800 border-blue-200"
+      let title = "Available"
+      
+      if (slot.status === 'unavailable') {
+        color = "bg-red-100 text-red-800 border-red-200"
+        title = "Unavailable"
+      } else if (slot.status === 'class') {
+        color = "bg-yellow-100 text-yellow-800 border-yellow-200"
+        title = "Class"
+      }
+      
+      return {
+        id: slot.id.toString(),
+        title: title,
+        start: startDateTime,
+        end: endDateTime,
+        type: slot.status,
+        color: color,
+        description: `${slot.start_time} - ${slot.end_time}`
+      } as CalendarEvent
+    })
+  }, [availability])
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -204,8 +237,11 @@ function StudentDashboard() {
         return 'bg-orange-100 text-orange-800'
       case 'available':
         return 'bg-blue-100 text-blue-800'
+      case 'unavailable':
       case 'busy':
         return 'bg-red-100 text-red-800'
+      case 'class':
+        return 'bg-purple-100 text-purple-800'
       case 'tentative':
         return 'bg-yellow-100 text-yellow-800'
       default:
@@ -220,6 +256,15 @@ function StudentDashboard() {
       .join("")
       .toUpperCase()
       .slice(0, 2)
+  }
+
+  const handleAvailabilityAdded = async () => {
+    try {
+      const response = await availabilityAPI.getMyAvailability({ per_page: 100 })
+      setAvailability(response.data)
+    } catch (error) {
+      console.error("Failed to refresh availability:", error)
+    }
   }
 
   const handleLogout = async () => {
@@ -507,45 +552,21 @@ function StudentDashboard() {
                 </Card>
 
                 {/* Availability Schedule */}
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
+                <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden">
+                  <div className="p-6 border-b border-gray-100">
+                    <h3 className="text-lg font-semibold flex items-center text-gray-900">
                       <Calendar className="w-5 h-5 mr-2 text-primary" />
                       Availability Schedule
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {availability.length > 0 ? (
-                      <div className="space-y-3">
-                        {availability.slice(0, 5).map((slot) => (
-                          <div key={slot.id} className="p-4 bg-gray-50/50 rounded-lg">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="flex items-center space-x-4">
-                                  <span className="font-medium text-gray-900">
-                                    {new Date(slot.date).toLocaleDateString('en-US', { 
-                                      weekday: 'long',
-                                      month: 'short', 
-                                      day: 'numeric' 
-                                    })}
-                                  </span>
-                                  <span className="text-gray-600">
-                                    {slot.start_time} - {slot.end_time}
-                                  </span>
-                                </div>
-                              </div>
-                              <Badge className={getStatusColor(slot.status)}>
-                                {slot.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-center text-gray-500 py-8">No availability schedule found</p>
-                    )}
-                  </CardContent>
-                </Card>
+                    </h3>
+                  </div>
+                  <div className="p-0">
+                    <CalendarComponent
+                      events={calendarEvents}
+                      view="day"
+                      className="border-0 shadow-none h-[400px]"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -710,178 +731,35 @@ function StudentDashboard() {
 
           {/* Schedule Tab */}
           {activeTab === "schedule" && (
-            <div className="space-y-6">
-              {/* Mobile Calendar View Toggle */}
-              {isMobile && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-xl rounded-lg p-1 border border-gray-300/30">
-                    <Button
-                      variant={calendarView === "day" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setCalendarView("day")}
-                      className="text-xs"
-                    >
-                      Day
-                    </Button>
-                    <Button
-                      variant={calendarView === "week" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setCalendarView("week")}
-                      className="text-xs"
-                    >
-                      Week
-                    </Button>
-                    <Button
-                      variant={calendarView === "month" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => setCalendarView("month")}
-                      className="text-xs"
-                    >
-                      Month
-                    </Button>
-                  </div>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add
-                  </Button>
-                </div>
-              )}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">My Schedule</h2>
+                <Button 
+                  size="sm" 
+                  className="bg-blue-600 hover:bg-blue-700" 
+                  onClick={() => setIsAddAvailabilityModalOpen(true)}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  {isMobile ? "Add" : "Add Availability"}
+                </Button>
+              </div>
 
-              <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>My Availability</CardTitle>
-                    {!isMobile && (
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">
-                          <Filter className="w-4 h-4 mr-1" />
-                          Filter
-                        </Button>
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                          <Plus className="w-4 h-4 mr-1" />
-                          Add Availability
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {/* Mobile-optimized calendar view */}
-                  {isMobile ? (
-                    <div className="space-y-4">
-                      {calendarView === "day" && (
-                        <div className="space-y-2">
-                          <div className="text-center py-2 bg-blue-50 rounded-lg">
-                            <h3 className="font-semibold text-blue-900">Today - Dec 14, 2024</h3>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="p-3 bg-green-50 border-l-4 border-green-500 rounded">
-                              <p className="font-semibold text-green-900">9:00 AM - 1:00 PM</p>
-                              <p className="text-sm text-green-700">Available</p>
-                            </div>
-                            <div className="p-3 bg-red-50 border-l-4 border-red-500 rounded">
-                              <p className="font-semibold text-red-900">2:00 PM - 6:00 PM</p>
-                              <p className="text-sm text-red-700">Not Available - Class</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {calendarView === "week" && (
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-600">
-                            <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
-                          </div>
-                          <div className="grid grid-cols-7 gap-1">
-                            {Array.from({ length: 7 }, (_, i) => (
-                              <div key={i} className="aspect-square p-1 border rounded text-xs">
-                                <div className="font-semibold">{9 + i}</div>
-                                <div className={`w-full h-2 rounded mt-1 ${
-                                  i % 3 === 0 ? 'bg-green-400' : i % 3 === 1 ? 'bg-yellow-400' : 'bg-red-400'
-                                }`}></div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {calendarView === "month" && (
-                        <div className="space-y-3">
-                          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-600">
-                            <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
-                          </div>
-                          <div className="grid grid-cols-7 gap-1">
-                            {Array.from({ length: 35 }, (_, i) => (
-                              <div key={i} className="aspect-square p-1 border rounded text-xs">
-                                <div className="font-semibold">{(i % 31) + 1}</div>
-                                {i < 25 && (
-                                  <div className={`w-full h-1 rounded mt-1 ${
-                                    i % 4 === 0 ? 'bg-green-400' : i % 4 === 1 ? 'bg-yellow-400' : 'bg-red-400'
-                                  }`}></div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    /* Desktop calendar view */
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-7 gap-2 text-center">
-                        <div className="font-semibold text-gray-600">Monday</div>
-                        <div className="font-semibold text-gray-600">Tuesday</div>
-                        <div className="font-semibold text-gray-600">Wednesday</div>
-                        <div className="font-semibold text-gray-600">Thursday</div>
-                        <div className="font-semibold text-gray-600">Friday</div>
-                        <div className="font-semibold text-gray-600">Saturday</div>
-                        <div className="font-semibold text-gray-600">Sunday</div>
-                      </div>
-                      <div className="grid grid-cols-7 gap-2">
-                        {Array.from({ length: 7 }, (_, i) => (
-                          <div key={i} className="p-4 border rounded-lg min-h-32">
-                            <div className="font-semibold text-sm text-gray-900">{9 + i}</div>
-                            <div className="space-y-1 mt-2">
-                              <div className="text-xs p-1 bg-green-100 text-green-800 rounded">
-                                9:00-13:00 Available
-                              </div>
-                              {i < 3 && (
-                                <div className="text-xs p-1 bg-red-100 text-red-800 rounded">
-                                  14:00-18:00 Busy
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Quick Actions for Mobile */}
-              {isMobile && (
-                <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="py-6">
-                    <Clock className="w-6 h-6 mr-2" />
-                    <div className="text-left">
-                      <div className="font-semibold">Quick Add</div>
-                      <div className="text-xs text-gray-500">Set availability</div>
-                    </div>
-                  </Button>
-                  <Button variant="outline" className="py-6">
-                    <CheckCircle className="w-6 h-6 mr-2" />
-                    <div className="text-left">
-                      <div className="font-semibold">View Schedule</div>
-                      <div className="text-xs text-gray-500">See assignments</div>
-                    </div>
-                  </Button>
-                </div>
-              )}
+              <CalendarComponent
+                events={calendarEvents}
+                view={calendarView}
+                onViewChange={setCalendarView}
+                isMobile={isMobile}
+                className="min-h-[600px]"
+              />
             </div>
           )}
         </main>
       </div>
+      <AddAvailabilityModal 
+        isOpen={isAddAvailabilityModalOpen} 
+        onClose={() => setIsAddAvailabilityModalOpen(false)} 
+        onSuccess={handleAvailabilityAdded}
+      />
     </div>
   )
 }
