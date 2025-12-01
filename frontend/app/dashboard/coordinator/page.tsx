@@ -66,6 +66,12 @@ function CoordinatorDashboard() {
   const [studentPagination, setStudentPagination] = useState<any>(null)
   const [studentCurrentPage, setStudentCurrentPage] = useState(1)
 
+  // Availability View State
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })
+
   // Data states
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [students, setStudents] = useState<User[]>([])
@@ -148,7 +154,10 @@ function CoordinatorDashboard() {
           break
 
         case 'schedules':
-          const availabilityResponse = await availabilityAPI.getAvailability({ per_page: 100 })
+          const availabilityResponse = await availabilityAPI.getAvailability({ 
+            per_page: 100,
+            date: selectedDate
+          })
           setAvailability(availabilityResponse.data)
           break
 
@@ -167,7 +176,7 @@ function CoordinatorDashboard() {
   // Initial load and tab change
   useEffect(() => {
     fetchData()
-  }, [currentUser, activeTab])
+  }, [currentUser, activeTab, selectedDate])
 
   // Student pagination change
   useEffect(() => {
@@ -287,7 +296,7 @@ function CoordinatorDashboard() {
                 }`}
               >
                 <Clock className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span className="font-medium">Student Schedule</span>}
+                {!sidebarCollapsed && <span className="font-medium">Student Availability</span>}
               </div>
               <div 
                 onClick={() => setActiveTab("positions")}
@@ -361,26 +370,27 @@ function CoordinatorDashboard() {
               <h1 className="text-2xl font-semibold text-gray-900">
                 {activeTab === "assignments" && "Assignment Management"}
                 {activeTab === "students" && "View Students"}
-                {activeTab === "schedules" && "Student Schedule"}
+                {activeTab === "schedules" && "Student Availability"}
                 {activeTab === "positions" && "Position Management"}
               </h1>
               <p className="text-sm text-gray-600 mt-1">
                 {activeTab === "assignments" && "Create and manage assignments for students"}
                 {activeTab === "students" && "View and manage student information"}
-                {activeTab === "schedules" && "Manage availability for all students"}
+                {activeTab === "schedules" && "Check who is available at specific times"}
                 {activeTab === "positions" && "Manage available positions and roles"}
               </p>
             </div>
-            <Button 
-              className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
-              onClick={() => router.push('/student')}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              {activeTab === "assignments" && "Add Assignment"}
-              {activeTab === "students" && "View All Students"}
-              {activeTab === "schedules" && "Add Schedule"}
-              {activeTab === "positions" && "Add Position"}
-            </Button>
+            {activeTab !== "schedules" && (
+              <Button 
+                className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
+                onClick={() => router.push('/student')}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                {activeTab === "assignments" && "Add Assignment"}
+                {activeTab === "students" && "View All Students"}
+                {activeTab === "positions" && "Add Position"}
+              </Button>
+            )}
           </div>
         </header>
 
@@ -682,23 +692,131 @@ function CoordinatorDashboard() {
           {activeTab === "schedules" && (
             <div className="space-y-6">
               <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle>Student Availability Overview</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-gray-900 font-bold">Daily Availability View</CardTitle>
+                  <div className="flex items-center bg-white rounded-lg border border-gray-200 shadow-sm p-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 hover:bg-gray-100 rounded-md text-gray-600"
+                      onClick={() => {
+                        const date = new Date(selectedDate)
+                        date.setDate(date.getDate() - 1)
+                        setSelectedDate(date.toISOString().split('T')[0])
+                      }}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+
+                    <div className="flex items-center px-2">
+                      <Label htmlFor="date-picker" className="sr-only">Select Date</Label>
+                      <Input 
+                        id="date-picker"
+                        type="date" 
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="w-auto border-0 focus-visible:ring-0 h-8 font-medium text-gray-700 bg-transparent p-0"
+                      />
+                    </div>
+
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 hover:bg-gray-100 rounded-md text-gray-600"
+                      onClick={() => {
+                        const date = new Date(selectedDate)
+                        date.setDate(date.getDate() + 1)
+                        setSelectedDate(date.toISOString().split('T')[0])
+                      }}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-7 gap-2 text-center">
-                      <div className="font-semibold text-gray-600">Mon</div>
-                      <div className="font-semibold text-gray-600">Tue</div>
-                      <div className="font-semibold text-gray-600">Wed</div>
-                      <div className="font-semibold text-gray-600">Thu</div>
-                      <div className="font-semibold text-gray-600">Fri</div>
-                      <div className="font-semibold text-gray-600">Sat</div>
-                      <div className="font-semibold text-gray-600">Sun</div>
-                    </div>
-                    <div className="text-center py-12 text-gray-500">
-                      Calendar view for student schedules will be implemented here
-                    </div>
+                    {loading ? (
+                      <div className="text-center py-8 text-gray-500">Loading availability...</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => { // 7 AM to 9 PM
+                          const timeString = `${hour.toString().padStart(2, '0')}:00`;
+                          
+                          // Filter students available at this hour
+                          const availableStudents = availability.filter(a => {
+                            if (a.date !== selectedDate) return false;
+                            if (a.status !== 'available') return false;
+                            
+                            const startHour = parseInt(a.start_time.split(':')[0]);
+                            const endHour = parseInt(a.end_time.split(':')[0]);
+                            
+                            return hour >= startHour && hour < endHour;
+                          });
+
+                          // Remove duplicates and ensure user object exists
+                          const uniqueStudents = Array.from(new Map(availableStudents.map(item => [item.student_id, item.user])).values()).filter(Boolean);
+
+                          return (
+                            <div key={hour} className="flex border-b border-gray-100 py-3 last:border-0">
+                              <div className="w-20 flex-shrink-0 font-medium text-gray-500 pt-2">
+                                {timeString}
+                              </div>
+                              <div className="flex-1">
+                                {uniqueStudents.length > 0 ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {uniqueStudents.map((student: any) => {
+                                      // Pen Hex Colors Reference - Darker Shades
+                                      const colors = [
+                                        // Blue
+                                        { border: 'border-[#2874A6]', bg: 'bg-[#2874A6]' },
+                                        // Red
+                                        { border: 'border-[#910100]', bg: 'bg-[#910100]' },
+                                        // Purple
+                                        { border: 'border-[#7B4384]', bg: 'bg-[#7B4384]' },
+                                        // Yellow
+                                        { border: 'border-[#FAA300]', bg: 'bg-[#FAA300]' },
+                                      ];
+                                      const colorIndex = student.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) % colors.length;
+                                      const style = colors[colorIndex];
+
+                                      return (
+                                        <div 
+                                          key={student.id} 
+                                          className={`
+                                            flex items-center space-x-2 
+                                            bg-white border-l-[3px] ${style.border}
+                                            rounded-r-lg rounded-l-[2px]
+                                            pl-2 pr-3 py-1.5 
+                                            cursor-pointer 
+                                            transition-all duration-300 
+                                            hover:scale-105 shadow-sm hover:shadow-md hover:bg-gray-50
+                                            border-y border-r border-gray-100
+                                            group
+                                          `}
+                                          onClick={() => router.push(`/student/${student.id}`)}
+                                        >
+                                          <Avatar className={`h-6 w-6 border ${style.border}`}>
+                                            <AvatarImage src={student.profile_picture_url || ""} />
+                                            <AvatarFallback className={`text-[9px] ${style.bg} text-white font-bold`}>
+                                              {getInitials(student.name)}
+                                            </AvatarFallback>
+                                          </Avatar>
+                                          <span className="text-xs font-bold text-gray-700 group-hover:text-gray-900 transition-colors tracking-wide">
+                                            {student.name}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <div className="text-sm text-gray-400 italic pt-2">No students available</div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
