@@ -33,6 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { AddAvailabilityModal } from "@/components/AddAvailabilityModal"
 import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
+import GoogleCalendarConnect from "@/components/GoogleCalendarConnect"
 
 import { 
   authAPI,
@@ -506,6 +507,9 @@ function StudentDashboard() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Google Calendar Integration */}
+                <GoogleCalendarConnect />
               </div>
 
               {/* Right Column - Hours & Availability */}
