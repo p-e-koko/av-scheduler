@@ -1,7 +1,8 @@
 import ProtectedStudentProfile from "./StudentProfileClient"
 
-// Required for static export with dynamic routes
-export function generateStaticParams() {
+export const dynamic = 'force-static'
+
+export async function generateStaticParams() {
   return []
 }
 
