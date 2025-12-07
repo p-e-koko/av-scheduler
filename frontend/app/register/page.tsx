@@ -35,7 +35,7 @@ export default function RegisterPage() {
     const checkConnection = async () => {
       const isConnected = await testConnection();
       if (!isConnected) {
-        setError("Cannot connect to backend server. Please ensure Laravel is running on http://localhost:8000");
+        setError("Cannot connect to backend server. Please check your connection.");
       }
     };
     

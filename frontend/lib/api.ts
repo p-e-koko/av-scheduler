@@ -1,6 +1,8 @@
 // API configuration and utilities
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
+console.log('Configured API_BASE_URL:', API_BASE_URL);
+
 // Custom error class for API errors
 export class APIError extends Error {
   constructor(
@@ -248,7 +250,7 @@ async function apiCall<T>(
     
     // Check if it's a network error
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new APIError('Cannot connect to server. Please check if the backend is running on http://localhost:8000', 0);
+      throw new APIError(`Cannot connect to server at ${API_BASE_URL}. Please check your connection.`, 0);
     }
     
     throw new APIError('Network error. Please check your connection and ensure the backend server is running.', 0);

@@ -10,6 +10,11 @@ RUN npm ci
 
 # copy source & build
 COPY frontend ./
+
+# Pass API URL during build
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
 # Build static export (output: 'export' in next.config.ts)
 RUN npm run build
 
