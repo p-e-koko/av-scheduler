@@ -181,6 +181,23 @@ function StudentDashboard() {
     endOfWeek.setHours(23, 59, 59, 999)
 
     // Use myAssignments if available, otherwise empty array
+    const assignedHours = myAssignments
+      .filter(a => {
+        const eventDate = new Date(a.event_start_datetime)
+        // Check pivot status if available, otherwise assume pending/assigned
+        const myStatus = a.pivot?.status || 'pending';
+        const isRejected = myStatus === 'rejected';
+        
+        // Include all assignments that are not rejected
+        return !isRejected && eventDate >= startOfWeek && eventDate <= endOfWeek
+      })
+      .reduce((acc, curr) => {
+        const start = new Date(curr.event_start_datetime)
+        const end = new Date(curr.event_end_datetime)
+        return acc + (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+      }, 0)
+
+    // Calculate worked hours (only completed assignments)
     const worked = myAssignments
       .filter(a => {
         const eventDate = new Date(a.event_start_datetime)
@@ -192,11 +209,34 @@ function StudentDashboard() {
         return acc + (end.getTime() - start.getTime()) / (1000 * 60 * 60)
       }, 0)
 
-    const remaining = Math.max(0, promised - worked)
+    const remaining = Math.max(0, promised - assignedHours)
     const percentage = promised > 0 ? Math.min(100, (worked / promised) * 100) : 0
 
     return { promised, worked, remaining, percentage }
   }, [currentUser, myAssignments])
+
+  const handleAcceptAssignment = async (assignmentId: number) => {
+    try {
+      await assignmentAPI.acceptAssignment(assignmentId)
+      // Refresh data
+      const response = await assignmentAPI.getMyAssignments({ per_page: 50 })
+      setMyAssignments(response.data)
+    } catch (err) {
+      alert(formatAPIError(err))
+    }
+  }
+
+  const handleRejectAssignment = async (assignmentId: number) => {
+    if (!confirm("Are you sure you want to reject this assignment?")) return
+    try {
+      await assignmentAPI.rejectAssignment(assignmentId)
+      // Refresh data
+      const response = await assignmentAPI.getMyAssignments({ per_page: 50 })
+      setMyAssignments(response.data)
+    } catch (err) {
+      alert(formatAPIError(err))
+    }
+  }
 
   const calendarEvents = React.useMemo(() => {
     return availability.map(slot => {
@@ -711,9 +751,64 @@ function StudentDashboard() {
                             )}
                           </div>
                           {viewMode === "card" && (
-                            <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
-                              View Details
-                            </Button>
+                            <div className="space-y-2 mt-4">
+                              <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
+                                View Details
+                              </Button>
+                              
+                              {/* Accept/Reject Buttons for My Assignments */}
+                              {assignment.pivot && assignment.status !== 'complete' && (
+                                <div className="space-y-2">
+                                  <div className="flex gap-2">
+                                    {assignment.pivot.status !== 'accepted' && assignment.pivot.status !== 'rejected' && (
+                                      <>
+                                        <Button 
+                                          size="sm" 
+                                          className="flex-1 bg-green-600 hover:bg-green-700"
+                                          onClick={() => handleAcceptAssignment(assignment.id)}
+                                        >
+                                          Accept
+                                        </Button>
+                                        <Button 
+                                          size="sm" 
+                                          variant="destructive"
+                                          className="flex-1"
+                                          onClick={() => handleRejectAssignment(assignment.id)}
+                                        >
+                                          Reject
+                                        </Button>
+                                      </>
+                                    )}
+                                    {assignment.pivot.status === 'accepted' && (
+                                       <Button 
+                                          size="sm" 
+                                          variant="destructive"
+                                          className="flex-1"
+                                          onClick={() => handleRejectAssignment(assignment.id)}
+                                        >
+                                          Reject
+                                        </Button>
+                                    )}
+                                     {assignment.pivot.status === 'rejected' && (
+                                       <Button 
+                                          size="sm" 
+                                          className="flex-1 bg-green-600 hover:bg-green-700"
+                                          onClick={() => handleAcceptAssignment(assignment.id)}
+                                        >
+                                          Accept
+                                        </Button>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-center text-gray-500">
+                                    My Status: <span className={`font-medium capitalize ${
+                                      assignment.pivot.status === 'accepted' ? 'text-green-600' :
+                                      assignment.pivot.status === 'rejected' ? 'text-red-600' :
+                                      'text-orange-600'
+                                    }`}>{assignment.pivot.status}</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           )}
                         </div>
                       ))}

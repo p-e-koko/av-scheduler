@@ -66,7 +66,7 @@ function AdminDashboard() {
     action: () => void
     variant?: "default" | "destructive"
   }>({ isOpen: false, title: "", description: "", action: () => {}, variant: "default" })
-  const [processingUsers, setProcessingUsers] = useState<Set<number>>(new Set())
+  const [processingUsers, setProcessingUsers] = useState<Set<string>>(new Set())
 
   // Check authentication and permissions
   useEffect(() => {
@@ -156,7 +156,7 @@ function AdminDashboard() {
     }
   }
 
-  const handleDeleteUser = (userId: number, userName: string) => {
+  const handleDeleteUser = (userId: string, userName: string) => {
     setConfirmDialog({
       isOpen: true,
       title: "Delete User Account",
@@ -166,7 +166,7 @@ function AdminDashboard() {
     })
   }
 
-  const performDeleteUser = async (userId: number) => {
+  const performDeleteUser = async (userId: string) => {
     setProcessingUsers(prev => new Set(prev).add(userId))
     
     try {

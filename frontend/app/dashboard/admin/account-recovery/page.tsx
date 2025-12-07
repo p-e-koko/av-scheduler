@@ -52,7 +52,7 @@ export default function AccountRecovery() {
     action: () => void
     variant?: "default" | "destructive"
   }>({ isOpen: false, title: "", description: "", action: () => {}, variant: "default" })
-  const [processingUsers, setProcessingUsers] = useState<Set<number>>(new Set())
+  const [processingUsers, setProcessingUsers] = useState<Set<string>>(new Set())
 
   // Check authentication and permissions
   useEffect(() => {
@@ -136,7 +136,7 @@ export default function AccountRecovery() {
     }
   }
 
-  const handleRestoreUser = (userId: number, userName: string) => {
+  const handleRestoreUser = (userId: string, userName: string) => {
     setConfirmDialog({
       isOpen: true,
       title: "Restore User Account",
@@ -146,7 +146,7 @@ export default function AccountRecovery() {
     })
   }
 
-  const performRestoreUser = async (userId: number) => {
+  const performRestoreUser = async (userId: string) => {
     setProcessingUsers(prev => new Set(prev).add(userId))
     
     try {
@@ -177,7 +177,7 @@ export default function AccountRecovery() {
     }
   }
 
-  const handlePermanentDelete = (userId: number, userName: string) => {
+  const handlePermanentDelete = (userId: string, userName: string) => {
     setConfirmDialog({
       isOpen: true,
       title: "Permanently Delete User",
@@ -187,7 +187,7 @@ export default function AccountRecovery() {
     })
   }
 
-  const performPermanentDelete = async (userId: number) => {
+  const performPermanentDelete = async (userId: string) => {
     setProcessingUsers(prev => new Set(prev).add(userId))
     
     try {

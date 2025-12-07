@@ -24,13 +24,15 @@ import {
   formatAPIError, 
   type User, 
   type Position,
-  type Availability 
+  type Availability,
+  type Assignment
 } from "@/lib/api"
 
 interface CreateAssignmentModalProps {
   isOpen: boolean
   onClose: () => void
   onAssignmentCreated: () => void
+  assignmentToEdit?: Assignment | null
 }
 
 interface Assignee {
@@ -38,7 +40,7 @@ interface Assignee {
   position: string
 }
 
-export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated }: CreateAssignmentModalProps) {
+export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, assignmentToEdit }: CreateAssignmentModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -63,6 +65,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated }: 
   const [isStudentDropdownOpen, setIsStudentDropdownOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>('bottom')
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const topRef = useRef<HTMLDivElement>(null)
 
   // Calculate dropdown position
   useEffect(() => {
@@ -98,13 +101,48 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated }: 
           ])
           setStudents(studentsRes.data)
           setPositions(positionsRes.positions || [])
+
+          // Pre-fill form if editing
+          if (assignmentToEdit) {
+            setEventName(assignmentToEdit.event_name)
+            setEventLocation(assignmentToEdit.event_location)
+            setDescription(assignmentToEdit.description || "")
+            
+            // Parse dates
+            const start = new Date(assignmentToEdit.event_start_datetime)
+            const end = new Date(assignmentToEdit.event_end_datetime)
+            
+            setStartDate(start.toISOString().split('T')[0])
+            setStartTime(start.toTimeString().slice(0, 5))
+            setEndDate(end.toISOString().split('T')[0])
+            setEndTime(end.toTimeString().slice(0, 5))
+            
+            // Set assignees if available in the assignment object
+            if (assignmentToEdit.users) {
+              const existingAssignees = assignmentToEdit.users.map(user => ({
+                user,
+                position: (user as any).pivot?.position || 'Unknown' 
+              }))
+              setAssignees(existingAssignees)
+            }
+          } else {
+            // Reset form
+            setEventName("")
+            setEventLocation("")
+            setDescription("")
+            setStartDate("")
+            setStartTime("")
+            setEndDate("")
+            setEndTime("")
+            setAssignees([])
+          }
         } catch (err) {
           console.error("Failed to fetch initial data", err)
         }
       }
       fetchInitialData()
     }
-  }, [isOpen])
+  }, [isOpen, assignmentToEdit])
 
   // Fetch availability when date changes
   useEffect(() => {
@@ -174,7 +212,6 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated }: 
 
     try {
       // Construct datetime strings
-      // Ensure seconds are added if needed, though API might handle H:i
       const startTimeWithSeconds = startTime.length === 5 ? `${startTime}:00` : startTime
       const endTimeWithSeconds = endTime.length === 5 ? `${endTime}:00` : endTime
       
@@ -182,7 +219,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated }: 
       const event_end_datetime = `${endDate}T${endTimeWithSeconds}`
 
       const payload = {
-        assignment_name: eventName, // Using event name as assignment name
+        assignment_name: eventName,
         event_name: eventName,
         event_location: eventLocation,
         event_start_datetime,
@@ -191,15 +228,43 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated }: 
         status: 'pending' as const
       }
 
-      // 1. Create Assignment
-      const { assignment } = await assignmentAPI.createAssignment(payload)
-      
-      // 2. Assign Users
-      if (assignees.length > 0) {
-        await Promise.all(assignees.map(assignee => 
-          assignmentAPI.assignUser(assignment.id, assignee.user.id, { position: assignee.position })
-        ))
+      let assignmentId: number
+      let currentUsers: User[] = []
+
+      if (assignmentToEdit) {
+        // Update existing assignment
+        const { assignment } = await assignmentAPI.updateAssignment(assignmentToEdit.id, payload)
+        assignmentId = assignment.id
+        currentUsers = assignmentToEdit.users || []
+      } else {
+        // Create new assignment
+        const { assignment } = await assignmentAPI.createAssignment(payload)
+        assignmentId = assignment.id
       }
+      
+      // Handle Assignees with Diffing Logic
+      const currentIds = new Set(currentUsers.map(u => u.id))
+      const newIds = new Set(assignees.map(a => a.user.id))
+
+      // Users to add
+      const toAdd = assignees.filter(a => !currentIds.has(a.user.id))
+      
+      // Users to remove
+      const toRemove = currentUsers.filter(u => !newIds.has(u.id))
+      
+      // Users to update (if position changed)
+      const toUpdate = assignees.filter(a => {
+          if (!currentIds.has(a.user.id)) return false
+          const currentUser = currentUsers.find(u => u.id === a.user.id)
+          const currentPosition = (currentUser as any).pivot?.position
+          return (currentPosition || '') !== (a.position || '')
+      })
+
+      await Promise.all([
+          ...toAdd.map(a => assignmentAPI.assignUser(assignmentId, a.user.id, { position: a.position })),
+          ...toRemove.map(u => assignmentAPI.unassignUser(assignmentId, u.id)),
+          ...toUpdate.map(a => assignmentAPI.updateUserPosition(assignmentId, a.user.id, a.position))
+      ])
 
       onAssignmentCreated()
       onClose()
@@ -215,6 +280,12 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated }: 
       setAssignees([])
     } catch (err) {
       setError(formatAPIError(err))
+      // Scroll to top to show error
+      setTimeout(() => {
+        if (topRef.current) {
+          topRef.current.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 100)
     } finally {
       setLoading(false)
     }
@@ -227,17 +298,18 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated }: 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] bg-white/95 backdrop-blur-xl border-white/20 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div ref={topRef} className="absolute top-0 left-0 w-full h-0" />
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-primary">Create New Assignment</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-primary">{assignmentToEdit ? "Edit Assignment" : "Create New Assignment"}</DialogTitle>
           <DialogDescription>
-            Fill in the details below to create a new assignment and assign students.
+            {assignmentToEdit ? "Update the details of the assignment." : "Fill in the details below to create a new assignment and assign students."}
           </DialogDescription>
         </DialogHeader>
         
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-100 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" />
-            {error}
+          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-100 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <div className="whitespace-pre-wrap">{error}</div>
           </div>
         )}
 
@@ -514,7 +586,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated }: 
               Cancel
             </Button>
             <Button type="submit" className="bg-primary hover:bg-primary-dark text-white" disabled={loading}>
-              {loading ? "Creating..." : "Create Assignment"}
+              {loading ? (assignmentToEdit ? "Updating..." : "Creating...") : (assignmentToEdit ? "Update Assignment" : "Create Assignment")}
             </Button>
           </DialogFooter>
         </form>

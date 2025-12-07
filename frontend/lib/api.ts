@@ -33,6 +33,7 @@ export interface User {
   profile_picture_url?: string;
   promised_hours_per_week?: string;
   remaining_hours_this_week?: string;
+  remaining_hours?: number;
   hours_worked_this_week?: number;
   hours_completion_percentage?: number;
   has_remaining_hours?: boolean;
@@ -40,6 +41,11 @@ export interface User {
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
+  pivot?: {
+    status: string;
+    checked_in: number;
+    position?: string;
+  };
 }
 
 export interface Assignment {
@@ -57,6 +63,11 @@ export interface Assignment {
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
+  pivot?: {
+    status: string;
+    checked_in: number;
+    position?: string;
+  };
 }
 
 export interface Availability {
@@ -226,7 +237,10 @@ async function apiCall<T>(
 
     return data;
   } catch (error) {
-    console.error('API call error:', error);
+    // Only log unexpected errors
+    if (!(error instanceof APIError)) {
+      console.error('API call error:', error);
+    }
     
     if (error instanceof APIError) {
       throw error;
@@ -453,9 +467,8 @@ export const hasAnyRole = (roles: string[]): boolean => {
 export const formatAPIError = (error: unknown): string => {
   if (error instanceof APIError) {
     if (error.errors) {
-      // Return first validation error
-      const firstError = Object.values(error.errors)[0];
-      return Array.isArray(firstError) ? firstError[0] : error.message;
+      // Return all validation errors joined by newlines
+      return Object.values(error.errors).flat().join('\n');
     }
     return error.message;
   }
@@ -671,22 +684,22 @@ export const userAPI = {
   },
 
   // Delete user (soft delete)
-  async deleteUser(id: string): Promise<{ message: string }> {
+  async deleteUser(id: number | string): Promise<{ message: string }> {
     return apiCall<{ message: string }>(`/users/${id}`, {
       method: 'DELETE',
     });
   },
 
   // Restore user
-  async restoreUser(id: number): Promise<{ message: string; user: User }> {
+  async restoreUser(id: number | string): Promise<{ message: string; user: User }> {
     return apiCall<{ message: string; user: User }>(`/users/${id}/restore`, {
       method: 'POST',
     });
   },
 
   // Force delete user (permanent)
-  async forceDeleteUser(id: string): Promise<{ message: string }> {
-    return apiCall<{ message: string }>(`/users/${id}/force`, {
+  async forceDeleteUser(id: number | string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/users/${id}/force-delete`, {
       method: 'DELETE',
     });
   },
@@ -778,6 +791,22 @@ export const assignmentAPI = {
     });
   },
 
+  // Unassign user from assignment (coordinator only)
+  async unassignUser(assignmentId: number, userId: string | number): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/assignments/${assignmentId}/unassign-user`, {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    });
+  },
+
+  // Update user position in assignment (coordinator only)
+  async updateUserPosition(assignmentId: number, userId: string | number, position: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/assignments/${assignmentId}/update-user-position`, {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, position }),
+    });
+  },
+
   // Check in user (students can check themselves in)
   async checkInUser(assignmentId: number, userId?: number): Promise<{ message: string }> {
     const endpoint = userId 
@@ -803,6 +832,20 @@ export const assignmentAPI = {
     return apiCall<{ message: string }>(endpoint, {
       method: 'POST',
       body: JSON.stringify(body),
+    });
+  },
+
+  // Accept assignment (student only)
+  async acceptAssignment(assignmentId: number): Promise<{ message: string; assignment: Assignment }> {
+    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${assignmentId}/accept`, {
+      method: 'POST',
+    });
+  },
+
+  // Reject assignment (student only)
+  async rejectAssignment(assignmentId: number): Promise<{ message: string; assignment: Assignment }> {
+    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${assignmentId}/reject`, {
+      method: 'POST',
     });
   }
 };

@@ -23,7 +23,8 @@ import {
   MapPin,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Eye
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { CreateAssignmentModal } from "@/components/CreateAssignmentModal"
 import { PositionModal } from "@/components/PositionModal"
+import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 
 import { 
@@ -63,6 +65,15 @@ function CoordinatorDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false)
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null)
+  const [isDeleteAssignmentConfirmationOpen, setIsDeleteAssignmentConfirmationOpen] = useState(false)
+  const [assignmentToDelete, setAssignmentToDelete] = useState<number | null>(null)
+  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'pending' | 'completed'>('all')
+  const [assignmentSearchQuery, setAssignmentSearchQuery] = useState("")
+  const [positionFilter, setPositionFilter] = useState<string>('all')
+  const [studentFilter, setStudentFilter] = useState<string>('all')
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
   // Position Management State
   const [isPositionModalOpen, setIsPositionModalOpen] = useState(false)
@@ -120,9 +131,15 @@ function CoordinatorDashboard() {
       setError(null)
 
       switch (activeTab) {
-        case 'assignments':
-          const assignmentsResponse = await assignmentAPI.getAssignments({ per_page: 50 })
+        case 'assignments': {
+          const [assignmentsResponse, positionsData, studentsResponse] = await Promise.all([
+            assignmentAPI.getAssignments({ per_page: 50 }),
+            positionAPI.getPositions(),
+            userAPI.getUsers({ role: 'student', per_page: 100 })
+          ])
           setAssignments(assignmentsResponse.data)
+          setPositions(positionsData.positions)
+          setStudents(studentsResponse.data)
           
           // Calculate stats
           const stats = assignmentsResponse.data.reduce((acc, assignment) => {
@@ -151,6 +168,7 @@ function CoordinatorDashboard() {
           
           setAssignmentStats(stats)
           break
+        }
 
         case 'students':
           const studentsResponse = await userAPI.getUsers({ 
@@ -180,6 +198,40 @@ function CoordinatorDashboard() {
       setError(formatAPIError(err))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleViewAssignment = (assignment: Assignment) => {
+    setSelectedAssignment(assignment)
+    setIsDetailModalOpen(true)
+  }
+
+  const handleCreateAssignment = () => {
+    setEditingAssignment(null)
+    setIsCreateAssignmentModalOpen(true)
+  }
+
+  const handleEditAssignment = (assignment: Assignment) => {
+    setEditingAssignment(assignment)
+    setIsCreateAssignmentModalOpen(true)
+  }
+
+  const handleDeleteAssignment = (id: number) => {
+    setAssignmentToDelete(id)
+    setIsDeleteAssignmentConfirmationOpen(true)
+  }
+
+  const executeDeleteAssignment = async () => {
+    if (!assignmentToDelete) return
+
+    try {
+      await assignmentAPI.deleteAssignment(assignmentToDelete)
+      fetchData()
+    } catch (err: any) {
+      alert(err.message || "Failed to delete assignment")
+    } finally {
+      setIsDeleteAssignmentConfirmationOpen(false)
+      setAssignmentToDelete(null)
     }
   }
 
@@ -424,7 +476,9 @@ function CoordinatorDashboard() {
                 className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
                 onClick={() => {
                   if (activeTab === "assignments") {
-                    setIsCreateAssignmentModalOpen(true)
+                    handleCreateAssignment()
+                  } else if (activeTab === "positions") {
+                    handleCreatePosition()
                   } else {
                     router.push('/student')
                   }
@@ -444,64 +498,88 @@ function CoordinatorDashboard() {
           {/* Assignment Management Tab */}
           {activeTab === "assignments" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Active Assignments</p>
-                        <p className="text-2xl font-bold text-primary">{assignmentStats.active}</p>
-                      </div>
-                      <ClipboardList className="h-8 w-8 text-primary" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-green-500/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Completed</p>
-                        <p className="text-2xl font-bold text-green-600">{assignmentStats.completed}</p>
-                      </div>
-                      <CheckCircle className="h-8 w-8 text-green-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-orange-500/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Pending</p>
-                        <p className="text-2xl font-bold text-orange-600">{assignmentStats.pending}</p>
-                      </div>
-                      <Clock className="h-8 w-8 text-orange-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-red-500/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Overdue</p>
-                        <p className="text-2xl font-bold text-red-600">{assignmentStats.overdue}</p>
-                      </div>
-                      <AlertCircle className="h-8 w-8 text-red-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
               <div className="bg-white/80 backdrop-blur-xl rounded-lg border border-gray-300/30 overflow-hidden">
                 <div className="p-6 border-b border-gray-200/50">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">Recent Assignments</h3>
-                    <div className="flex items-center space-x-3">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          placeholder="Search assignments..."
-                          className="pl-10 w-64 bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary"
-                        />
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Assignments</h3>
+                    
+                    <div className="flex flex-col md:flex-row gap-4">
+                      {/* Filter Buttons */}
+                      <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setAssignmentFilter('all')}
+                          className={`transition-all duration-200 ${
+                            assignmentFilter === 'all' 
+                              ? 'bg-white text-primary shadow-sm font-medium' 
+                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                          }`}
+                        >
+                          All
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setAssignmentFilter('pending')}
+                          className={`transition-all duration-200 ${
+                            assignmentFilter === 'pending' 
+                              ? 'bg-white text-primary shadow-sm font-medium' 
+                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                          }`}
+                        >
+                          Pending
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setAssignmentFilter('completed')}
+                          className={`transition-all duration-200 ${
+                            assignmentFilter === 'completed' 
+                              ? 'bg-white text-primary shadow-sm font-medium' 
+                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                          }`}
+                        >
+                          Completed
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <select
+                          className="h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-gray-600 max-w-[150px]"
+                          value={studentFilter}
+                          onChange={(e) => setStudentFilter(e.target.value)}
+                        >
+                          <option value="all">All Students</option>
+                          {students.map((student) => (
+                            <option key={student.id} value={student.id}>
+                              {student.name}
+                            </option>
+                          ))}
+                        </select>
+
+                        <select
+                          className="h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-gray-600"
+                          value={positionFilter}
+                          onChange={(e) => setPositionFilter(e.target.value)}
+                        >
+                          <option value="all">All Positions</option>
+                          {positions.map((pos) => (
+                            <option key={pos.id} value={pos.name}>
+                              {pos.name}
+                            </option>
+                          ))}
+                        </select>
+
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            placeholder="Search assignments..."
+                            className="pl-10 w-64 bg-white/80 backdrop-blur-xl border-gray-200 focus-visible:ring-0 focus-visible:border-primary"
+                            value={assignmentSearchQuery}
+                            onChange={(e) => setAssignmentSearchQuery(e.target.value)}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -513,8 +591,40 @@ function CoordinatorDashboard() {
                     <div className="text-center py-8 text-red-500">{error}</div>
                   ) : (
                     <div className="space-y-4">
-                      {(assignments || []).slice(0, 5).map((assignment) => (
-                        <div key={assignment.id} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-lg">
+                      {(assignments || [])
+                        .filter(assignment => {
+                          // Filter by status
+                          if (assignmentFilter !== 'all') {
+                            if (assignmentFilter === 'completed' && assignment.status !== 'complete') return false;
+                            if (assignmentFilter === 'pending' && assignment.status !== 'pending') return false;
+                          }
+
+                          // Filter by position
+                          if (positionFilter !== 'all') {
+                            const hasPosition = assignment.users?.some(u => (u as any).pivot?.position === positionFilter);
+                            if (!hasPosition) return false;
+                          }
+
+                          // Filter by student
+                          if (studentFilter !== 'all') {
+                            const hasStudent = assignment.users?.some(u => u.id.toString() === studentFilter);
+                            if (!hasStudent) return false;
+                          }
+                          
+                          // Filter by search query
+                          if (assignmentSearchQuery) {
+                            const query = assignmentSearchQuery.toLowerCase();
+                            return (
+                              assignment.assignment_name.toLowerCase().includes(query) ||
+                              assignment.event_name.toLowerCase().includes(query) ||
+                              assignment.event_location.toLowerCase().includes(query)
+                            );
+                          }
+                          
+                          return true;
+                        })
+                        .map((assignment, index) => (
+                        <div key={`${assignment.id}-${index}`} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-lg">
                           <div className="flex items-center space-x-4">
                             <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                               <ClipboardList className="w-5 h-5 text-primary" />
@@ -527,7 +637,7 @@ function CoordinatorDashboard() {
                           <div className="flex items-center space-x-2">
                             <Badge 
                               variant="secondary" 
-                              className={`text-xs px-2 py-0.5 ${
+                              className={`text-xs px-2 py-0.5 border-none ${
                                 assignment.status === 'complete' ? 'bg-green-100 text-green-800' :
                                 assignment.status === 'confirmed' ? 'bg-primary/10 text-primary' :
                                 'bg-orange-100 text-orange-800'
@@ -535,8 +645,38 @@ function CoordinatorDashboard() {
                             >
                               {assignment.status}
                             </Badge>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewAssignment(assignment);
+                              }} 
+                              className="text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditAssignment(assignment);
+                              }} 
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
                               <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteAssignment(assignment.id);
+                              }} 
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
@@ -649,6 +789,9 @@ function CoordinatorDashboard() {
                               <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                                 Email
                               </th>
+                              <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                Actions
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-200/50">
@@ -678,12 +821,34 @@ function CoordinatorDashboard() {
                                   </Badge>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                  <Badge variant="hours" className="text-xs">
-                                    {student.promised_hours_per_week || '0'}h/week
-                                  </Badge>
+                                  <div className="flex flex-col gap-1">
+                                    <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200">
+                                      {student.promised_hours_per_week || '0'}h Promised
+                                    </Badge>
+                                    <Badge variant="outline" className={`text-xs w-fit ${
+                                      (student.remaining_hours || 0) > 0 
+                                        ? 'bg-orange-50 text-orange-700 border-orange-200' 
+                                        : 'bg-green-50 text-green-700 border-green-200'
+                                    }`}>
+                                      {student.remaining_hours ? Number(student.remaining_hours).toFixed(1) : '0'}h Remaining
+                                    </Badge>
+                                  </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                   {student.email}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      router.push(`/student/${student.id}`)
+                                    }}
+                                    className="text-primary hover:text-primary-dark hover:bg-primary/10"
+                                  >
+                                    View Details
+                                  </Button>
                                 </td>
                               </tr>
                             ))}
@@ -939,6 +1104,12 @@ function CoordinatorDashboard() {
         isOpen={isCreateAssignmentModalOpen} 
         onClose={() => setIsCreateAssignmentModalOpen(false)} 
         onAssignmentCreated={fetchData}
+        assignmentToEdit={editingAssignment}
+      />
+      <AssignmentDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        assignment={selectedAssignment}
       />
       <PositionModal
         isOpen={isPositionModalOpen}
@@ -952,6 +1123,15 @@ function CoordinatorDashboard() {
         onConfirm={executeDeletePosition}
         title="Delete Position"
         description="Are you sure you want to delete this position? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
+      />
+      <ConfirmationDialog
+        isOpen={isDeleteAssignmentConfirmationOpen}
+        onClose={() => setIsDeleteAssignmentConfirmationOpen(false)}
+        onConfirm={executeDeleteAssignment}
+        title="Delete Assignment"
+        description="Are you sure you want to delete this assignment? This action cannot be undone."
         confirmText="Delete"
         variant="destructive"
       />
