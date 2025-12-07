@@ -41,6 +41,9 @@ class AuthController extends Controller
 
         $user = User::create($userData);
 
+        // Assign Spatie role to ensure permissions work
+        $user->assignRole($userData['role']);
+
         // Login the user with session instead of creating token
         Auth::login($user);
 
