@@ -67,20 +67,18 @@ class RolePermissionSeeder extends Seeder
         // Create roles and assign permissions
 
         // Admin role - has all permissions
-        $adminRole = Role::create([
-            'id' => (string) \Illuminate\Support\Str::uuid(),
-            'name' => 'admin',
-            'guard_name' => 'web'
-        ]);
-        $adminRole->givePermissionTo(Permission::all());
+        $adminRole = Role::firstOrCreate(
+            ['name' => 'admin', 'guard_name' => 'web'],
+            ['id' => (string) \Illuminate\Support\Str::uuid()]
+        );
+        $adminRole->syncPermissions(Permission::all());
 
         // Supervisor role - can manage assignments and view users
-        $supervisorRole = Role::create([
-            'id' => (string) \Illuminate\Support\Str::uuid(),
-            'name' => 'supervisor',
-            'guard_name' => 'web'
-        ]);
-        $supervisorRole->givePermissionTo([
+        $supervisorRole = Role::firstOrCreate(
+            ['name' => 'supervisor', 'guard_name' => 'web'],
+            ['id' => (string) \Illuminate\Support\Str::uuid()]
+        );
+        $supervisorRole->syncPermissions([
             'view users',
             'view assignments',
             'create assignments',
@@ -95,12 +93,11 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Coordinator role - can create assignments and manage students
-        $coordinatorRole = Role::create([
-            'id' => (string) \Illuminate\Support\Str::uuid(),
-            'name' => 'coordinator',
-            'guard_name' => 'web'
-        ]);
-        $coordinatorRole->givePermissionTo([
+        $coordinatorRole = Role::firstOrCreate(
+            ['name' => 'coordinator', 'guard_name' => 'web'],
+            ['id' => (string) \Illuminate\Support\Str::uuid()]
+        );
+        $coordinatorRole->syncPermissions([
             'view users',
             'create users',
             'edit users',
@@ -121,12 +118,11 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Student role - basic permissions
-        $studentRole = Role::create([
-            'id' => (string) \Illuminate\Support\Str::uuid(),
-            'name' => 'student',
-            'guard_name' => 'web'
-        ]);
-        $studentRole->givePermissionTo([
+        $studentRole = Role::firstOrCreate(
+            ['name' => 'student', 'guard_name' => 'web'],
+            ['id' => (string) \Illuminate\Support\Str::uuid()]
+        );
+        $studentRole->syncPermissions([
             'view assignments',
             'check in users',
             'check out users',
