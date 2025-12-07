@@ -40,6 +40,7 @@ RUN apk add --no-cache \
     oniguruma-dev \
     icu-dev \
     zlib-dev \
+    $PHPIZE_DEPS \
     && docker-php-ext-install pdo_mysql mbstring zip intl
 
 # create app dir
