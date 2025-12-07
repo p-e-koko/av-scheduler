@@ -15,7 +15,7 @@ class AssignmentResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'assignment_id' => $this->assignment_id,
+            'id' => $this->id,
             'assignment_name' => $this->assignment_name,
             'event_name' => $this->event_name,
             'event_location' => $this->event_location,
@@ -70,11 +70,13 @@ class AssignmentResource extends JsonResource
                         'profile_picture_url' => $user->getProfilePictureUrlAttribute(),
 
                         // Pivot data from assignment_users table
-                        'assignment_status' => $user->pivot->status,
-                        'checked_in' => $user->pivot->checked_in,
-                        'position' => $user->pivot->position,
-                        'assigned_at' => $user->pivot->created_at?->toISOString(),
-                        'updated_at' => $user->pivot->updated_at?->toISOString(),
+                        'pivot' => [
+                            'status' => $user->pivot->status,
+                            'checked_in' => $user->pivot->checked_in,
+                            'position' => $user->pivot->position,
+                            'created_at' => $user->pivot->created_at?->toISOString(),
+                            'updated_at' => $user->pivot->updated_at?->toISOString(),
+                        ]
                     ];
                 });
             }),

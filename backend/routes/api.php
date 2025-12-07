@@ -97,6 +97,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // Student-specific assignment routes
     Route::middleware(['role:student'])->group(function () {
         Route::get('/my-assignments', [AssignmentController::class, 'myAssignments']);
+        Route::post('/assignments/{assignment}/accept', [AssignmentController::class, 'acceptAssignment']);
+        Route::post('/assignments/{assignment}/reject', [AssignmentController::class, 'rejectAssignment']);
         // Students can check themselves in/out of their own assignments
         Route::post('/assignments/{assignment}/check-in', function (Request $request, \App\Models\Assignment $assignment) {
             $request->merge(['user_id' => $request->user()->id]);

@@ -18,6 +18,11 @@ class AssignmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Auto-complete past assignments
+        Assignment::where('status', 'confirmed')
+            ->where('event_end_datetime', '<', now())
+            ->update(['status' => 'complete']);
+
         $query = Assignment::with(['creator', 'users']);
 
         // Add filtering by status
@@ -109,6 +114,11 @@ class AssignmentController extends Controller
 
         $assignment->update($assignmentData);
 
+        // Reset all users status to pending
+        foreach ($assignment->users as $user) {
+            $assignment->updateUserStatus($user, 'pending');
+        }
+
         // Load relationships for response
         $assignment->load(['creator', 'users']);
 
@@ -191,7 +201,7 @@ class AssignmentController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'position' => 'nullable|string|max:255',
-            'status' => 'nullable|in:assigned,completed'
+            'status' => 'nullable|in:pending,accepted,rejected,completed'
         ]);
 
         // Check if user is already assigned
@@ -203,7 +213,7 @@ class AssignmentController extends Controller
 
         $assignment->assignUser(
             \App\Models\User::find($request->user_id),
-            $request->get('status', 'assigned'),
+            $request->get('status', 'pending'),
             $request->position
         );
 
@@ -337,6 +347,50 @@ class AssignmentController extends Controller
         return response()->json([
             'message' => 'User checked out successfully',
             'assignment' => new AssignmentResource($assignment)
+        ]);
+    }
+
+    /**
+     * Accept an assignment.
+     */
+    public function acceptAssignment(Request $request, Assignment $assignment): JsonResponse
+    {
+        $user = auth()->user();
+
+        // Check if user is assigned
+        if (!$assignment->users()->where('user_id', $user->id)->exists()) {
+            return response()->json([
+                'message' => 'You are not assigned to this assignment'
+            ], 422);
+        }
+
+        $assignment->updateUserStatus($user, 'accepted');
+
+        return response()->json([
+            'message' => 'Assignment accepted successfully',
+            'assignment' => new AssignmentResource($assignment->load(['creator', 'users']))
+        ]);
+    }
+
+    /**
+     * Reject an assignment.
+     */
+    public function rejectAssignment(Request $request, Assignment $assignment): JsonResponse
+    {
+        $user = auth()->user();
+
+        // Check if user is assigned
+        if (!$assignment->users()->where('user_id', $user->id)->exists()) {
+            return response()->json([
+                'message' => 'You are not assigned to this assignment'
+            ], 422);
+        }
+
+        $assignment->updateUserStatus($user, 'rejected');
+
+        return response()->json([
+            'message' => 'Assignment rejected successfully',
+            'assignment' => new AssignmentResource($assignment->load(['creator', 'users']))
         ]);
     }
 

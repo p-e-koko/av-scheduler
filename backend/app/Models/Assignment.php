@@ -171,7 +171,7 @@ class Assignment extends Model
      */
     public function getDurationInHours(): float
     {
-        return $this->event_start_datetime->diffInHours($this->event_end_datetime);
+        return $this->event_start_datetime->diffInMinutes($this->event_end_datetime) / 60;
     }
 
     /**

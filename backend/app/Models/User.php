@@ -44,6 +44,13 @@ class User extends Authenticatable
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['profile_picture_url', 'remaining_hours'];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -196,6 +203,25 @@ class User extends Authenticatable
 
         // Generate the full URL using the app URL and storage path
         return config('app.url') . '/storage/' . $this->profile_picture;
+    }
+
+    /**
+     * Get the remaining hours for the current week.
+     */
+    public function getRemainingHoursAttribute()
+    {
+        $startOfWeek = now()->startOfWeek();
+        $endOfWeek = now()->endOfWeek();
+
+        $assignedHours = $this->assignments()
+            ->wherePivot('status', '!=', 'rejected')
+            ->whereBetween('event_start_datetime', [$startOfWeek, $endOfWeek])
+            ->get()
+            ->sum(function ($assignment) {
+                return $assignment->getDurationInHours();
+            });
+
+        return max(0, ($this->promised_hours_per_week ?? 0) - $assignedHours);
     }
 
     /**
