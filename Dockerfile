@@ -64,6 +64,10 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # copy supervisor config
 COPY supervisord.conf /etc/supervisord.conf
 
+# copy entrypoint
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /usr/share/nginx/html
 
@@ -75,5 +79,5 @@ ENV APP_ENV=production
 ENV APP_DEBUG=false
 ENV PORT=8080
 
-# Start supervisor
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
+# Start supervisor via entrypoint
+CMD ["/usr/local/bin/docker-entrypoint.sh"]
