@@ -21,11 +21,14 @@ class DatabaseSeeder extends Seeder
         }
 
         // Create test user with UUID
-        $user = \App\Models\User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'role' => 'student'
-        ]);
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'role' => 'student',
+                'password' => '$2y$12$KjG.d5.1.w.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1', // You might want to set a default password here if creating
+            ]
+        );
         
         // Assign student role to test user
         $user->assignRole('student');
