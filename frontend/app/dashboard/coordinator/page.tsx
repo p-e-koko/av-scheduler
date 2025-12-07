@@ -35,6 +35,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { CreateAssignmentModal } from "@/components/CreateAssignmentModal"
+import { PositionModal } from "@/components/PositionModal"
+import ConfirmationDialog from "@/components/ConfirmationDialog"
 
 import { 
   authAPI,
@@ -61,6 +63,12 @@ function CoordinatorDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false)
+
+  // Position Management State
+  const [isPositionModalOpen, setIsPositionModalOpen] = useState(false)
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null)
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false)
+  const [positionToDelete, setPositionToDelete] = useState<string | null>(null)
 
   // Student View State
   const [viewMode, setViewMode] = useState<"card" | "list">("card")
@@ -172,6 +180,35 @@ function CoordinatorDashboard() {
       setError(formatAPIError(err))
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreatePosition = () => {
+    setEditingPosition(null)
+    setIsPositionModalOpen(true)
+  }
+
+  const handleEditPosition = (position: Position) => {
+    setEditingPosition(position)
+    setIsPositionModalOpen(true)
+  }
+
+  const handleDeletePosition = (id: string) => {
+    setPositionToDelete(id)
+    setIsDeleteConfirmationOpen(true)
+  }
+
+  const executeDeletePosition = async () => {
+    if (!positionToDelete) return
+
+    try {
+      await positionAPI.deletePosition(positionToDelete)
+      fetchData()
+    } catch (err: any) {
+      alert(err.message || "Failed to delete position")
+    } finally {
+      setIsDeleteConfirmationOpen(false)
+      setPositionToDelete(null)
     }
   }
 
@@ -839,31 +876,60 @@ function CoordinatorDashboard() {
               ) : error ? (
                 <div className="text-center py-8 text-red-500">{error}</div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {(positions || []).map((position) => (
-                    <Card key={position.id} className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                              <MapPin className="w-5 h-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-900">{position.name}</h3>
-                              <p className="text-sm text-gray-600">{position.description || 'No description'}</p>
-                            </div>
-                          </div>
-                          <Badge variant={position.is_active ? "secondary" : "outline"}>
-                            {position.is_active ? "Active" : "Inactive"}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  {(positions || []).length === 0 && (
-                    <div className="col-span-full text-center py-8 text-gray-500">No positions found</div>
-                  )}
-                </div>
+                <>
+                  <div className="flex justify-end">
+                    <Button onClick={handleCreatePosition} className="bg-primary text-white hover:bg-primary/90">
+                      <Plus className="mr-2 h-4 w-4" /> Add Position
+                    </Button>
+                  </div>
+                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <table className="w-full">
+                      <thead className="bg-gray-50/50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200/50">
+                        {(positions || []).map((position) => (
+                          <tr key={position.id} className="hover:bg-gray-50/30 transition-colors">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                  <MapPin className="w-4 h-4 text-primary" />
+                                </div>
+                                <span className="font-medium text-gray-900">{position.name}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="text-sm text-gray-600 line-clamp-1">{position.description || 'No description'}</p>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <Badge variant={position.is_active ? "secondary" : "outline"}>
+                                {position.is_active ? "Active" : "Inactive"}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                              <div className="flex justify-end space-x-2">
+                                <Button variant="ghost" size="sm" onClick={() => handleEditPosition(position)} className="h-8 w-8 p-0">
+                                  <Edit className="h-4 w-4 text-gray-500" />
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => handleDeletePosition(position.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {(positions || []).length === 0 && (
+                      <div className="text-center py-8 text-gray-500">No positions found</div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -873,6 +939,21 @@ function CoordinatorDashboard() {
         isOpen={isCreateAssignmentModalOpen} 
         onClose={() => setIsCreateAssignmentModalOpen(false)} 
         onAssignmentCreated={fetchData}
+      />
+      <PositionModal
+        isOpen={isPositionModalOpen}
+        onClose={() => setIsPositionModalOpen(false)}
+        onPositionSaved={fetchData}
+        positionToEdit={editingPosition}
+      />
+      <ConfirmationDialog
+        isOpen={isDeleteConfirmationOpen}
+        onClose={() => setIsDeleteConfirmationOpen(false)}
+        onConfirm={executeDeletePosition}
+        title="Delete Position"
+        description="Are you sure you want to delete this position? This action cannot be undone."
+        confirmText="Delete"
+        variant="destructive"
       />
     </div>
   )

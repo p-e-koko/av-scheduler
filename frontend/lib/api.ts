@@ -72,7 +72,7 @@ export interface Availability {
 }
 
 export interface Position {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   is_active: boolean;
@@ -891,7 +891,7 @@ export const positionAPI = {
   },
 
   // Get specific position
-  async getPosition(id: number): Promise<{ position: Position }> {
+  async getPosition(id: string): Promise<{ position: Position }> {
     return apiCall<{ position: Position }>(`/positions/${id}`);
   },
 
@@ -904,7 +904,7 @@ export const positionAPI = {
   },
 
   // Update position (coordinator only)
-  async updatePosition(id: number, positionData: Partial<Position>): Promise<{ message: string; position: Position }> {
+  async updatePosition(id: string, positionData: Partial<Position>): Promise<{ message: string; position: Position }> {
     return apiCall<{ message: string; position: Position }>(`/positions/${id}`, {
       method: 'PUT',
       body: JSON.stringify(positionData),
@@ -912,7 +912,7 @@ export const positionAPI = {
   },
 
   // Delete position (coordinator only)
-  async deletePosition(id: number): Promise<{ message: string }> {
+  async deletePosition(id: string): Promise<{ message: string }> {
     return apiCall<{ message: string }>(`/positions/${id}`, {
       method: 'DELETE',
     });
