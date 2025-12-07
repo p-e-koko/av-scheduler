@@ -1,7 +1,7 @@
 # =========================
 # Stage 1: Build Node assets (Next.js + Laravel Vite/Mix)
 # =========================
-FROM node:18-alpine AS node_builder
+FROM node:20-alpine3.19 AS node_builder
 WORKDIR /app
 
 # Install deps for frontend
@@ -30,7 +30,7 @@ RUN cd backend && composer install --no-dev --optimize-autoloader
 # =========================
 # Stage 3: Final image = PHP-FPM + Nginx + Supervisor + Node Runtime
 # =========================
-FROM php:8.1-fpm-alpine
+FROM php:8.2-fpm-alpine
 
 WORKDIR /var/www/html
 
@@ -49,7 +49,34 @@ RUN apk add --no-cache \
     oniguruma-dev
 
 # PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql mbstring zip intl
+# Build PHP extensions safely for Alpine
+# Install required system packages
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    nodejs \
+    npm \
+    bash \
+    curl \
+    git \
+    icu-dev \
+    zlib-dev \
+    libzip-dev \
+    oniguruma-dev \
+    autoconf \
+    make \
+    g++ \
+    libtool
+
+# Install PHP extensions
+RUN docker-php-ext-configure intl \
+    && docker-php-ext-install \
+        pdo \
+        pdo_mysql \
+        mbstring \
+        zip \
+        intl
+
 
 # --- Copy Laravel code ---
 COPY --from=composer_builder /app/backend ./
