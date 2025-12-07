@@ -223,7 +223,13 @@ async function apiCall<T>(
     // Handle unauthorized
     if (response.status === 401) {
       removeAuthToken(); // Clean up any stored tokens
-      throw new APIError('Invalid credentials. Please check your email and password.', 401);
+      
+      // Customize error message based on endpoint
+      if (url.includes('/auth/login')) {
+        throw new APIError('Invalid credentials. Please check your email and password.', 401);
+      }
+      
+      throw new APIError('Session expired or unauthenticated. Please log in again.', 401);
     }
 
     const data = await response.json();
