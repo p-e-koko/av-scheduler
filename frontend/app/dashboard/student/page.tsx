@@ -335,7 +335,7 @@ function StudentDashboard() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-card/70 backdrop-blur-xl border-b border-border px-4 md:px-6 py-4 shadow-sm">
+        <header className="px-4 md:px-6 py-4 pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
@@ -347,12 +347,12 @@ function StudentDashboard() {
                 <Menu className="h-6 w-6" />
               </Button>
               <div>
-                <h1 className="text-xl md:text-2xl font-semibold text-foreground">
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
                 {activeTab === "profile" && "My Profile"}
                 {activeTab === "assignments" && "My Assignments"}
                 {activeTab === "schedule" && "My Schedule"}
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-muted-foreground mt-1">
                 {activeTab === "profile" && "Manage your profile and skills"}
                 {activeTab === "assignments" && "View and track your assignments"}
                 {activeTab === "schedule" && "Manage your availability"}
