@@ -159,16 +159,16 @@ export function CalendarComponent({
     return (
       <div className="flex flex-col h-full">
         {/* Day headers */}
-        <div className="grid grid-cols-7 border-b border-gray-200">
+        <div className="grid grid-cols-7 border-b border-border">
           {dayNames.map(day => (
-            <div key={day} className="text-center py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <div key={day} className="text-center py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               {day}
             </div>
           ))}
         </div>
         
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 grid-rows-6 flex-1 border-l border-gray-200">
+        <div className="grid grid-cols-7 grid-rows-6 flex-1 border-l border-border">
           {days.map((day, index) => {
             const dayEvents = getEventsForDate(day)
             const isCurrentMonth = day.getMonth() === currentDate.getMonth()
@@ -179,14 +179,14 @@ export function CalendarComponent({
                 key={index}
                 onClick={() => onDateClick?.(day)}
                 className={cn(
-                  "min-h-[100px] border-b border-r border-gray-200 p-1 transition-colors hover:bg-gray-50 cursor-pointer relative",
-                  !isCurrentMonth && "bg-gray-50/30 text-gray-400"
+                  "min-h-[100px] border-b border-r border-border p-1 transition-colors hover:bg-muted/50 cursor-pointer relative",
+                  !isCurrentMonth && "bg-muted/30 text-muted-foreground"
                 )}
               >
                 <div className="flex justify-center mb-1">
                   <span className={cn(
                     "text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full",
-                    isToday ? "bg-blue-600 text-white" : "text-gray-700"
+                    isToday ? "bg-primary text-primary-foreground" : "text-foreground"
                   )}>
                     {day.getDate()}
                   </span>
@@ -230,11 +230,11 @@ export function CalendarComponent({
       <div className="flex flex-col h-full overflow-y-auto relative scrollbar-hide">
         <div className="flex min-w-full">
           {/* Time labels column */}
-          <div className="w-16 flex-shrink-0 border-r border-gray-200 bg-white sticky left-0 z-10">
-            <div className="h-10 border-b border-gray-200"></div> {/* Header spacer */}
+          <div className="w-16 flex-shrink-0 border-r border-border bg-card sticky left-0 z-10">
+            <div className="h-10 border-b border-border"></div> {/* Header spacer */}
             {hours.map(hour => (
               <div key={hour} className="h-12 relative">
-                <span className="absolute -top-2.5 right-2 text-xs text-gray-500">
+                <span className="absolute -top-2.5 right-2 text-xs text-muted-foreground">
                   {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
                 </span>
               </div>
@@ -248,15 +248,15 @@ export function CalendarComponent({
               const dayEvents = getEventsForDate(day)
 
               return (
-                <div key={dayIndex} className="flex-1 min-w-[100px] border-r border-gray-200 relative">
+                <div key={dayIndex} className="flex-1 min-w-[100px] border-r border-border relative">
                   {/* Day Header */}
-                  <div className="h-10 border-b border-gray-200 flex flex-col items-center justify-center sticky top-0 bg-white z-10">
-                    <span className={cn("text-xs font-medium uppercase", isToday ? "text-blue-600" : "text-gray-500")}>
+                  <div className="h-10 border-b border-border flex flex-col items-center justify-center sticky top-0 bg-card z-10">
+                    <span className={cn("text-xs font-medium uppercase", isToday ? "text-primary" : "text-muted-foreground")}>
                       {day.toLocaleDateString('en-US', { weekday: 'short' })}
                     </span>
                     <span className={cn(
                       "text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full mt-0.5",
-                      isToday ? "bg-blue-600 text-white" : "text-gray-900"
+                      isToday ? "bg-primary text-primary-foreground" : "text-foreground"
                     )}>
                       {day.getDate()}
                     </span>
@@ -265,7 +265,7 @@ export function CalendarComponent({
                   {/* Time slots background */}
                   <div className="relative">
                     {hours.map(hour => (
-                      <div key={hour} className="h-12 border-b border-gray-100"></div>
+                      <div key={hour} className="h-12 border-b border-border"></div>
                     ))}
 
                     {/* Events */}
@@ -288,7 +288,7 @@ export function CalendarComponent({
                           }}
                           className={cn(
                             "absolute left-0.5 right-0.5 rounded px-2 py-1 text-xs cursor-pointer overflow-hidden border-l-4 shadow-sm hover:brightness-95 transition-all z-0",
-                            event.color || "bg-blue-100 border-blue-500 text-blue-700"
+                            event.color || "bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500"
                           )}
                           style={{
                             top: `${top}px`,
@@ -329,32 +329,32 @@ export function CalendarComponent({
     }
 
     return (
-      <div className="flex flex-col h-full overflow-y-auto bg-white">
+      <div className="flex flex-col h-full overflow-y-auto bg-card">
         <div className="p-4">
           <div className="mb-6 flex items-center">
              {currentDate.toDateString() === new Date().toDateString() && (
-              <span className="px-2 py-1 rounded bg-gray-800 text-xs font-medium text-grey-900 mr-2">
+              <span className="px-2 py-1 rounded bg-primary text-xs font-medium text-primary-foreground mr-2">
                 Today
               </span>
              )}
-             <span className="font-semibold text-gray-900">
+             <span className="font-semibold text-foreground">
                {currentDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
              </span>
           </div>
 
           <div className="space-y-1">
             {dayEvents.length === 0 ? (
-               <div className="text-center text-gray-500 py-12">No events scheduled</div>
+               <div className="text-center text-muted-foreground py-12">No events scheduled</div>
             ) : (
               dayEvents.map(event => (
                 <div 
                   key={event.id} 
-                  className="flex group cursor-pointer hover:bg-gray-50 rounded-lg p-3 -mx-3 transition-colors"
+                  className="flex group cursor-pointer hover:bg-muted/50 rounded-lg p-3 -mx-3 transition-colors"
                   onClick={() => onEventClick?.(event)}
                 >
                   {/* Time */}
                   <div className="w-14 flex-shrink-0 pt-1">
-                    <div className="text-sm font-bold text-gray-900">
+                    <div className="text-sm font-bold text-foreground">
                       {event.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: false }).replace(/^0/, '')}
                     </div>
                   </div>
@@ -365,8 +365,8 @@ export function CalendarComponent({
                     <div className={cn("w-1 rounded-full flex-shrink-0", getEventColor(event))} />
                     
                     <div className="pb-1">
-                      <h4 className="text-base font-medium text-gray-900 leading-tight">{event.title}</h4>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <h4 className="text-base font-medium text-foreground leading-tight">{event.title}</h4>
+                      <p className="text-sm text-muted-foreground mt-1">
                         {event.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })} - 
                         {event.end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
                       </p>
@@ -384,24 +384,24 @@ export function CalendarComponent({
   const navigate = getNavigationHandler()
 
   return (
-    <Card className={cn("bg-white border shadow-sm overflow-hidden flex flex-col h-full", className)}>
-      <CardHeader className="border-b border-gray-200 px-4 py-3">
+    <Card className={cn("bg-card border shadow-sm overflow-hidden flex flex-col h-full", className)}>
+      <CardHeader className="border-b border-border px-4 py-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+            <div className="flex items-center bg-muted rounded-lg p-0.5">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("prev")}
-                className="h-7 w-7 p-0 hover:bg-white rounded-md"
+                className="h-7 w-7 p-0 hover:bg-card rounded-md"
               >
-                <ChevronLeft className="w-4 h-4 text-black" />
+                <ChevronLeft className="w-4 h-4 text-foreground" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setCurrentDate(new Date())}
-                className="h-7 px-3 text-xs font-medium hover:bg-white text-black rounded-md"
+                className="h-7 px-3 text-xs font-medium hover:bg-card text-foreground rounded-md"
               >
                 Today
               </Button>
@@ -409,25 +409,25 @@ export function CalendarComponent({
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("next")}
-                className="h-7 w-7 p-0 hover:bg-white rounded-md"
+                className="h-7 w-7 p-0 hover:bg-card rounded-md"
               >
-                <ChevronRight className="w-4 h-4 text-black" />
+                <ChevronRight className="w-4 h-4 text-foreground" />
               </Button>
             </div>
-            <CardTitle className="text-lg font-semibold text-gray-900">
+            <CardTitle className="text-lg font-semibold text-foreground">
               {formatDateHeader()}
             </CardTitle>
           </div>
           
           {onViewChange && (
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center bg-muted rounded-lg p-1">
               <Button
                 variant={view === "month" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => onViewChange("month")}
                 className={cn(
                   "h-7 text-xs font-medium rounded-md px-3",
-                  view === "month" ? "bg-white shadow-sm text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  view === "month" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 Month
@@ -438,7 +438,7 @@ export function CalendarComponent({
                 onClick={() => onViewChange("week")}
                 className={cn(
                   "h-7 text-xs font-medium rounded-md px-3",
-                  view === "week" ? "bg-white shadow-sm text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  view === "week" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 Week
@@ -449,7 +449,7 @@ export function CalendarComponent({
                 onClick={() => onViewChange("day")}
                 className={cn(
                   "h-7 text-xs font-medium rounded-md px-3",
-                  view === "day" ? "bg-white shadow-sm text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  view === "day" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 Day

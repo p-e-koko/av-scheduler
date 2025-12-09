@@ -12,6 +12,7 @@ const config: Config = {
         // Custom blue color scheme
         primary: {
           DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
           dark: "var(--primary-dark)",
           medium: "var(--primary-medium)",
           light: "var(--primary-light)",

@@ -39,10 +39,10 @@ export default function ConfirmationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white/95 backdrop-blur-xl border border-gray-300/30">
+      <DialogContent className="bg-card/95 backdrop-blur-xl border border-border">
         <DialogHeader>
-          <DialogTitle className="text-gray-900">{title}</DialogTitle>
-          <DialogDescription className="text-gray-600">
+          <DialogTitle className="text-foreground">{title}</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             {description}
           </DialogDescription>
         </DialogHeader>
@@ -50,7 +50,7 @@ export default function ConfirmationDialog({
           <Button
             variant="outline"
             onClick={onClose}
-            className="bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300"
+            className="bg-muted text-foreground hover:bg-muted/80 border-input"
           >
             {cancelText}
           </Button>
@@ -58,8 +58,8 @@ export default function ConfirmationDialog({
             onClick={handleConfirm}
             className={
               variant === "destructive" 
-                ? "bg-red-600 text-white hover:bg-red-700" 
-                : "bg-primary text-white hover:bg-primary-medium"
+                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" 
+                : "bg-primary text-primary-foreground hover:bg-primary/90"
             }
           >
             {confirmText}

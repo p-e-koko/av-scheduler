@@ -297,7 +297,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] bg-white/95 backdrop-blur-xl border-white/20 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] bg-card/95 backdrop-blur-xl border-border shadow-2xl max-h-[90vh] overflow-y-auto">
         <div ref={topRef} className="absolute top-0 left-0 w-full h-0" />
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary">{assignmentToEdit ? "Edit Assignment" : "Create New Assignment"}</DialogTitle>
@@ -307,7 +307,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
         </DialogHeader>
         
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm border border-red-100 flex items-start gap-2">
+          <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm border border-destructive/20 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div className="whitespace-pre-wrap">{error}</div>
           </div>
@@ -326,7 +326,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
               value={eventName}
               onChange={(e) => setEventName(e.target.value)}
               required
-              className="bg-white/50 border-gray-300 focus:border-primary focus:ring-primary/20 text-gray-900 font-medium placeholder:text-gray-400"
+              className="bg-muted/50 border-input focus:border-primary focus:ring-primary/20 text-foreground font-medium placeholder:text-muted-foreground"
             />
           </div>
 
@@ -342,7 +342,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
               value={eventLocation}
               onChange={(e) => setEventLocation(e.target.value)}
               required
-              className="bg-white/50 border-gray-300 focus:border-primary focus:ring-primary/20 text-gray-900 font-medium placeholder:text-gray-400"
+              className="bg-muted/50 border-input focus:border-primary focus:ring-primary/20 text-foreground font-medium placeholder:text-muted-foreground"
             />
           </div>
 
@@ -359,14 +359,14 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   required
-                  className="bg-white/50 border-gray-300 focus:border-primary focus:ring-primary/20 text-gray-900"
+                  className="bg-muted/50 border-input focus:border-primary focus:ring-primary/20 text-foreground"
                 />
                 <div className="relative">
                   <select
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
                     required
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ring-offset-background placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                   >
                     <option value="" disabled>Select time</option>
                     {timeSlots.map((time) => (
@@ -375,7 +375,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                       </option>
                     ))}
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-foreground">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                       <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
                     </svg>
@@ -394,14 +394,14 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   required
-                  className="bg-white/50 border-gray-300 focus:border-primary focus:ring-primary/20 text-gray-900"
+                  className="bg-muted/50 border-input focus:border-primary focus:ring-primary/20 text-foreground"
                 />
                 <div className="relative">
                   <select
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
                     required
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ring-offset-background placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                   >
                     <option value="" disabled>Select time</option>
                     {timeSlots.map((time) => (
@@ -410,7 +410,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                       </option>
                     ))}
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-foreground">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                       <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
                     </svg>
@@ -431,12 +431,12 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
               placeholder="Add any additional details, requirements, or instructions..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="min-h-[100px] bg-white/50 border-gray-300 focus:border-primary focus:ring-primary/20 text-gray-900 placeholder:text-gray-400"
+              className="min-h-[100px] bg-muted/50 border-input focus:border-primary focus:ring-primary/20 text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           {/* Assignees Section */}
-          <div className="space-y-4 border-t border-gray-200 pt-6">
+          <div className="space-y-4 border-t border-border pt-6">
             <div className="flex items-center justify-between">
               <Label className="flex items-center gap-2 text-primary font-bold text-lg">
                 <UserPlus className="w-5 h-5" />
@@ -450,9 +450,9 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                   ref={triggerRef}
                   type="button"
                   onClick={() => setIsStudentDropdownOpen(!isStudentDropdownOpen)}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white/50 px-3 py-2 text-sm ring-offset-background placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 text-gray-900"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-muted/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
                 >
-                  <span className={!selectedStudentId ? "text-gray-500" : "font-medium"}>
+                  <span className={!selectedStudentId ? "text-muted-foreground" : "font-medium"}>
                     {selectedStudentId 
                       ? students.find(s => s.id.toString() === selectedStudentId)?.name 
                       : "Select Student..."}
@@ -467,29 +467,29 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                       onClick={() => setIsStudentDropdownOpen(false)} 
                     />
                     <div 
-                      className={`absolute z-20 w-full overflow-auto rounded-md border border-white/20 bg-white/90 backdrop-blur-xl py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm max-h-60 ${
+                      className={`absolute z-20 w-full overflow-auto rounded-md border border-border bg-card/90 backdrop-blur-xl py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm max-h-60 ${
                         dropdownPosition === 'top' ? 'bottom-full mb-1' : 'mt-1'
                       }`}
                     >
                       {availableStudents.length > 0 && (
                         <>
-                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50/50">Available</div>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">Available</div>
                           {availableStudents.map(student => (
                             <div
                               key={student.id}
-                              className="relative cursor-pointer select-none py-2 pl-3 pr-4 hover:bg-primary/10 text-gray-900 flex justify-between items-center group"
+                              className="relative cursor-pointer select-none py-2 pl-3 pr-4 hover:bg-primary/10 text-foreground flex justify-between items-center group"
                               onClick={() => {
                                 setSelectedStudentId(student.id.toString())
                                 setIsStudentDropdownOpen(false)
                               }}
                             >
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-green-700">{student.name}</span>
+                                <span className="font-medium text-green-600 dark:text-green-400">{student.name}</span>
                                 {selectedStudentId === student.id.toString() && (
                                   <Check className="h-4 w-4 text-primary" />
                                 )}
                               </div>
-                              <span className="text-xs text-gray-500 font-medium bg-white/50 px-2 py-0.5 rounded-full border border-gray-100">
+                              <span className="text-xs text-muted-foreground font-medium bg-muted/50 px-2 py-0.5 rounded-full border border-border">
                                 {student.remaining_hours_this_week ? `${student.remaining_hours_this_week}h left` : 'N/A'}
                               </span>
                             </div>
@@ -499,23 +499,23 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                       
                       {unavailableStudents.length > 0 && (
                         <>
-                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50/50 border-t border-gray-100">Others</div>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 border-t border-border">Others</div>
                           {unavailableStudents.map(student => (
                             <div
                               key={student.id}
-                              className="relative cursor-pointer select-none py-2 pl-3 pr-4 hover:bg-gray-100 text-gray-900 flex justify-between items-center"
+                              className="relative cursor-pointer select-none py-2 pl-3 pr-4 hover:bg-muted text-foreground flex justify-between items-center"
                               onClick={() => {
                                 setSelectedStudentId(student.id.toString())
                                 setIsStudentDropdownOpen(false)
                               }}
                             >
                               <div className="flex items-center gap-2">
-                                <span className="text-gray-600">{student.name}</span>
+                                <span className="text-muted-foreground">{student.name}</span>
                                 {selectedStudentId === student.id.toString() && (
-                                  <Check className="h-4 w-4 text-gray-400" />
+                                  <Check className="h-4 w-4 text-muted-foreground" />
                                 )}
                               </div>
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-muted-foreground">
                                 {student.remaining_hours_this_week ? `${student.remaining_hours_this_week}h left` : 'N/A'}
                               </span>
                             </div>
@@ -524,7 +524,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                       )}
                       
                       {students.length === 0 && (
-                        <div className="py-2 px-3 text-sm text-gray-500 text-center">No students found</div>
+                        <div className="py-2 px-3 text-sm text-muted-foreground text-center">No students found</div>
                       )}
                     </div>
                   </>
@@ -532,7 +532,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
               </div>
               <div className="w-1/3">
                 <select
-                  className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-gray-900"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
                   value={selectedPosition}
                   onChange={(e) => setSelectedPosition(e.target.value)}
                 >
@@ -546,7 +546,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                 type="button" 
                 onClick={handleAddAssignee}
                 disabled={!selectedStudentId || !selectedPosition}
-                className="bg-primary text-white hover:bg-primary-dark"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -554,16 +554,16 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
 
             {/* Assignees List */}
             {assignees.length > 0 && (
-              <div className="space-y-2 bg-gray-50/50 p-3 rounded-lg border border-gray-200">
+              <div className="space-y-2 bg-muted/50 p-3 rounded-lg border border-border">
                 {assignees.map((assignee) => (
-                  <div key={assignee.user.id} className="flex items-center justify-between bg-white p-2 rounded shadow-sm border border-gray-100">
+                  <div key={assignee.user.id} className="flex items-center justify-between bg-card p-2 rounded shadow-sm border border-border">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                         {assignee.user.name.substring(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{assignee.user.name}</p>
-                        <p className="text-xs text-gray-500">{assignee.position}</p>
+                        <p className="text-sm font-medium text-foreground">{assignee.user.name}</p>
+                        <p className="text-xs text-muted-foreground">{assignee.position}</p>
                       </div>
                     </div>
                     <Button
@@ -571,7 +571,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveAssignee(assignee.user.id)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -585,7 +585,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-primary hover:bg-primary-dark text-white" disabled={loading}>
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
               {loading ? (assignmentToEdit ? "Updating..." : "Creating...") : (assignmentToEdit ? "Update Assignment" : "Create Assignment")}
             </Button>
           </DialogFooter>

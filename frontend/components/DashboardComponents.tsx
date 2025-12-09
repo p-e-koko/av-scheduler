@@ -56,22 +56,22 @@ export function DashboardNavigation({
       } transition-all duration-300 flex-shrink-0`,
       className
     )}>
-      <div className="bg-white/80 backdrop-blur-xl border-r border-gray-300/30 shadow-lg shadow-gray-100/50 h-full flex flex-col">
+      <div className="bg-card/80 backdrop-blur-xl border-r border-border shadow-lg h-full flex flex-col">
         {/* Header */}
-        <div className={cn("bg-gradient-to-r text-white border-0 p-4", gradient)}>
+        <div className={cn("bg-gradient-to-r text-primary-foreground border-0 p-4", gradient)}>
           <div className="flex items-center justify-between">
             {(!collapsed || isMobile) ? (
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-primary-foreground/20 flex items-center justify-center">
                   <Calendar className="w-5 h-5" />
                 </div>
                 <div>
                   <h1 className="font-semibold text-lg">AV Scheduler</h1>
-                  <p className="text-xs text-white/80">{subtitle}</p>
+                  <p className="text-xs text-primary-foreground/80">{subtitle}</p>
                 </div>
               </div>
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-primary-foreground/20 flex items-center justify-center">
                 <Calendar className="w-5 h-5" />
               </div>
             )}
@@ -79,7 +79,7 @@ export function DashboardNavigation({
               variant="ghost" 
               size="icon" 
               onClick={onToggleCollapse}
-              className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
+              className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20 flex-shrink-0"
             >
               {collapsed ? (
                 isMobile ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
@@ -103,7 +103,7 @@ export function DashboardNavigation({
                       `flex items-center ${isMobile ? 'justify-start' : 'space-x-3'} cursor-pointer transition-colors rounded-lg p-3`,
                       item.active 
                         ? 'text-primary bg-primary/10 border border-primary/20' 
-                        : 'text-gray-600 hover:bg-gray-100'
+                        : 'text-muted-foreground hover:bg-muted'
                     )}
                   >
                     <div className="w-5 h-5 flex-shrink-0">
@@ -116,19 +116,19 @@ export function DashboardNavigation({
             </div>
 
             {/* User Footer */}
-            <div className="p-4 border-t border-gray-200/30">
+            <div className="p-4 border-t border-border">
               <div className="flex items-center space-x-3">
                 <Avatar className="h-10 w-10 flex-shrink-0">
                   <AvatarImage src={user.profile_picture_url || ""} />
-                  <AvatarFallback className="bg-primary text-white font-semibold">
+                  <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                     {getInitials(user.name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {user.name}
                   </p>
-                  <p className="text-xs text-gray-600 truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {user.email}
                   </p>
                 </div>
@@ -147,11 +147,11 @@ export function DashboardNavigation({
 
         {/* Collapsed state user */}
         {collapsed && !isMobile && (
-          <div className="p-4 border-t border-gray-200/30">
+          <div className="p-4 border-t border-border">
             <div className="flex flex-col items-center space-y-2">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={user.profile_picture_url || ""} />
-                <AvatarFallback className="bg-primary text-white font-semibold">
+                <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                   {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
@@ -183,7 +183,7 @@ export function MobileBottomNavigation({
 }: MobileBottomNavigationProps) {
   return (
     <div className={cn(
-      "fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-gray-300/30 shadow-lg",
+      "fixed bottom-0 left-0 right-0 bg-card/90 backdrop-blur-xl border-t border-border shadow-lg",
       className
     )}>
       <div className="flex items-center justify-around py-2">
@@ -195,7 +195,7 @@ export function MobileBottomNavigation({
               "flex flex-col items-center space-y-1 p-2 rounded-lg transition-colors",
               item.active 
                 ? "text-primary bg-primary/10" 
-                : "text-gray-600 hover:text-primary"
+                : "text-muted-foreground hover:text-primary"
             )}
           >
             <div className="w-6 h-6">
@@ -226,15 +226,15 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <header className={cn(
-      "bg-white/70 backdrop-blur-xl border-b border-gray-300/30 px-4 md:px-6 py-4 shadow-sm",
+      "bg-card/70 backdrop-blur-xl border-b border-border px-4 md:px-6 py-4 shadow-sm",
       className
     )}>
       <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
         <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+          <h1 className="text-xl md:text-2xl font-semibold text-foreground">
             {title}
           </h1>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {subtitle}
           </p>
         </div>

@@ -39,6 +39,7 @@ import { CreateAssignmentModal } from "@/components/CreateAssignmentModal"
 import { PositionModal } from "@/components/PositionModal"
 import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
+import { CoordinatorSidebar } from "@/components/CoordinatorSidebar"
 
 import { 
   authAPI,
@@ -56,12 +57,13 @@ import {
   type AssignmentsQueryParams,
   type UsersQueryParams
 } from "@/lib/api"
+import { ModeToggle } from "@/components/mode-toggle"
 
 function CoordinatorDashboard() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [activeTab, setActiveTab] = useState<"assignments" | "students" | "schedules" | "positions">("assignments")
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false)
@@ -299,197 +301,70 @@ function CoordinatorDashboard() {
       .slice(0, 2)
   }
 
-  const handleLogout = async () => {
-    try {
-      await authAPI.logout()
-      router.push('/login')
-    } catch (error) {
-      console.error('Logout error:', error)
-      router.push('/login')
-    }
-  }
-
   if (!currentUser) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-white">
-      {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0`}>
-        <div className="bg-white/80 backdrop-blur-xl border-r border-gray-300/30 shadow-lg shadow-gray-100/50 h-full flex flex-col">
-          {/* Sidebar Header - App Branding */}
-          <div className="bg-gradient-to-r from-primary to-primary-medium text-white border-0 p-4">
-            <div className="flex items-center justify-between">
-              {!sidebarCollapsed ? (
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h1 className="font-semibold text-lg">AV Scheduler</h1>
-                    <p className="text-xs text-white/80">Coordinator Dashboard</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                  <Calendar className="w-5 h-5" />
-                </div>
-              )}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
-              >
-                {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* Sidebar Navigation */}
-          <div className="flex-1 p-2">
-            <nav className="space-y-1">
-              <div 
-                onClick={() => setActiveTab("assignments")}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                  activeTab === "assignments" 
-                    ? 'text-primary bg-primary/10 border-primary/20' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors ${
-                  activeTab === "assignments" ? 'border' : ''
-                }`}
-              >
-                <ClipboardList className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span className="font-medium">Assignment Management</span>}
-              </div>
-              <div 
-                onClick={() => setActiveTab("students")}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                  activeTab === "students" 
-                    ? 'text-primary bg-primary/10 border-primary/20' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors ${
-                  activeTab === "students" ? 'border' : ''
-                }`}
-              >
-                <Users className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span className="font-medium">View Students</span>}
-              </div>
-              <div 
-                onClick={() => setActiveTab("schedules")}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                  activeTab === "schedules" 
-                    ? 'text-primary bg-primary/10 border-primary/20' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors ${
-                  activeTab === "schedules" ? 'border' : ''
-                }`}
-              >
-                <Clock className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span className="font-medium">Student Availability</span>}
-              </div>
-              <div 
-                onClick={() => setActiveTab("positions")}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                  activeTab === "positions" 
-                    ? 'text-primary bg-primary/10 border-primary/20' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors ${
-                  activeTab === "positions" ? 'border' : ''
-                }`}
-              >
-                <MapPin className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span className="font-medium">Position Management</span>}
-              </div>
-            </nav>
-          </div>
-
-          {/* Sidebar Footer - Current User */}
-          <div className="p-4 border-t border-gray-200/30">
-            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}>
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={currentUser.profile_picture_url || ""} />
-                <AvatarFallback className="bg-primary text-white font-semibold">
-                  {getInitials(currentUser.name)}
-                </AvatarFallback>
-              </Avatar>
-              {!sidebarCollapsed && (
-                <>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {currentUser.name}
-                    </p>
-                    <p className="text-xs text-gray-600 truncate">
-                      {currentUser.email}
-                    </p>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 flex-shrink-0"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-            {sidebarCollapsed && (
-              <div className="mt-2 flex justify-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={handleLogout}
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+    <div className="flex h-screen bg-background">
+      <CoordinatorSidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white/70 backdrop-blur-xl border-b border-gray-300/30 px-6 py-4 shadow-sm">
+        <header className="bg-card/70 backdrop-blur-xl border-b border-border px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground">
                 {activeTab === "assignments" && "Assignment Management"}
                 {activeTab === "students" && "View Students"}
                 {activeTab === "schedules" && "Student Availability"}
                 {activeTab === "positions" && "Position Management"}
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {activeTab === "assignments" && "Create and manage assignments for students"}
                 {activeTab === "students" && "View and manage student information"}
                 {activeTab === "schedules" && "Check who is available at specific times"}
                 {activeTab === "positions" && "Manage available positions and roles"}
               </p>
             </div>
-            {activeTab !== "schedules" && (
-              <Button 
-                className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
-                onClick={() => {
-                  if (activeTab === "assignments") {
-                    handleCreateAssignment()
-                  } else if (activeTab === "positions") {
-                    handleCreatePosition()
-                  } else {
-                    router.push('/student')
-                  }
-                }}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {activeTab === "assignments" && "Add Assignment"}
-                {activeTab === "students" && "View All Students"}
-                {activeTab === "positions" && "Add Position"}
-              </Button>
-            )}
+            </div>
+            <div className="flex items-center gap-4">
+              <ModeToggle />
+              {activeTab !== "schedules" && (
+                <Button 
+                  className="bg-gradient-to-r from-primary to-primary-medium text-primary-foreground hover:shadow-lg transition-all"
+                  onClick={() => {
+                    if (activeTab === "assignments") {
+                      handleCreateAssignment()
+                    } else if (activeTab === "positions") {
+                      handleCreatePosition()
+                    } else {
+                      router.push('/student')
+                    }
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {activeTab === "assignments" && "Add Assignment"}
+                  {activeTab === "students" && "View All Students"}
+                  {activeTab === "positions" && "Add Position"}
+                </Button>
+              )}
+            </div>
           </div>
         </header>
 
@@ -498,22 +373,22 @@ function CoordinatorDashboard() {
           {/* Assignment Management Tab */}
           {activeTab === "assignments" && (
             <div className="space-y-6">
-              <div className="bg-white/80 backdrop-blur-xl rounded-lg border border-gray-300/30 overflow-hidden">
-                <div className="p-6 border-b border-gray-200/50">
+              <div className="bg-card/80 backdrop-blur-xl rounded-lg border border-border overflow-hidden">
+                <div className="p-6 border-b border-border">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Assignments</h3>
+                    <h3 className="text-lg font-semibold text-foreground">Assignments</h3>
                     
                     <div className="flex flex-col md:flex-row gap-4">
                       {/* Filter Buttons */}
-                      <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+                      <div className="flex items-center bg-muted p-1 rounded-lg">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setAssignmentFilter('all')}
                           className={`transition-all duration-200 ${
                             assignmentFilter === 'all' 
-                              ? 'bg-white text-primary shadow-sm font-medium' 
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                              ? 'bg-background text-primary shadow-sm font-medium' 
+                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                           }`}
                         >
                           All
@@ -524,8 +399,8 @@ function CoordinatorDashboard() {
                           onClick={() => setAssignmentFilter('pending')}
                           className={`transition-all duration-200 ${
                             assignmentFilter === 'pending' 
-                              ? 'bg-white text-primary shadow-sm font-medium' 
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                              ? 'bg-background text-primary shadow-sm font-medium' 
+                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                           }`}
                         >
                           Pending
@@ -536,8 +411,8 @@ function CoordinatorDashboard() {
                           onClick={() => setAssignmentFilter('completed')}
                           className={`transition-all duration-200 ${
                             assignmentFilter === 'completed' 
-                              ? 'bg-white text-primary shadow-sm font-medium' 
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                              ? 'bg-background text-primary shadow-sm font-medium' 
+                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                           }`}
                         >
                           Completed
@@ -546,7 +421,7 @@ function CoordinatorDashboard() {
 
                       <div className="flex items-center space-x-2">
                         <select
-                          className="h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-gray-600 max-w-[150px]"
+                          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground max-w-[150px]"
                           value={studentFilter}
                           onChange={(e) => setStudentFilter(e.target.value)}
                         >
@@ -559,7 +434,7 @@ function CoordinatorDashboard() {
                         </select>
 
                         <select
-                          className="h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-gray-600"
+                          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground"
                           value={positionFilter}
                           onChange={(e) => setPositionFilter(e.target.value)}
                         >
@@ -572,10 +447,10 @@ function CoordinatorDashboard() {
                         </select>
 
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             placeholder="Search assignments..."
-                            className="pl-10 w-64 bg-white/80 backdrop-blur-xl border-gray-200 focus-visible:ring-0 focus-visible:border-primary"
+                            className="pl-10 w-64 bg-background/80 backdrop-blur-xl border-input focus-visible:ring-0 focus-visible:border-primary"
                             value={assignmentSearchQuery}
                             onChange={(e) => setAssignmentSearchQuery(e.target.value)}
                           />
@@ -586,9 +461,9 @@ function CoordinatorDashboard() {
                 </div>
                 <div className="p-6">
                   {loading ? (
-                    <div className="text-center py-8 text-gray-500">Loading assignments...</div>
+                    <div className="text-center py-8 text-muted-foreground">Loading assignments...</div>
                   ) : error ? (
-                    <div className="text-center py-8 text-red-500">{error}</div>
+                    <div className="text-center py-8 text-destructive">{error}</div>
                   ) : (
                     <div className="space-y-4">
                       {(assignments || [])
@@ -624,23 +499,23 @@ function CoordinatorDashboard() {
                           return true;
                         })
                         .map((assignment, index) => (
-                        <div key={`${assignment.id}-${index}`} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-lg">
+                        <div key={`${assignment.id}-${index}`} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                           <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                               <ClipboardList className="w-5 h-5 text-primary" />
                             </div>
                             <div>
-                              <h4 className="font-medium text-gray-900">{assignment.assignment_name}</h4>
-                              <p className="text-sm text-gray-600">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString('en-US')}</p>
+                              <h4 className="font-medium text-foreground">{assignment.assignment_name}</h4>
+                              <p className="text-sm text-muted-foreground">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString('en-US')}</p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Badge 
                               variant="secondary" 
                               className={`text-xs px-2 py-0.5 border-none ${
-                                assignment.status === 'complete' ? 'bg-green-100 text-green-800' :
+                                assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                                 assignment.status === 'confirmed' ? 'bg-primary/10 text-primary' :
-                                'bg-orange-100 text-orange-800'
+                                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                               }`}
                             >
                               {assignment.status}
@@ -652,7 +527,7 @@ function CoordinatorDashboard() {
                                 e.stopPropagation();
                                 handleViewAssignment(assignment);
                               }} 
-                              className="text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                              className="text-muted-foreground hover:text-foreground hover:bg-muted"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -663,7 +538,7 @@ function CoordinatorDashboard() {
                                 e.stopPropagation();
                                 handleEditAssignment(assignment);
                               }} 
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -674,7 +549,7 @@ function CoordinatorDashboard() {
                                 e.stopPropagation();
                                 handleDeleteAssignment(assignment.id);
                               }} 
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -682,7 +557,7 @@ function CoordinatorDashboard() {
                         </div>
                       ))}
                       {assignments.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">No assignments found</div>
+                        <div className="text-center py-8 text-muted-foreground">No assignments found</div>
                       )}
                     </div>
                   )}
@@ -698,12 +573,12 @@ function CoordinatorDashboard() {
               <div className="flex items-center justify-between mb-6">
                 {/* View Toggle */}
                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-xl rounded-lg p-1 border border-gray-300/30">
+                  <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
                     <Button
                       variant={viewMode === "card" ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setViewMode("card")}
-                      className={viewMode === "card" ? "bg-primary text-white" : "text-gray-700 hover:text-gray-900"}
+                      className={viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                     >
                       <Grid3X3 className="w-4 h-4 mr-1" />
                       Cards
@@ -712,7 +587,7 @@ function CoordinatorDashboard() {
                       variant={viewMode === "list" ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setViewMode("list")}
-                      className={viewMode === "list" ? "bg-primary text-white" : "text-gray-700 hover:text-gray-900"}
+                      className={viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                     >
                       <List className="w-4 h-4 mr-1" />
                       List
@@ -723,21 +598,21 @@ function CoordinatorDashboard() {
                 {/* Search */}
                 <div className="flex items-center space-x-3">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       placeholder="Search students..."
                       value={studentSearchQuery}
                       onChange={(e) => setStudentSearchQuery(e.target.value)}
-                      className="pl-10 w-64 bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary"
+                      className="pl-10 w-64 bg-card/80 backdrop-blur-xl border-border focus:border-primary"
                     />
                   </div>
                 </div>
               </div>
 
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Loading students...</div>
+                <div className="text-center py-8 text-muted-foreground">Loading students...</div>
               ) : error ? (
-                <div className="text-center py-8 text-red-500">{error}</div>
+                <div className="text-center py-8 text-destructive">{error}</div>
               ) : (
                 <>
                   {viewMode === "card" ? (
@@ -745,21 +620,21 @@ function CoordinatorDashboard() {
                       {(students || []).map((student) => (
                         <Card 
                           key={student.id} 
-                          className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all cursor-pointer h-32"
+                          className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10 transition-all cursor-pointer h-32"
                           onClick={() => router.push(`/student/${student.id}`)}
                         >
                           <CardContent className="p-4 h-full">
                             <div className="flex items-center space-x-4 h-full">
                               <Avatar className="h-16 w-16 flex-shrink-0">
                                 <AvatarImage src={student.profile_picture_url || ""} />
-                                <AvatarFallback className="bg-primary text-white font-semibold text-lg">
+                                <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
                                   {getInitials(student.name)}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex-1 min-w-0 space-y-1">
                                 <div>
-                                  <h3 className="font-semibold text-gray-900 text-sm truncate">{student.name}</h3>
-                                  <p className="text-xs text-gray-600 truncate">Student ID: {student.student_id || 'N/A'}</p>
+                                  <h3 className="font-semibold text-foreground text-sm truncate">{student.name}</h3>
+                                  <p className="text-xs text-muted-foreground truncate">Student ID: {student.student_id || 'N/A'}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="secondary" className="text-xs px-2 py-0.5">Student</Badge>
@@ -772,46 +647,46 @@ function CoordinatorDashboard() {
                       ))}
                     </div>
                   ) : (
-                    <div className="bg-white/80 backdrop-blur-xl rounded-lg border border-gray-300/30 overflow-hidden">
+                    <div className="bg-card/80 backdrop-blur-xl rounded-lg border border-border overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full">
-                          <thead className="bg-gray-50/50">
+                          <thead className="bg-muted/50">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Student
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Role
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Hours
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Email
                               </th>
-                              <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Actions
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-200/50">
+                          <tbody className="divide-y divide-border">
                             {(students || []).map((student) => (
                               <tr 
                                 key={student.id} 
-                                className="hover:bg-gray-50/30 transition-colors cursor-pointer"
+                                className="hover:bg-muted/30 transition-colors cursor-pointer"
                                 onClick={() => router.push(`/student/${student.id}`)}
                               >
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex items-center">
                                     <Avatar className="h-10 w-10">
                                       <AvatarImage src={student.profile_picture_url || ""} />
-                                      <AvatarFallback className="bg-primary text-white font-semibold">
+                                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                                         {getInitials(student.name)}
                                       </AvatarFallback>
                                     </Avatar>
                                     <div className="ml-4">
-                                      <div className="text-sm font-medium text-gray-900">{student.name}</div>
-                                      <div className="text-sm text-gray-600">{student.student_id || 'No Student ID'}</div>
+                                      <div className="text-sm font-medium text-foreground">{student.name}</div>
+                                      <div className="text-sm text-muted-foreground">{student.student_id || 'No Student ID'}</div>
                                     </div>
                                   </div>
                                 </td>
@@ -822,19 +697,19 @@ function CoordinatorDashboard() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex flex-col gap-1">
-                                    <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200">
+                                    <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
                                       {student.promised_hours_per_week || '0'}h Promised
                                     </Badge>
                                     <Badge variant="outline" className={`text-xs w-fit ${
                                       (student.remaining_hours || 0) > 0 
-                                        ? 'bg-orange-50 text-orange-700 border-orange-200' 
-                                        : 'bg-green-50 text-green-700 border-green-200'
+                                        ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800' 
+                                        : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
                                     }`}>
                                       {student.remaining_hours ? Number(student.remaining_hours).toFixed(1) : '0'}h Remaining
                                     </Badge>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                   {student.email}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -861,7 +736,7 @@ function CoordinatorDashboard() {
                   {/* Pagination */}
                   {studentPagination && studentPagination.last_page > 1 && (
                     <div className="mt-6 flex items-center justify-between">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         Showing {studentPagination.from} to {studentPagination.to} of {studentPagination.total} results
                       </p>
                       <div className="flex items-center space-x-2">
@@ -870,11 +745,11 @@ function CoordinatorDashboard() {
                           size="sm"
                           disabled={studentCurrentPage === 1}
                           onClick={() => setStudentCurrentPage(studentCurrentPage - 1)}
-                          className="bg-white/80 backdrop-blur-xl border-gray-300/30"
+                          className="bg-card/80 backdrop-blur-xl border-border"
                         >
                           Previous
                         </Button>
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-muted-foreground">
                           Page {studentCurrentPage} of {studentPagination.last_page}
                         </span>
                         <Button
@@ -882,7 +757,7 @@ function CoordinatorDashboard() {
                           size="sm"
                           disabled={studentCurrentPage === studentPagination.last_page}
                           onClick={() => setStudentCurrentPage(studentCurrentPage + 1)}
-                          className="bg-white/80 backdrop-blur-xl border-gray-300/30"
+                          className="bg-card/80 backdrop-blur-xl border-border"
                         >
                           Next
                         </Button>
@@ -891,7 +766,7 @@ function CoordinatorDashboard() {
                   )}
 
                   {students.length === 0 && (
-                    <div className="col-span-full text-center py-8 text-gray-500">No students found</div>
+                    <div className="col-span-full text-center py-8 text-muted-foreground">No students found</div>
                   )}
                 </>
               )}
@@ -901,14 +776,14 @@ function CoordinatorDashboard() {
           {/* Schedules Tab */}
           {activeTab === "schedules" && (
             <div className="space-y-6">
-              <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
+              <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-gray-900 font-bold">Daily Availability View</CardTitle>
-                  <div className="flex items-center bg-white rounded-lg border border-gray-200 shadow-sm p-1">
+                  <CardTitle className="text-foreground font-bold">Daily Availability View</CardTitle>
+                  <div className="flex items-center bg-card rounded-lg border border-border shadow-sm p-1">
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 hover:bg-gray-100 rounded-md text-gray-600"
+                      className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
                       onClick={() => {
                         const date = new Date(selectedDate)
                         date.setDate(date.getDate() - 1)
@@ -925,14 +800,14 @@ function CoordinatorDashboard() {
                         type="date" 
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-auto border-0 focus-visible:ring-0 h-8 font-medium text-gray-700 bg-transparent p-0"
+                        className="w-auto border-0 focus-visible:ring-0 h-8 font-medium text-foreground bg-transparent p-0"
                       />
                     </div>
 
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 hover:bg-gray-100 rounded-md text-gray-600"
+                      className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
                       onClick={() => {
                         const date = new Date(selectedDate)
                         date.setDate(date.getDate() + 1)
@@ -946,7 +821,7 @@ function CoordinatorDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     {loading ? (
-                      <div className="text-center py-8 text-gray-500">Loading availability...</div>
+                      <div className="text-center py-8 text-muted-foreground">Loading availability...</div>
                     ) : (
                       <div className="space-y-2">
                         {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => { // 7 AM to 9 PM
@@ -967,8 +842,8 @@ function CoordinatorDashboard() {
                           const uniqueStudents = Array.from(new Map(availableStudents.map(item => [item.student_id, item.user])).values()).filter(Boolean);
 
                           return (
-                            <div key={hour} className="flex border-b border-gray-100 py-3 last:border-0">
-                              <div className="w-20 flex-shrink-0 font-medium text-gray-500 pt-2">
+                            <div key={hour} className="flex border-b border-border py-3 last:border-0">
+                              <div className="w-20 flex-shrink-0 font-medium text-muted-foreground pt-2">
                                 {timeString}
                               </div>
                               <div className="flex-1">
@@ -994,13 +869,13 @@ function CoordinatorDashboard() {
                                           key={student.id} 
                                           className={`
                                             flex items-center space-x-2 
-                                            bg-white border-l-[3px] ${style.border}
+                                            bg-card border-l-[3px] ${style.border}
                                             rounded-r-lg rounded-l-[2px]
                                             pl-2 pr-3 py-1.5 
                                             cursor-pointer 
                                             transition-all duration-300 
-                                            hover:scale-105 shadow-sm hover:shadow-md hover:bg-gray-50
-                                            border-y border-r border-gray-100
+                                            hover:scale-105 shadow-sm hover:shadow-md hover:bg-muted
+                                            border-y border-r border-border
                                             group
                                           `}
                                           onClick={() => router.push(`/student/${student.id}`)}
@@ -1011,7 +886,7 @@ function CoordinatorDashboard() {
                                               {getInitials(student.name)}
                                             </AvatarFallback>
                                           </Avatar>
-                                          <span className="text-xs font-bold text-gray-700 group-hover:text-gray-900 transition-colors tracking-wide">
+                                          <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors tracking-wide">
                                             {student.name}
                                           </span>
                                         </div>
@@ -1019,7 +894,7 @@ function CoordinatorDashboard() {
                                     })}
                                   </div>
                                 ) : (
-                                  <div className="text-sm text-gray-400 italic pt-2">No students available</div>
+                                  <div className="text-sm text-muted-foreground italic pt-2">No students available</div>
                                 )}
                               </div>
                             </div>
@@ -1037,39 +912,39 @@ function CoordinatorDashboard() {
           {activeTab === "positions" && (
             <div className="space-y-6">
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Loading positions...</div>
+                <div className="text-center py-8 text-muted-foreground">Loading positions...</div>
               ) : error ? (
-                <div className="text-center py-8 text-red-500">{error}</div>
+                <div className="text-center py-8 text-destructive">{error}</div>
               ) : (
                 <>
                   <div className="flex justify-end">
-                    <Button onClick={handleCreatePosition} className="bg-primary text-white hover:bg-primary/90">
+                    <Button onClick={handleCreatePosition} className="bg-primary text-primary-foreground hover:bg-primary/90">
                       <Plus className="mr-2 h-4 w-4" /> Add Position
                     </Button>
                   </div>
-                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
                     <table className="w-full">
-                      <thead className="bg-gray-50/50">
+                      <thead className="bg-muted/50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Description</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200/50">
+                      <tbody className="divide-y divide-border">
                         {(positions || []).map((position) => (
-                          <tr key={position.id} className="hover:bg-gray-50/30 transition-colors">
+                          <tr key={position.id} className="hover:bg-muted/30 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center space-x-3">
                                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                                   <MapPin className="w-4 h-4 text-primary" />
                                 </div>
-                                <span className="font-medium text-gray-900">{position.name}</span>
+                                <span className="font-medium text-foreground">{position.name}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <p className="text-sm text-gray-600 line-clamp-1">{position.description || 'No description'}</p>
+                              <p className="text-sm text-muted-foreground line-clamp-1">{position.description || 'No description'}</p>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <Badge variant={position.is_active ? "secondary" : "outline"}>
@@ -1079,9 +954,9 @@ function CoordinatorDashboard() {
                             <td className="px-6 py-4 whitespace-nowrap text-right">
                               <div className="flex justify-end space-x-2">
                                 <Button variant="ghost" size="sm" onClick={() => handleEditPosition(position)} className="h-8 w-8 p-0">
-                                  <Edit className="h-4 w-4 text-gray-500" />
+                                  <Edit className="h-4 w-4 text-muted-foreground" />
                                 </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleDeletePosition(position.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+                                <Button variant="ghost" size="sm" onClick={() => handleDeletePosition(position.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -1091,7 +966,7 @@ function CoordinatorDashboard() {
                       </tbody>
                     </table>
                     {(positions || []).length === 0 && (
-                      <div className="text-center py-8 text-gray-500">No positions found</div>
+                      <div className="text-center py-8 text-muted-foreground">No positions found</div>
                     )}
                   </div>
                 </>

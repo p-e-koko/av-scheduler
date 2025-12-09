@@ -78,7 +78,7 @@ export function PositionModal({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+            <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm border border-destructive/20">
               {error}
             </div>
           )}

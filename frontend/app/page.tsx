@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Calendar } from 'lucide-react'
+import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { getStoredUser, hasAnyRole } from '@/lib/api'
 import { getRoleBasedDashboardPath } from '@/lib/role-routing'
@@ -30,23 +31,26 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-white">
-        <div className="text-gray-500">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-white">
+    <div className="flex min-h-screen items-center justify-center bg-background relative">
+      <div className="absolute top-4 right-4">
+        <ModeToggle />
+      </div>
       <main className="flex flex-col items-center justify-center text-center max-w-md mx-auto px-6">
         {/* App Logo and Branding */}
         <div className="flex items-center space-x-3 mb-8">
           <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-primary to-primary-medium flex items-center justify-center">
-            <Calendar className="w-8 h-8 text-white" />
+            <Calendar className="w-8 h-8 text-primary-foreground" />
           </div>
           <div className="text-left">
-            <h1 className="text-3xl font-bold text-gray-900">AV Scheduler</h1>
-            <p className="text-sm text-gray-600">Audio Visual Management System</p>
+            <h1 className="text-3xl font-bold text-foreground">AV Scheduler</h1>
+            <p className="text-sm text-muted-foreground">Audio Visual Management System</p>
           </div>
         </div>
 

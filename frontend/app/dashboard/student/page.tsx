@@ -22,7 +22,8 @@ import {
   MapPin,
   Star,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Menu
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -45,12 +46,13 @@ import {
   type Assignment,
   type Availability
 } from "@/lib/api"
+import { StudentSidebar } from "@/components/StudentSidebar"
 
 function StudentDashboard() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<UserType | null>(null)
   const [activeTab, setActiveTab] = useState<"profile" | "assignments" | "schedule">("profile")
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [assignmentFilter, setAssignmentFilter] = useState<"all" | "me">("all")
@@ -245,14 +247,14 @@ function StudentDashboard() {
       const startDateTime = new Date(`${dateStr}T${slot.start_time}`)
       const endDateTime = new Date(`${dateStr}T${slot.end_time}`)
       
-      let color = "bg-green-100 text-green-800 border-green-200"
+      let color = "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800"
       let title = "Available"
       
       if (slot.status === 'unavailable') {
-        color = "bg-red-100 text-red-800 border-red-200"
+        color = "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
         title = "Unavailable"
       } else if (slot.status === 'class') {
-        color = "bg-blue-100 text-blue-800 border-blue-200"
+        color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
         title = "Class"
       }
       
@@ -272,20 +274,20 @@ function StudentDashboard() {
     switch (status) {
       case 'confirmed':
       case 'complete':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
       case 'pending':
-        return 'bg-orange-100 text-orange-800'
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
       case 'available':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
       case 'unavailable':
       case 'busy':
-        return 'bg-red-100 text-red-800'
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
       case 'class':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
       case 'tentative':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
     }
   }
 
@@ -322,151 +324,49 @@ function StudentDashboard() {
   }
 
   return (
-    <div className={`flex h-screen bg-gradient-to-br from-slate-50 to-white ${isMobile ? 'flex-col' : ''}`}>
-      {/* Sidebar - Collapsible on mobile */}
-      <div className={`${
-        isMobile 
-          ? sidebarCollapsed ? 'h-16' : 'h-64' 
-          : sidebarCollapsed ? 'w-16' : 'w-64'
-      } transition-all duration-300 flex-shrink-0`}>
-        <div className="bg-white/80 backdrop-blur-xl border-r border-gray-300/30 shadow-lg shadow-gray-100/50 h-full flex flex-col">
-          {/* Sidebar Header - App Branding */}
-          <div className="bg-gradient-to-r from-primary to-primary-medium text-white border-0 p-4">
-            <div className="flex items-center justify-between">
-              {(!sidebarCollapsed || isMobile) ? (
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h1 className="font-semibold text-lg">AV Scheduler</h1>
-                    <p className="text-xs text-white/80">Student Portal</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                  <Calendar className="w-5 h-5" />
-                </div>
-              )}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
-              >
-                {sidebarCollapsed ? (
-                  isMobile ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
-                ) : (
-                  isMobile ? <ChevronUp className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {/* Sidebar Navigation */}
-          {!sidebarCollapsed && (
-            <div className="flex-1 p-2">
-              <nav className="space-y-1">
-                <div 
-                  onClick={() => setActiveTab("profile")}
-                  className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                    activeTab === "profile" 
-                      ? 'text-primary bg-primary/10 border-primary/20' 
-                      : 'text-gray-600 hover:bg-gray-100'
-                  } hover:bg-primary/20 rounded-lg p-3 cursor-pointer transition-colors ${
-                    activeTab === "profile" ? 'border' : ''
-                  }`}
-                >
-                  <User className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium">Profile</span>
-                </div>
-                <div 
-                  onClick={() => setActiveTab("assignments")}
-                  className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                    activeTab === "assignments" 
-                      ? 'text-primary bg-primary/10 border-primary/20' 
-                      : 'text-gray-600 hover:bg-gray-100'
-                  } hover:bg-primary/20 rounded-lg p-3 cursor-pointer transition-colors ${
-                    activeTab === "assignments" ? 'border' : ''
-                  }`}
-                >
-                  <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium">Assignments</span>
-                </div>
-                <div 
-                  onClick={() => setActiveTab("schedule")}
-                  className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                    activeTab === "schedule" 
-                      ? 'text-primary bg-primary/10 border-primary/20' 
-                      : 'text-gray-600 hover:bg-gray-100'
-                  } hover:bg-primary/20 rounded-lg p-3 cursor-pointer transition-colors ${
-                    activeTab === "schedule" ? 'border' : ''
-                  }`}
-                >
-                  <Clock className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium">My Schedule</span>
-                </div>
-              </nav>
-            </div>
-          )}
-
-          {/* Sidebar Footer - Current User */}
-          {!sidebarCollapsed && (
-            <div className="p-4 border-t border-gray-200/30">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-10 w-10 flex-shrink-0">
-                  <AvatarImage src={currentUser.profile_picture_url || ""} />
-                  <AvatarFallback className="bg-primary text-white font-semibold">
-                    {getInitials(currentUser.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {currentUser.name}
-                  </p>
-                  <p className="text-xs text-gray-600 truncate">
-                    {currentUser.email}
-                  </p>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 flex-shrink-0"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+    <div className="flex h-screen bg-background">
+      <StudentSidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white/70 backdrop-blur-xl border-b border-gray-300/30 px-4 md:px-6 py-4 shadow-sm">
+        <header className="bg-card/70 backdrop-blur-xl border-b border-border px-4 md:px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+              <div>
+                <h1 className="text-xl md:text-2xl font-semibold text-foreground">
                 {activeTab === "profile" && "My Profile"}
                 {activeTab === "assignments" && "My Assignments"}
                 {activeTab === "schedule" && "My Schedule"}
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {activeTab === "profile" && "Manage your profile and skills"}
                 {activeTab === "assignments" && "View and track your assignments"}
                 {activeTab === "schedule" && "Manage your availability"}
               </p>
             </div>
+            </div>
             {activeTab === "assignments" && (
               <div className="flex items-center space-x-2">
-                <div className="flex items-center bg-white/80 backdrop-blur-xl rounded-lg p-1 border border-gray-300/30">
+                <div className="flex items-center bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
                   <Button
                     variant={assignmentFilter === "all" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setAssignmentFilter("all")}
-                    className={assignmentFilter === "all" ? "bg-primary text-white" : "text-gray-700"}
+                    className={assignmentFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                   >
                     All
                   </Button>
@@ -474,7 +374,7 @@ function StudentDashboard() {
                     variant={assignmentFilter === "me" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setAssignmentFilter("me")}
-                    className={assignmentFilter === "me" ? "bg-primary text-white" : "text-gray-700"}
+                    className={assignmentFilter === "me" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                   >
                     Mine
                   </Button>
@@ -492,53 +392,53 @@ function StudentDashboard() {
               {/* Left Column - Profile Info */}
               <div className="lg:col-span-1 space-y-6">
                 {/* Profile Card */}
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
+                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                   <CardContent className="p-6">
                     <div className="text-center mb-6">
                       <div className="relative inline-block">
                         <Avatar className="h-24 w-24 mx-auto">
                           <AvatarImage src={currentUser.profile_picture_url || ""} />
-                          <AvatarFallback className="bg-primary text-white text-2xl font-semibold">
+                          <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
                             {getInitials(currentUser.name)}
                           </AvatarFallback>
                         </Avatar>
                         <Button
                           size="icon"
-                          className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-primary hover:bg-primary-dark"
+                          className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-primary hover:bg-primary-dark text-primary-foreground"
                         >
-                          <Camera className="h-4 w-4 text-white" />
+                          <Camera className="h-4 w-4" />
                         </Button>
                       </div>
                       
-                      <h3 className="text-xl font-semibold text-gray-900 mt-4">{currentUser.name}</h3>
-                      <p className="text-gray-600">{currentUser.email}</p>
+                      <h3 className="text-xl font-semibold text-foreground mt-4">{currentUser.name}</h3>
+                      <p className="text-muted-foreground">{currentUser.email}</p>
                       {currentUser.student_id && (
-                        <p className="text-sm text-gray-500 mt-1">ID: {currentUser.student_id}</p>
+                        <p className="text-sm text-muted-foreground mt-1">ID: {currentUser.student_id}</p>
                       )}
                     </div>
 
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Status</span>
-                        <Badge className="bg-green-100 text-green-800">Active Student</Badge>
+                        <span className="text-sm text-muted-foreground">Status</span>
+                        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active Student</Badge>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Role</span>
+                        <span className="text-sm text-muted-foreground">Role</span>
                         <Badge variant="secondary">Student</Badge>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">Promised Hours/Week</span>
-                        <span className="font-medium text-gray-900">{currentUser.promised_hours_per_week || '0'}h</span>
+                        <span className="text-sm text-muted-foreground">Promised Hours/Week</span>
+                        <span className="font-medium text-foreground">{currentUser.promised_hours_per_week || '0'}h</span>
                       </div>
 
                       <div className="pt-4 space-y-2">
-                        <Button className="w-full bg-primary hover:bg-primary-dark">
+                        <Button className="w-full bg-primary hover:bg-primary-dark text-primary-foreground">
                           <Edit className="w-4 h-4 mr-2" />
                           Edit Profile
                         </Button>
-                        <Button variant="outline" className="w-full">
+                        <Button variant="outline" className="w-full border-border hover:bg-accent hover:text-accent-foreground">
                           <Star className="w-4 h-4 mr-2" />
                           Update Skills
                         </Button>
@@ -551,9 +451,9 @@ function StudentDashboard() {
               {/* Right Column - Hours & Availability */}
               <div className="lg:col-span-2 space-y-6">
                 {/* Hours Summary Card */}
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
+                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                   <CardHeader>
-                    <CardTitle className="flex items-center text-gray-900">
+                    <CardTitle className="flex items-center text-foreground">
                       <Clock className="w-5 h-5 mr-2 text-primary" />
                       Hours Summary (This Week)
                     </CardTitle>
@@ -561,26 +461,26 @@ function StudentDashboard() {
                   <CardContent>
                     <div className="space-y-6">
                       <div className="grid grid-cols-3 gap-4 text-center">
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                          <p className="text-sm text-gray-600 mb-1">Promised</p>
-                          <p className="text-2xl font-bold text-blue-700">{hoursData.promised}h</p>
+                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <p className="text-sm text-muted-foreground mb-1">Promised</p>
+                          <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{hoursData.promised}h</p>
                         </div>
-                        <div className="p-4 bg-green-50 rounded-lg">
-                          <p className="text-sm text-gray-600 mb-1">Worked</p>
-                          <p className="text-2xl font-bold text-green-700">{hoursData.worked.toFixed(1)}h</p>
+                        <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <p className="text-sm text-muted-foreground mb-1">Worked</p>
+                          <p className="text-2xl font-bold text-green-700 dark:text-green-400">{hoursData.worked.toFixed(1)}h</p>
                         </div>
-                        <div className="p-4 bg-orange-50 rounded-lg">
-                          <p className="text-sm text-gray-600 mb-1">Remaining</p>
-                          <p className="text-2xl font-bold text-orange-700">{hoursData.remaining.toFixed(1)}h</p>
+                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                          <p className="text-sm text-muted-foreground mb-1">Remaining</p>
+                          <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">{hoursData.remaining.toFixed(1)}h</p>
                         </div>
                       </div>
                       
                       <div className="space-y-2">
-                        <div className="flex justify-between text-sm text-gray-600">
+                        <div className="flex justify-between text-sm text-muted-foreground">
                           <span>Progress</span>
                           <span>{Math.round(hoursData.percentage)}%</span>
                         </div>
-                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-3 bg-secondary rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-primary transition-all duration-500 ease-out"
                             style={{ width: `${hoursData.percentage}%` }}
@@ -592,9 +492,9 @@ function StudentDashboard() {
                 </Card>
 
                 {/* Availability Schedule */}
-                <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden">
-                  <div className="p-6 border-b border-gray-100">
-                    <h3 className="text-lg font-semibold flex items-center text-gray-900">
+                <div className="bg-card/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden">
+                  <div className="p-6 border-b border-border">
+                    <h3 className="text-lg font-semibold flex items-center text-foreground">
                       <Calendar className="w-5 h-5 mr-2 text-primary" />
                       Availability Schedule
                     </h3>
@@ -616,54 +516,54 @@ function StudentDashboard() {
             <div className="space-y-6">
               {/* Assignment Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20">
+                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20">
                   <CardContent className="p-4 md:p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Total Assignments</p>
+                        <p className="text-sm font-medium text-muted-foreground">Total Assignments</p>
                         <p className="text-xl md:text-2xl font-bold text-primary">{assignmentStats.total}</p>
                       </div>
                       <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-primary" />
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-green-500/20">
+                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-green-500/20">
                   <CardContent className="p-4 md:p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Completed</p>
-                        <p className="text-xl md:text-2xl font-bold text-green-600">{assignmentStats.completed}</p>
+                        <p className="text-sm font-medium text-muted-foreground">Completed</p>
+                        <p className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-400">{assignmentStats.completed}</p>
                       </div>
-                      <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-green-600" />
+                      <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-green-600 dark:text-green-400" />
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-orange-500/20">
+                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-orange-500/20">
                   <CardContent className="p-4 md:p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">In Progress</p>
-                        <p className="text-xl md:text-2xl font-bold text-orange-600">{assignmentStats.inProgress}</p>
+                        <p className="text-sm font-medium text-muted-foreground">In Progress</p>
+                        <p className="text-xl md:text-2xl font-bold text-orange-600 dark:text-orange-400">{assignmentStats.inProgress}</p>
                       </div>
-                      <Clock className="h-6 w-6 md:h-8 md:w-8 text-orange-600" />
+                      <Clock className="h-6 w-6 md:h-8 md:w-8 text-orange-600 dark:text-orange-400" />
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-red-500/20">
+                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-red-500/20">
                   <CardContent className="p-4 md:p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">Pending</p>
-                        <p className="text-xl md:text-2xl font-bold text-red-600">{assignmentStats.pending}</p>
+                        <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                        <p className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">{assignmentStats.pending}</p>
                       </div>
-                      <AlertCircle className="h-6 w-6 md:h-8 md:w-8 text-red-600" />
+                      <AlertCircle className="h-6 w-6 md:h-8 md:w-8 text-red-600 dark:text-red-400" />
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
               {/* Assignments List */}
-              <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
+              <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                 <CardHeader>
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0">
                     <CardTitle>
@@ -671,17 +571,18 @@ function StudentDashboard() {
                     </CardTitle>
                     <div className="flex items-center space-x-2">
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           placeholder="Search..."
-                          className="pl-10 w-full md:w-64 bg-white/80"
+                          className="pl-10 w-full md:w-64 bg-card/80"
                         />
                       </div>
-                      <div className="flex items-center bg-white/80 backdrop-blur-xl rounded-lg p-1 border border-gray-300/30">
+                      <div className="flex items-center bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
                         <Button
                           variant={viewMode === "card" ? "default" : "ghost"}
                           size="sm"
                           onClick={() => setViewMode("card")}
+                          className={viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                         >
                           <Grid className="w-4 h-4" />
                         </Button>
@@ -689,6 +590,7 @@ function StudentDashboard() {
                           variant={viewMode === "list" ? "default" : "ghost"}
                           size="sm"
                           onClick={() => setViewMode("list")}
+                          className={viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                         >
                           <List className="w-4 h-4" />
                         </Button>
@@ -698,9 +600,9 @@ function StudentDashboard() {
                 </CardHeader>
                 <CardContent>
                   {loading ? (
-                    <div className="text-center py-8 text-gray-500">Loading assignments...</div>
+                    <div className="text-center py-8 text-muted-foreground">Loading assignments...</div>
                   ) : error ? (
-                    <div className="text-center py-8 text-red-500">{error}</div>
+                    <div className="text-center py-8 text-destructive">{error}</div>
                   ) : (
                     <div className={viewMode === "card" 
                       ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" 
@@ -710,40 +612,40 @@ function StudentDashboard() {
                       {(assignmentFilter === "all" ? assignments : myAssignments).map((assignment) => (
                         <div key={assignment.id} className={`${
                           viewMode === "card" 
-                            ? "p-4 bg-gray-50/50 rounded-lg border" 
-                            : "flex items-center justify-between p-4 bg-gray-50/50 rounded-lg"
+                            ? "p-4 bg-muted/50 rounded-lg border border-border" 
+                            : "flex items-center justify-between p-4 bg-muted/50 rounded-lg"
                         }`}>
                           <div className={`${viewMode === "card" ? "space-y-3" : "flex items-center space-x-4"}`}>
                             {viewMode === "card" && (
                               <div className="flex items-center justify-between">
                                 <Badge className={`${
-                                  assignment.status === 'complete' ? 'bg-green-100 text-green-800' :
-                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800' :
-                                  'bg-blue-100 text-blue-800'
+                                  assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                                 }`}>
                                   {assignment.status}
                                 </Badge>
-                                <Clock className="w-4 h-4 text-gray-400" />
+                                <Clock className="w-4 h-4 text-muted-foreground" />
                               </div>
                             )}
                             <div className={`${viewMode === "card" ? "" : "flex items-center space-x-3"}`}>
                               {viewMode === "list" && (
-                                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                  <MapPin className="w-5 h-5 text-blue-600" />
+                                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                                  <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                 </div>
                               )}
                               <div>
-                                <h4 className="font-semibold text-gray-900">{assignment.assignment_name}</h4>
-                                <p className="text-sm text-gray-600">{assignment.event_name} • {assignment.event_location}</p>
-                                <p className="text-xs text-gray-500">{new Date(assignment.event_start_datetime).toLocaleDateString()}</p>
+                                <h4 className="font-semibold text-foreground">{assignment.assignment_name}</h4>
+                                <p className="text-sm text-muted-foreground">{assignment.event_name} • {assignment.event_location}</p>
+                                <p className="text-xs text-muted-foreground">{new Date(assignment.event_start_datetime).toLocaleDateString()}</p>
                               </div>
                             </div>
                             {viewMode === "list" && (
                               <div className="flex items-center space-x-2">
                                 <Badge className={`${
-                                  assignment.status === 'complete' ? 'bg-green-100 text-green-800' :
-                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800' :
-                                  'bg-blue-100 text-blue-800'
+                                  assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                                 }`}>
                                   {assignment.status}
                                 </Badge>
@@ -752,7 +654,7 @@ function StudentDashboard() {
                           </div>
                           {viewMode === "card" && (
                             <div className="space-y-2 mt-4">
-                              <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700">
+                              <Button size="sm" className="w-full bg-primary hover:bg-primary-dark text-primary-foreground">
                                 View Details
                               </Button>
                               
@@ -764,7 +666,7 @@ function StudentDashboard() {
                                       <>
                                         <Button 
                                           size="sm" 
-                                          className="flex-1 bg-green-600 hover:bg-green-700"
+                                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                                           onClick={() => handleAcceptAssignment(assignment.id)}
                                         >
                                           Accept
@@ -792,18 +694,18 @@ function StudentDashboard() {
                                      {assignment.pivot.status === 'rejected' && (
                                        <Button 
                                           size="sm" 
-                                          className="flex-1 bg-green-600 hover:bg-green-700"
+                                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                                           onClick={() => handleAcceptAssignment(assignment.id)}
                                         >
                                           Accept
                                         </Button>
                                     )}
                                   </div>
-                                  <div className="text-xs text-center text-gray-500">
+                                  <div className="text-xs text-center text-muted-foreground">
                                     My Status: <span className={`font-medium capitalize ${
-                                      assignment.pivot.status === 'accepted' ? 'text-green-600' :
-                                      assignment.pivot.status === 'rejected' ? 'text-red-600' :
-                                      'text-orange-600'
+                                      assignment.pivot.status === 'accepted' ? 'text-green-600 dark:text-green-400' :
+                                      assignment.pivot.status === 'rejected' ? 'text-red-600 dark:text-red-400' :
+                                      'text-orange-600 dark:text-orange-400'
                                     }`}>{assignment.pivot.status}</span>
                                   </div>
                                 </div>
@@ -813,7 +715,7 @@ function StudentDashboard() {
                         </div>
                       ))}
                       {(assignmentFilter === "all" ? assignments : myAssignments).length === 0 && (
-                        <div className="col-span-full text-center py-8 text-gray-500">
+                        <div className="col-span-full text-center py-8 text-muted-foreground">
                           No assignments found
                         </div>
                       )}
@@ -828,10 +730,10 @@ function StudentDashboard() {
           {activeTab === "schedule" && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">My Schedule</h2>
+                <h2 className="text-lg font-semibold text-foreground">My Schedule</h2>
                 <Button 
                   size="sm" 
-                  className="bg-blue-600 hover:bg-blue-700" 
+                  className="bg-primary hover:bg-primary-dark text-primary-foreground" 
                   onClick={() => setIsAddAvailabilityModalOpen(true)}
                 >
                   <Plus className="w-4 h-4 mr-1" />

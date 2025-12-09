@@ -44,6 +44,7 @@ import {
   type User,
   UsersListResponse
 } from "@/lib/api"
+import { ModeToggle } from "@/components/mode-toggle"
 
 function AdminDashboard() {
   const router = useRouter()
@@ -55,7 +56,6 @@ function AdminDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [selectedRole, setSelectedRole] = useState<string>("")
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [showEditUserModal, setShowEditUserModal] = useState(false)
@@ -220,140 +220,35 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-white">
-      {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0`}>
-        <div className="bg-white/80 backdrop-blur-xl border-r border-gray-300/30 shadow-lg shadow-gray-100/50 h-full flex flex-col">
-          {/* Sidebar Header - App Branding */}
-          <div className="bg-gradient-to-r from-primary to-primary-medium text-white border-0 p-4">
-            <div className="flex items-center justify-between">
-              {!sidebarCollapsed ? (
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h1 className="font-semibold text-lg">AV Scheduler</h1>
-                    <p className="text-xs text-white/80">Admin Dashboard</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                  <Calendar className="w-5 h-5" />
-                </div>
-              )}
+    <>
+      {/* Header */}
+      <header className="bg-card/70 backdrop-blur-xl border-b border-border px-6 py-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">User Management</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage users, roles, and permissions</p>
+          </div>
+          {hasAnyRole(['admin']) && (
+            <div className="flex space-x-2">
               <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
+                variant="outline"
+                onClick={() => router.push('/student')}
+                className="bg-card/80 backdrop-blur-xl border-border"
               >
-                {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                <Users className="w-4 h-4 mr-2" />
+                All Students
+              </Button>
+              <Button 
+                className="bg-gradient-to-r from-primary to-primary-medium text-primary-foreground hover:shadow-lg transition-all"
+                onClick={handleAddUser}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add User
               </Button>
             </div>
-          </div>
-
-          {/* Sidebar Navigation */}
-          <div className="flex-1 p-2">
-            <nav className="space-y-1">
-              <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-primary bg-primary/10 hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-primary/20`}>
-                <Users className="w-5 h-5 flex-shrink-0 text-primary" />
-                {!sidebarCollapsed && <span className="font-medium text-primary">User Management</span>}
-              </div>
-              <div 
-                onClick={() => router.push('/dashboard/admin/account-recovery')}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-gray-600 hover:bg-gray-100 rounded-lg p-2 cursor-pointer transition-colors`}
-              >
-                <UserX className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span>Account Recovery</span>}
-              </div>
-              <div 
-                onClick={() => router.push('/dashboard/admin/audit-logs')}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-gray-600 hover:bg-gray-100 rounded-lg p-2 cursor-pointer transition-colors`}
-              >
-                <FileText className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span>Audit Logs</span>}
-              </div>
-            </nav>
-          </div>
-
-          {/* Sidebar Footer - Current User */}
-          <div className="p-4 border-t border-gray-200/30">
-            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}>
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={currentUser.profile_picture_url || ""} />
-                <AvatarFallback className="bg-primary text-white font-semibold">
-                  {getInitials(currentUser.name)}
-                </AvatarFallback>
-              </Avatar>
-              {!sidebarCollapsed && (
-                <>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {currentUser.name}
-                    </p>
-                    <p className="text-xs text-gray-600 truncate">
-                      {currentUser.email}
-                    </p>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 flex-shrink-0"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-            {sidebarCollapsed && (
-              <div className="mt-2 flex justify-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={handleLogout}
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white/70 backdrop-blur-xl border-b border-gray-300/30 px-6 py-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">User Management</h1>
-              <p className="text-sm text-gray-600 mt-1">Manage users, roles, and permissions</p>
-            </div>
-            {hasAnyRole(['admin']) && (
-              <div className="flex space-x-2">
-                <Button 
-                  variant="outline"
-                  onClick={() => router.push('/student')}
-                  className="bg-white/80 backdrop-blur-xl border-gray-300/30"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  All Students
-                </Button>
-                <Button 
-                  className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
-                  onClick={handleAddUser}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add User
-                </Button>
-              </div>
-            )}
-          </div>
-        </header>
+      </header>
 
         {/* Content Area */}
         <main className="flex-1 overflow-auto p-6">
@@ -361,12 +256,12 @@ function AdminDashboard() {
           <div className="flex items-center justify-between mb-6">
             {/* View Toggle */}
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-xl rounded-lg p-1 border border-gray-300/30">
+              <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
                 <Button
                   variant={viewMode === "card" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("card")}
-                  className={viewMode === "card" ? "bg-primary text-white" : "text-gray-700 hover:text-gray-900"}
+                  className={viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                 >
                   <Grid3X3 className="w-4 h-4 mr-1" />
                   Cards
@@ -375,7 +270,7 @@ function AdminDashboard() {
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className={viewMode === "list" ? "bg-primary text-white" : "text-gray-700 hover:text-gray-900"}
+                  className={viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                 >
                   <List className="w-4 h-4 mr-1" />
                   List
@@ -386,18 +281,18 @@ function AdminDashboard() {
             {/* Search and Filter */}
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search users..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-64 bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary"
+                  className="pl-10 w-64 bg-card/80 backdrop-blur-xl border-border focus:border-primary"
                 />
               </div>
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-3 py-2 rounded-md border border-gray-300/30 bg-white/80 backdrop-blur-xl text-gray-700 text-sm"
+                className="px-3 py-2 rounded-md border border-border bg-card/80 backdrop-blur-xl text-foreground text-sm"
               >
                 <option value="">All Roles</option>
                 <option value="admin">Admin</option>
@@ -410,7 +305,7 @@ function AdminDashboard() {
 
           {/* Error State */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md mb-6">
               {error}
             </div>
           )}
@@ -418,7 +313,7 @@ function AdminDashboard() {
           {/* Loading State */}
           {loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="text-gray-500">Loading users...</div>
+              <div className="text-muted-foreground">Loading users...</div>
             </div>
           )}
 
@@ -431,7 +326,7 @@ function AdminDashboard() {
                   {users.map((user) => (
                     <Card 
                       key={user.id} 
-                      className={`bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all hover:scale-[1.01] h-32 ${
+                      className={`bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all hover:scale-[1.01] h-32 ${
                         user.role === 'student' ? 'cursor-pointer' : ''
                       }`}
                       onClick={() => user.role === 'student' ? router.push(`/student/${user.id}`) : undefined}
@@ -441,7 +336,7 @@ function AdminDashboard() {
                           {/* Profile Picture - Left Side */}
                           <Avatar className="h-16 w-16 flex-shrink-0">
                             <AvatarImage src={user.profile_picture_url || ""} />
-                            <AvatarFallback className="bg-primary text-white font-semibold text-lg">
+                            <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
                               {getInitials(user.name)}
                             </AvatarFallback>
                           </Avatar>
@@ -449,8 +344,8 @@ function AdminDashboard() {
                           {/* User Info - Right Side */}
                           <div className="flex-1 min-w-0 space-y-1">
                             <div>
-                              <h3 className="font-semibold text-gray-900 text-sm truncate">{user.name}</h3>
-                              <p className="text-xs text-gray-600 truncate">{user.student_id || 'No Student ID'}</p>
+                              <h3 className="font-semibold text-foreground text-sm truncate">{user.name}</h3>
+                              <p className="text-xs text-muted-foreground truncate">{user.student_id || 'No Student ID'}</p>
                             </div>
                             
                             <div className="flex items-center gap-2">
@@ -467,7 +362,7 @@ function AdminDashboard() {
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
-                                  className="h-6 px-2 text-xs text-gray-600 hover:text-primary hover:bg-primary/10"
+                                  className="h-6 px-2 text-xs text-muted-foreground hover:text-primary hover:bg-primary/10"
                                   onClick={() => handleEditUser(user)}
                                   disabled={processingUsers.has(user.id)}
                                 >
@@ -477,7 +372,7 @@ function AdminDashboard() {
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
-                                  className="h-6 px-2 text-xs text-gray-600 hover:text-red-600 hover:bg-red-50"
+                                  className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                   onClick={() => handleDeleteUser(user.id, user.name)}
                                   disabled={processingUsers.has(user.id)}
                                 >
@@ -494,68 +389,74 @@ function AdminDashboard() {
                 </div>
               ) : (
                 /* List View */
-                <div className="bg-white/80 backdrop-blur-xl rounded-lg border border-gray-300/30 overflow-hidden">
+                <div className="bg-card rounded-lg border border-border overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-gray-50/50">
+                      <thead className="bg-muted/30 border-b border-border">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             User
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             Role
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             Hours
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             Created
                           </th>
                           {hasAnyRole(['admin']) && (
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                               Actions
                             </th>
                           )}
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200/50">
+                      <tbody className="divide-y divide-border">
                         {users.map((user) => (
-                          <tr key={user.id} className="hover:bg-gray-50/30 transition-colors">
+                          <tr 
+                            key={user.id} 
+                            className="group bg-card hover:bg-primary transition-colors duration-200"
+                          >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
-                                <Avatar className="h-10 w-10">
+                                <Avatar className="h-10 w-10 border-2 border-muted group-hover:border-primary-foreground/20">
                                   <AvatarImage src={user.profile_picture_url || ""} />
-                                  <AvatarFallback className="bg-primary text-white font-semibold">
+                                  <AvatarFallback className="bg-muted text-muted-foreground font-semibold group-hover:bg-primary-foreground/20 group-hover:text-primary-foreground">
                                     {getInitials(user.name)}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="ml-4">
-                                  <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                                  <div className="text-sm text-gray-600">{user.student_id || 'No Student ID'}</div>
-                                  <div className="text-xs text-gray-500">{user.email}</div>
+                                  <div className="text-sm font-medium text-foreground group-hover:text-primary-foreground">{user.name}</div>
+                                  <div className="text-sm text-muted-foreground group-hover:text-primary-foreground/80">{user.student_id || 'No Student ID'}</div>
+                                  <div className="text-xs text-muted-foreground group-hover:text-primary-foreground/70">{user.email}</div>
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant="secondary" className="text-xs">
-                                {user.role}
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs font-medium bg-background text-foreground border-border group-hover:bg-primary-foreground/20 group-hover:text-primary-foreground group-hover:border-primary-foreground/30"
+                              >
+                                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                               </Badge>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant="hours" className="text-xs">
+                              <span className="text-sm text-muted-foreground group-hover:text-primary-foreground/90">
                                 {user.promised_hours_per_week || '0'}h/week
-                              </Badge>
+                              </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground group-hover:text-primary-foreground/80">
                               {new Date(user.created_at).toLocaleDateString()}
                             </td>
                             {hasAnyRole(['admin']) && (
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                 <div className="flex space-x-2">
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="h-8 w-8 p-0"
+                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-primary-foreground hover:bg-primary-foreground/20 group-hover:text-primary-foreground/80"
                                     onClick={() => handleEditUser(user)}
                                     disabled={processingUsers.has(user.id)}
                                   >
@@ -564,7 +465,7 @@ function AdminDashboard() {
                                   <Button 
                                     variant="ghost" 
                                     size="sm" 
-                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive-foreground hover:bg-destructive group-hover:text-primary-foreground/80 group-hover:hover:text-white group-hover:hover:bg-red-500"
                                     onClick={() => handleDeleteUser(user.id, user.name)}
                                     disabled={processingUsers.has(user.id)}
                                     title={processingUsers.has(user.id) ? 'Deleting...' : 'Delete user'}
@@ -585,7 +486,7 @@ function AdminDashboard() {
               {/* Pagination */}
               {pagination && pagination.last_page > 1 && (
                 <div className="mt-6 flex items-center justify-between">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Showing {pagination.from} to {pagination.to} of {pagination.total} results
                   </p>
                   <div className="flex items-center space-x-2">
@@ -594,11 +495,11 @@ function AdminDashboard() {
                       size="sm"
                       disabled={currentPage === 1}
                       onClick={() => setCurrentPage(currentPage - 1)}
-                      className="bg-white/80 backdrop-blur-xl border-gray-300/30"
+                      className="bg-card/80 backdrop-blur-xl border-border"
                     >
                       Previous
                     </Button>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-muted-foreground">
                       Page {currentPage} of {pagination.last_page}
                     </span>
                     <Button
@@ -606,7 +507,7 @@ function AdminDashboard() {
                       size="sm"
                       disabled={currentPage === pagination.last_page}
                       onClick={() => setCurrentPage(currentPage + 1)}
-                      className="bg-white/80 backdrop-blur-xl border-gray-300/30"
+                      className="bg-card/80 backdrop-blur-xl border-border"
                     >
                       Next
                     </Button>
@@ -617,9 +518,9 @@ function AdminDashboard() {
               {/* Empty State */}
               {users.length === 0 && (
                 <div className="text-center py-12">
-                  <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
-                  <p className="text-gray-600">
+                  <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No users found</h3>
+                  <p className="text-muted-foreground">
                     {searchQuery || selectedRole ? 'Try adjusting your search or filter criteria.' : 'Get started by adding your first user.'}
                   </p>
                 </div>
@@ -627,7 +528,6 @@ function AdminDashboard() {
             </>
           )}
         </main>
-      </div>
 
       {/* Add User Modal */}
       <AddUserModal
@@ -657,7 +557,7 @@ function AdminDashboard() {
         variant={confirmDialog.variant}
         confirmText={confirmDialog.variant === "destructive" ? "Delete" : "Confirm"}
       />
-    </div>
+    </>
   )
 }
 

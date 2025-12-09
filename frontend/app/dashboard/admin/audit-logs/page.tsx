@@ -47,8 +47,9 @@ import {
   type User,
   type AuditLog
 } from "@/lib/api"
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 
-export default function AuditLogsPage() {
+function AuditLogsContent() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [logs, setLogs] = useState<AuditLog[]>([])
@@ -57,7 +58,6 @@ export default function AuditLogsPage() {
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [selectedRole, setSelectedRole] = useState<string>("all")
 
   // Check authentication and permissions
@@ -140,115 +140,26 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-white">
-      {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0`}>
-        <div className="bg-white/80 backdrop-blur-xl border-r border-gray-300/30 shadow-lg shadow-gray-100/50 h-full flex flex-col">
-          {/* Sidebar Header */}
-          <div className="bg-gradient-to-r from-primary to-primary-medium text-white border-0 p-4">
-            <div className="flex items-center justify-between">
-              {!sidebarCollapsed ? (
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h1 className="font-semibold text-lg">AV Scheduler</h1>
-                    <p className="text-xs text-white/80">Admin Dashboard</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                  <Calendar className="w-5 h-5" />
-                </div>
-              )}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
-              >
-                {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* Sidebar Navigation */}
-          <div className="flex-1 p-2">
-            <nav className="space-y-1">
-              <div 
-                onClick={() => router.push('/dashboard/admin')}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-gray-600 hover:bg-gray-100 rounded-lg p-2 cursor-pointer transition-colors`}
-              >
-                <Users className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span>User Management</span>}
-              </div>
-              <div 
-                onClick={() => router.push('/dashboard/admin/account-recovery')}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-gray-600 hover:bg-gray-100 rounded-lg p-2 cursor-pointer transition-colors`}
-              >
-                <UserX className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span>Account Recovery</span>}
-              </div>
-              <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-primary bg-primary/10 hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-primary/20`}>
-                <FileText className="w-5 h-5 flex-shrink-0 text-primary" />
-                {!sidebarCollapsed && <span className="font-medium text-primary">Audit Logs</span>}
-              </div>
-            </nav>
-          </div>
-
-          {/* Sidebar Footer */}
-          <div className="p-4 border-t border-gray-200/30">
-            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}>
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={currentUser.profile_picture_url || ""} />
-                <AvatarFallback className="bg-primary text-white font-semibold">
-                  {getInitials(currentUser.name)}
-                </AvatarFallback>
-              </Avatar>
-              {!sidebarCollapsed && (
-                <>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {currentUser.name}
-                    </p>
-                    <p className="text-xs text-gray-600 truncate">
-                      {currentUser.email}
-                    </p>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 flex-shrink-0"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </Button>
-                </>
-              )}
-            </div>
+    <>
+      {/* Header */}
+      <header className="bg-card/70 backdrop-blur-xl border-b border-border px-6 py-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">Audit Logs</h1>
+            <p className="text-sm text-muted-foreground mt-1">View system activities and changes</p>
           </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-800">Audit Logs</h2>
-          </div>
-        </header>
+      </header>
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-6">
-          <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm">
+          <Card className="border-none shadow-lg bg-card/80 backdrop-blur-sm">
             <CardHeader className="pb-2">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <CardTitle>System Activities</CardTitle>
                 <div className="flex items-center gap-2">
                   <div className="relative w-64">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search logs..."
                       className="pl-8"
@@ -363,7 +274,14 @@ export default function AuditLogsPage() {
             </CardContent>
           </Card>
         </main>
-      </div>
-    </div>
+    </>
+  )
+}
+
+export default function AuditLogsPage() {
+  return (
+    <RoleProtectedRoute allowedRoles={['admin']}>
+      <AuditLogsContent />
+    </RoleProtectedRoute>
   )
 }
