@@ -22,6 +22,7 @@ export interface ApiResponse<T = any> {
   user?: User;
   access_token?: string;
   token_type?: string;
+  reset_token?: string;
 }
 
 export interface User {
