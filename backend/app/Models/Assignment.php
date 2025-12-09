@@ -50,6 +50,7 @@ class Assignment extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'assignment_users', 'assignment_id', 'user_id')
+                    ->using(AssignmentUser::class)
                     ->withPivot('status', 'checked_in', 'position')
                     ->withTimestamps();
     }

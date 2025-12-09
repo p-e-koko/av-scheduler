@@ -49,6 +49,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     // User Management - Admin only with sensitive rate limiting
     Route::middleware(['role:admin', 'throttle:sensitive'])->group(function () {
+        Route::get('/audit-logs', [\App\Http\Controllers\Api\AuditLogController::class, 'index']);
         Route::apiResource('users', UserController::class)->except(['index', 'show']);
         Route::prefix('users')->group(function () {
             Route::post('/create-with-files', [UserController::class, 'storeWithFiles']);

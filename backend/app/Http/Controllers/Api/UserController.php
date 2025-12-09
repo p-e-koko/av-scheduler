@@ -10,6 +10,7 @@ use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Helpers\AuditLogger;
 
 class UserController extends Controller
 {
@@ -64,6 +65,8 @@ class UserController extends Controller
 
         $user = User::create($userData);
 
+        AuditLogger::log('User Created', ['user_id' => $user->id, 'email' => $user->email]);
+
         return response()->json([
             'message' => 'User created successfully',
             'user' => new UserResource($user)
@@ -92,6 +95,8 @@ class UserController extends Controller
 
         $user = User::create($userData);
 
+        AuditLogger::log('User Created', ['user_id' => $user->id, 'email' => $user->email]);
+
         return response()->json([
             'message' => 'User created successfully',
             'user' => new UserResource($user)
@@ -103,6 +108,7 @@ class UserController extends Controller
      */
     public function show(User $user): JsonResponse
     {
+        AuditLogger::log('User Details Viewed', ['viewed_user_id' => $user->id, 'viewed_user_email' => $user->email]);
         return response()->json([
             'user' => new UserResource($user)
         ]);
@@ -114,6 +120,7 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
         $userData = $request->validated();
+        $oldRole = $user->role;
 
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
@@ -127,6 +134,17 @@ class UserController extends Controller
         }
 
         $user->update($userData);
+
+        AuditLogger::log('User Updated', ['user_id' => $user->id, 'email' => $user->email]);
+
+        if (isset($userData['role']) && $userData['role'] !== $oldRole) {
+             AuditLogger::log('User Role Changed', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'old_role' => $oldRole,
+                'new_role' => $userData['role']
+            ]);
+        }
 
         return response()->json([
             'message' => 'User updated successfully',
@@ -140,6 +158,7 @@ class UserController extends Controller
     public function updateWithFiles(UpdateUserRequest $request, User $user): JsonResponse
     {
         $userData = $request->validated();
+        $oldRole = $user->role;
 
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
@@ -153,6 +172,17 @@ class UserController extends Controller
         }
 
         $user->update($userData);
+
+        AuditLogger::log('User Updated', ['user_id' => $user->id, 'email' => $user->email]);
+
+        if (isset($userData['role']) && $userData['role'] !== $oldRole) {
+             AuditLogger::log('User Role Changed', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'old_role' => $oldRole,
+                'new_role' => $userData['role']
+            ]);
+        }
 
         return response()->json([
             'message' => 'User updated successfully',
@@ -167,6 +197,8 @@ class UserController extends Controller
     {
         $user->delete();
 
+        AuditLogger::log('User Deleted (Soft)', ['user_id' => $user->id, 'email' => $user->email]);
+
         return response()->json([
             'message' => 'User deleted successfully'
         ]);
@@ -179,6 +211,8 @@ class UserController extends Controller
     {
         $user = User::withTrashed()->findOrFail($id);
         $user->restore();
+
+        AuditLogger::log('User Restored', ['user_id' => $user->id, 'email' => $user->email]);
 
         return response()->json([
             'message' => 'User restored successfully',
@@ -193,6 +227,8 @@ class UserController extends Controller
     {
         $user = User::withTrashed()->findOrFail($id);
         $user->forceDelete();
+
+        AuditLogger::log('User Deleted (Permanent)', ['user_id' => $user->id, 'email' => $user->email]);
 
         return response()->json([
             'message' => 'User permanently deleted'

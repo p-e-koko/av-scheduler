@@ -10,6 +10,7 @@ use App\Http\Resources\AssignmentResource;
 use App\Models\Assignment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Helpers\AuditLogger;
 
 class AssignmentController extends Controller
 {
@@ -83,6 +84,8 @@ class AssignmentController extends Controller
 
         $assignment = Assignment::create($assignmentData);
 
+        AuditLogger::log('Assignment Created', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
+
         // Load relationships for response
         $assignment->load(['creator', 'users']);
 
@@ -114,6 +117,8 @@ class AssignmentController extends Controller
 
         $assignment->update($assignmentData);
 
+        AuditLogger::log('Assignment Updated', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
+
         // Reset all users status to pending
         foreach ($assignment->users as $user) {
             $assignment->updateUserStatus($user, 'pending');
@@ -135,6 +140,8 @@ class AssignmentController extends Controller
     {
         $assignment->delete();
 
+        AuditLogger::log('Assignment Deleted (Soft)', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
+
         return response()->json([
             'message' => 'Assignment deleted successfully'
         ]);
@@ -147,6 +154,8 @@ class AssignmentController extends Controller
     {
         $assignment = Assignment::withTrashed()->findOrFail($id);
         $assignment->restore();
+
+        AuditLogger::log('Assignment Restored', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
 
         // Load relationships for response
         $assignment->load(['creator', 'users']);
@@ -164,6 +173,8 @@ class AssignmentController extends Controller
     {
         $assignment = Assignment::withTrashed()->findOrFail($id);
         $assignment->forceDelete();
+
+        AuditLogger::log('Assignment Deleted (Permanent)', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
 
         return response()->json([
             'message' => 'Assignment permanently deleted'
@@ -217,6 +228,12 @@ class AssignmentController extends Controller
             $request->position
         );
 
+        AuditLogger::log('User Assigned to Assignment', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'assigned_user_id' => $request->user_id
+        ]);
+
         // Load relationships for response
         $assignment->load(['creator', 'users']);
 
@@ -245,6 +262,12 @@ class AssignmentController extends Controller
         }
 
         $assignment->unassignUser($user);
+
+        AuditLogger::log('User Unassigned from Assignment', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'unassigned_user_id' => $request->user_id
+        ]);
 
         // Load relationships for response
         $assignment->load(['creator', 'users']);
@@ -283,6 +306,13 @@ class AssignmentController extends Controller
 
         $assignment->updateUserPosition($user, $request->position);
 
+        AuditLogger::log('User Position Updated in Assignment', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'user_id' => $request->user_id,
+            'new_position' => $request->position
+        ]);
+
         // Load relationships for response
         $assignment->load(['creator', 'users']);
 
@@ -311,6 +341,12 @@ class AssignmentController extends Controller
         }
 
         $assignment->checkInUser($user);
+
+        AuditLogger::log('User Checked In', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'user_id' => $request->user_id
+        ]);
 
         // Load relationships for response
         $assignment->load(['creator', 'users']);
@@ -341,6 +377,12 @@ class AssignmentController extends Controller
 
         $assignment->checkOutUser($user);
 
+        AuditLogger::log('User Checked Out', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'user_id' => $request->user_id
+        ]);
+
         // Load relationships for response
         $assignment->load(['creator', 'users']);
 
@@ -366,6 +408,11 @@ class AssignmentController extends Controller
 
         $assignment->updateUserStatus($user, 'accepted');
 
+        AuditLogger::log('Assignment Accepted', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name
+        ]);
+
         return response()->json([
             'message' => 'Assignment accepted successfully',
             'assignment' => new AssignmentResource($assignment->load(['creator', 'users']))
@@ -387,6 +434,11 @@ class AssignmentController extends Controller
         }
 
         $assignment->updateUserStatus($user, 'rejected');
+
+        AuditLogger::log('Assignment Rejected', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name
+        ]);
 
         return response()->json([
             'message' => 'Assignment rejected successfully',

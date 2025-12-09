@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
+use App\Helpers\AuditLogger;
 
 class AuthController extends Controller
 {
@@ -47,6 +48,8 @@ class AuthController extends Controller
         // Login the user with session instead of creating token
         Auth::login($user);
 
+        AuditLogger::log('User Registered', ['email' => $user->email, 'role' => $user->role]);
+
         return response()->json([
             'message' => 'User registered successfully',
             'user' => new UserResource($user),
@@ -67,6 +70,7 @@ class AuthController extends Controller
             ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            AuditLogger::log('Failed Login Attempt', ['email' => $request->email, 'ip' => $request->ip()]);
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
@@ -74,6 +78,8 @@ class AuthController extends Controller
 
         // Login the user with session
         Auth::login($user);
+
+        AuditLogger::log('User Logged In', ['email' => $user->email]);
 
         return response()->json([
             'message' => 'Login successful',
@@ -86,6 +92,11 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if ($user) {
+             AuditLogger::log('User Logged Out', ['email' => $user->email]);
+        }
+
         // For Sanctum API authentication, delete the current access token
         if ($request->user() && $request->user()->currentAccessToken()) {
             $request->user()->currentAccessToken()->delete();

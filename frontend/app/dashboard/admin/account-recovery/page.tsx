@@ -14,7 +14,8 @@ import {
   LogOut,
   RotateCcw,
   Trash2,
-  UserX
+  UserX,
+  FileText
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -273,6 +274,13 @@ export default function AccountRecovery() {
               <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-primary bg-primary/10 hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-primary/20`}>
                 <UserX className="w-5 h-5 flex-shrink-0 text-primary" />
                 {!sidebarCollapsed && <span className="font-medium text-primary">Account Recovery</span>}
+              </div>
+              <div 
+                onClick={() => router.push('/dashboard/admin/audit-logs')}
+                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-gray-600 hover:bg-gray-100 rounded-lg p-2 cursor-pointer transition-colors`}
+              >
+                <FileText className="w-5 h-5 flex-shrink-0" />
+                {!sidebarCollapsed && <span>Audit Logs</span>}
               </div>
             </nav>
           </div>

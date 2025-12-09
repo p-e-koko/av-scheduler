@@ -969,3 +969,58 @@ export const positionAPI = {
     });
   }
 };
+// Audit Log Types
+export interface AuditLog {
+  id: number;
+  user_id: string | null;
+  user_name: string | null;
+  role: string | null;
+  action: string;
+  details: any;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  updated_at: string;
+  user?: User;
+}
+
+export interface AuditLogsResponse {
+  current_page: number;
+  data: AuditLog[];
+  first_page_url: string;
+  from: number;
+  last_page: number;
+  last_page_url: string;
+  links: {
+    url: string | null;
+    label: string;
+    active: boolean;
+  }[];
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number;
+  total: number;
+}
+
+// Audit Log API
+export const auditLogAPI = {
+  getLogs: async (params: {
+    page?: number;
+    search?: string;
+    role?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<AuditLogsResponse> => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.search) queryParams.append('search', params.search);
+    if (params.role) queryParams.append('role', params.role);
+    if (params.start_date) queryParams.append('start_date', params.start_date);
+    if (params.end_date) queryParams.append('end_date', params.end_date);
+
+    return apiCall<AuditLogsResponse>(`/audit-logs?${queryParams.toString()}`);
+  },
+};
+

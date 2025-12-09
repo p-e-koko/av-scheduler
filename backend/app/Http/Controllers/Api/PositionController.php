@@ -7,6 +7,7 @@ use App\Models\Position;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Helpers\AuditLogger;
 
 class PositionController extends Controller
 {
@@ -56,6 +57,8 @@ class PositionController extends Controller
 
         $position = Position::create($request->only(['name', 'description', 'is_active']));
 
+        AuditLogger::log('Position Created', ['position_id' => $position->id, 'name' => $position->name]);
+
         return response()->json([
             'message' => 'Position created successfully',
             'position' => $position
@@ -85,6 +88,8 @@ class PositionController extends Controller
 
         $position->update($request->only(['name', 'description', 'is_active']));
 
+        AuditLogger::log('Position Updated', ['position_id' => $position->id, 'name' => $position->name]);
+
         return response()->json([
             'message' => 'Position updated successfully',
             'position' => $position->fresh()
@@ -105,6 +110,8 @@ class PositionController extends Controller
         }
 
         $position->delete();
+
+        AuditLogger::log('Position Deleted', ['position_id' => $position->id, 'name' => $position->name]);
 
         return response()->json([
             'message' => 'Position deleted successfully'

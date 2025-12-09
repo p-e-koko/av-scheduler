@@ -19,7 +19,8 @@ import {
   Trash2,
   Menu,
   X,
-  UserX
+  UserX,
+  FileText
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -265,6 +266,13 @@ function AdminDashboard() {
               >
                 <UserX className="w-5 h-5 flex-shrink-0" />
                 {!sidebarCollapsed && <span>Account Recovery</span>}
+              </div>
+              <div 
+                onClick={() => router.push('/dashboard/admin/audit-logs')}
+                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} text-gray-600 hover:bg-gray-100 rounded-lg p-2 cursor-pointer transition-colors`}
+              >
+                <FileText className="w-5 h-5 flex-shrink-0" />
+                {!sidebarCollapsed && <span>Audit Logs</span>}
               </div>
             </nav>
           </div>
