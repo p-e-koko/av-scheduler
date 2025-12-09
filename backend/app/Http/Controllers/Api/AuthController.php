@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\AuditLogger;
+use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
@@ -44,6 +45,8 @@ class AuthController extends Controller
 
         // Assign Spatie role to ensure permissions work
         $user->assignRole($userData['role']);
+
+        event(new Registered($user));
 
         // Login the user with session instead of creating token
         Auth::login($user);
@@ -224,5 +227,45 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Password reset successfully'
         ]);
+    }
+
+    /**
+     * Verify user email.
+     */
+    public function verifyEmail(Request $request): JsonResponse
+    {
+        $user = User::find($request->route('id'));
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid user.'], 400);
+        }
+
+        if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
+            return response()->json(['message' => 'Invalid verification link.'], 400);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email already verified.']);
+        }
+
+        if ($user->markEmailAsVerified()) {
+            event(new \Illuminate\Auth\Events\Verified($user));
+        }
+
+        return response()->json(['message' => 'Email verified successfully.']);
+    }
+
+    /**
+     * Resend verification email.
+     */
+    public function resendVerificationEmail(Request $request): JsonResponse
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email already verified.']);
+        }
+
+        $request->user()->sendEmailVerificationNotification();
+
+        return response()->json(['message' => 'Verification link sent.']);
     }
 }

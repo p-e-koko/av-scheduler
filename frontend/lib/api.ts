@@ -413,6 +413,32 @@ export const authAPI = {
       body: JSON.stringify(data),
     });
   },
+
+  // Verify email
+  async verifyEmail(url: string): Promise<ApiResponse> {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new APIError(data.message || 'Verification failed', response.status);
+    }
+
+    return data;
+  },
+
+  // Resend verification email
+  async resendVerificationEmail(): Promise<ApiResponse> {
+    return apiCall<ApiResponse>('/auth/email/verification-notification', {
+      method: 'POST',
+    });
+  },
 };
 
 // Legacy API object for backward compatibility

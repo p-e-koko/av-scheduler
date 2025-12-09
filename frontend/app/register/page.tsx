@@ -109,12 +109,8 @@ export default function RegisterPage() {
       const response = await authAPI.register(submitData)
       
       if (response.user) {
-        // Redirect based on user role
-        const redirectPath = response.user.role === 'admin' 
-          ? '/dashboard/admin' 
-          : '/dashboard'
-        
-        router.push(redirectPath)
+        // Redirect to verification page with a success flag
+        router.push('/auth/verify?registered=true')
       }
     } catch (error) {
       setError(formatAPIError(error))

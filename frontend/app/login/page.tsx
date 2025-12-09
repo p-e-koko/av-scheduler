@@ -43,6 +43,12 @@ export default function LoginPage() {
       const response = await authAPI.login({ email, password })
       
       if (response.user) {
+        // Check if email is verified
+        if (!response.user.email_verified_at) {
+          router.push('/auth/verify?reason=unverified');
+          return;
+        }
+
         // Redirect based on user role using role-based routing
         const redirectPath = getRoleBasedDashboardPath(response.user.role);
         router.push(redirectPath);

@@ -28,6 +28,11 @@ Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
+// Email Verification Route
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
+
 // CSRF Token Route - Available to all stateful domains
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->noContent();
@@ -42,6 +47,9 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
+        ->middleware(['throttle:6,1'])
+        ->name('verification.send');
 });
 
 // Protected User Management Routes - Role-Based Access Control
