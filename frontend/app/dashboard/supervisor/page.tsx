@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { SupervisorSidebar } from "@/components/SupervisorSidebar"
+import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
 
 import { 
   authAPI,
@@ -66,6 +67,12 @@ function SupervisorDashboard() {
     completedToday: 0,
     upcoming: 0
   })
+  
+  // Calendar state
+  const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month")
+
+  // Search states
+  const [studentSearchQuery, setStudentSearchQuery] = useState("")
 
   // Check authentication and permissions
   useEffect(() => {
@@ -93,61 +100,55 @@ function SupervisorDashboard() {
         setLoading(true)
         setError(null)
 
-        switch (activeTab) {
-          case 'dashboard':
-            // Fetch students and calculate stats
-            const studentsResponse = await userAPI.getUsers({ role: 'student', per_page: 100 })
-            setStudents(studentsResponse.data)
-            
-            const totalHours = studentsResponse.data.reduce((acc, student) => 
-              acc + (student.hours_worked_this_week || 0), 0)
-            const avgHours = studentsResponse.data.length > 0 ? 
-              totalHours / studentsResponse.data.length : 0
-            const completionSum = studentsResponse.data.reduce((acc, student) => 
-              acc + (student.hours_completion_percentage || 0), 0)
-            const avgCompletion = studentsResponse.data.length > 0 ?
-              completionSum / studentsResponse.data.length : 0
-            
-            setStats({
-              totalStudents: studentsResponse.data.length,
-              monthlyHours: totalHours * 4, // Approximate monthly hours
-              averageHours: avgHours,
-              completionRate: avgCompletion
-            })
-            break
+        // Always fetch students and assignments as they are used across tabs or for stats
+        const [studentsResponse, assignmentsResponse, availabilityResponse] = await Promise.all([
+            userAPI.getUsers({ role: 'student', per_page: 100 }),
+            assignmentAPI.getAssignments({ per_page: 100 }),
+            availabilityAPI.getAvailability({ per_page: 100 })
+        ]);
 
-          case 'student-schedules':
-            const availabilityResponse = await availabilityAPI.getAvailability({ per_page: 100 })
-            setAvailability(availabilityResponse.data)
-            break
+        setStudents(studentsResponse.data)
+        setAssignments(assignmentsResponse.data)
+        setAvailability(availabilityResponse.data)
 
-          case 'assignment-schedules':
-            const assignmentsResponse = await assignmentAPI.getAssignments({ per_page: 100 })
-            setAssignments(assignmentsResponse.data)
+        // Calculate Dashboard Stats
+        const totalHours = studentsResponse.data.reduce((acc, student) => 
+            acc + (student.hours_worked_this_week || 0), 0)
+        const avgHours = studentsResponse.data.length > 0 ? 
+            totalHours / studentsResponse.data.length : 0
+        const completionSum = studentsResponse.data.reduce((acc, student) => 
+            acc + (student.hours_completion_percentage || 0), 0)
+        const avgCompletion = studentsResponse.data.length > 0 ?
+            completionSum / studentsResponse.data.length : 0
+        
+        setStats({
+            totalStudents: studentsResponse.data.length,
+            monthlyHours: totalHours * 4, // Approximate monthly hours
+            averageHours: avgHours,
+            completionRate: avgCompletion
+        })
+
+        // Calculate Assignment Stats
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        const assignmentStatsCalc = assignmentsResponse.data.reduce((acc, assignment) => {
+            const startDate = new Date(assignment.event_start_datetime)
             
-            // Calculate assignment stats
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
+            if (assignment.status === 'confirmed' || assignment.status === 'pending') acc.active++
             
-            const assignmentStatsCalc = assignmentsResponse.data.reduce((acc, assignment) => {
-              const startDate = new Date(assignment.event_start_datetime)
-              const endDate = new Date(assignment.event_end_datetime)
-              
-              if (assignment.status === 'confirmed') acc.active++
-              
-              if (assignment.status === 'complete' && 
-                  startDate >= today && startDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)) {
-                acc.completedToday++
-              }
-              
-              if (startDate > new Date()) acc.upcoming++
-              
-              return acc
-            }, { active: 0, completedToday: 0, upcoming: 0 })
+            if (assignment.status === 'complete' && 
+                startDate >= today && startDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)) {
+            acc.completedToday++
+            }
             
-            setAssignmentStats(assignmentStatsCalc)
-            break
-        }
+            if (startDate > new Date()) acc.upcoming++
+            
+            return acc
+        }, { active: 0, completedToday: 0, upcoming: 0 })
+        
+        setAssignmentStats(assignmentStatsCalc)
+
       } catch (err) {
         setError(formatAPIError(err))
       } finally {
@@ -156,7 +157,7 @@ function SupervisorDashboard() {
     }
 
     fetchData()
-  }, [currentUser, activeTab])
+  }, [currentUser]) // Fetch once on load/user change, not on tab change to avoid flickering
 
   const getInitials = (name: string) => {
     return name
@@ -167,23 +168,72 @@ function SupervisorDashboard() {
       .slice(0, 2)
   }
 
-  // Sample data for the bar chart
-  const monthlyData = [
-    { month: "Jan", hours: 156 },
-    { month: "Feb", hours: 134 },
-    { month: "Mar", hours: 189 },
-    { month: "Apr", hours: 167 },
-    { month: "May", hours: 198 },
-    { month: "Jun", hours: 201 },
-    { month: "Jul", hours: 145 },
-    { month: "Aug", hours: 178 },
-    { month: "Sep", hours: 156 },
-    { month: "Oct", hours: 203 },
-    { month: "Nov", hours: 187 },
-    { month: "Dec", hours: 165 },
-  ]
+  // Calculate Monthly Data from Assignments
+  const calculateMonthlyData = () => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentYear = new Date().getFullYear();
+    const data = new Array(12).fill(0);
 
-  const maxHours = Math.max(...monthlyData.map(d => d.hours))
+    assignments.forEach(assignment => {
+        const date = new Date(assignment.event_start_datetime);
+        if (date.getFullYear() === currentYear && assignment.status === 'complete') {
+            const duration = (new Date(assignment.event_end_datetime).getTime() - date.getTime()) / (1000 * 60 * 60);
+            data[date.getMonth()] += duration;
+        }
+    });
+
+    return months.map((month, index) => ({
+        month,
+        hours: Math.round(data[index])
+    }));
+  };
+
+  const monthlyData = calculateMonthlyData();
+  const maxHours = Math.max(...monthlyData.map(d => d.hours), 10); // Default to 10 to avoid div by zero
+
+  // Filter students
+  const filteredStudents = students.filter(student => 
+    student.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
+    student.email.toLowerCase().includes(studentSearchQuery.toLowerCase())
+  );
+
+  // Helper to get student assignments count
+  const getStudentAssignmentCount = (studentId: string) => {
+      return assignments.filter(a => a.users?.some(u => u.id === studentId) && a.status !== 'complete').length;
+  };
+
+  // Helper to get student availability string
+  const getStudentAvailability = (studentId: string) => {
+      const studentAvail = availability.filter(a => a.student_id === studentId);
+      if (studentAvail.length === 0) return "No availability set";
+      // Just show count or first available day for brevity
+      return `${studentAvail.length} slots available`;
+  };
+
+
+
+  // Prepare calendar events
+  const calendarEvents: CalendarEvent[] = assignments.map(assignment => {
+    let colorClass = "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-500";
+    
+    if (assignment.status === 'confirmed') {
+      colorClass = "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-500";
+    } else if (assignment.status === 'pending') {
+      colorClass = "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-500";
+    } else if (assignment.status === 'complete') {
+      colorClass = "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-500";
+    }
+
+    return {
+      id: assignment.id.toString(),
+      title: assignment.assignment_name,
+      start: new Date(assignment.event_start_datetime),
+      end: new Date(assignment.event_end_datetime),
+      type: assignment.status,
+      color: colorClass,
+      description: assignment.description
+    };
+  });
 
   if (!currentUser) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
@@ -230,6 +280,7 @@ function SupervisorDashboard() {
                 <Eye className="w-3 h-3 mr-1" />
                 View Only
               </Badge>
+              <ModeToggle />
             </div>
           </div>
         </header>
@@ -296,7 +347,7 @@ function SupervisorDashboard() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <BarChart3 className="w-5 h-5" />
-                    <span>Student Assignment Hours - Monthly Overview</span>
+                    <span>Completed Assignment Hours - {new Date().getFullYear()} Overview</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -305,10 +356,10 @@ function SupervisorDashboard() {
                       {monthlyData.map((data, index) => (
                         <div key={index} className="flex flex-col items-center space-y-2 flex-1">
                           <div 
-                            className="w-full bg-gradient-to-t from-primary to-primary-light rounded-t-md min-h-[4px] flex items-end justify-center text-white text-xs font-semibold"
+                            className="w-full bg-gradient-to-t from-primary to-primary-light rounded-t-md min-h-[4px] flex items-end justify-center text-white text-xs font-semibold transition-all duration-500"
                             style={{ height: `${(data.hours / maxHours) * 100}%` }}
                           >
-                            <span className="pb-2">{data.hours}h</span>
+                            {data.hours > 0 && <span className="pb-2">{data.hours}h</span>}
                           </div>
                           <div className="text-xs font-medium text-muted-foreground">{data.month}</div>
                         </div>
@@ -316,13 +367,7 @@ function SupervisorDashboard() {
                     </div>
                   </div>
                   <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Showing monthly assignment hours across all students</span>
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-primary rounded"></div>
-                        <span>Assignment Hours</span>
-                      </div>
-                    </div>
+                    <span>Showing completed assignment hours per month</span>
                   </div>
                 </CardContent>
               </Card>
@@ -387,62 +432,48 @@ function SupervisorDashboard() {
                     <Input
                       placeholder="Search students..."
                       className="pl-10 w-64 bg-card/80 backdrop-blur-xl border-border focus:border-primary"
+                      value={studentSearchQuery}
+                      onChange={(e) => setStudentSearchQuery(e.target.value)}
                     />
                   </div>
-                  <Button variant="outline" size="sm">
-                    <Filter className="w-4 h-4 mr-1" />
-                    Filter
-                  </Button>
                 </div>
               </div>
 
               {/* Students Schedule Overview */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Sample student schedule cards */}
-                {[
-                  { name: "John Doe", availability: "Mon-Fri 9AM-5PM", status: "Available", assignments: 3 },
-                  { name: "Jane Smith", availability: "Tue-Sat 10AM-6PM", status: "Busy", assignments: 5 },
-                  { name: "Mike Johnson", availability: "Mon-Wed 8AM-4PM", status: "Available", assignments: 2 },
-                  { name: "Sarah Wilson", availability: "Thu-Sun 12PM-8PM", status: "Available", assignments: 4 },
-                ].map((student, index) => (
-                  <Card key={index} className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
+                {filteredStudents.map((student) => {
+                    const activeAssignments = getStudentAssignmentCount(student.id);
+                    const availabilityText = getStudentAvailability(student.id);
+                    
+                    return (
+                  <Card key={student.id} className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center space-x-4">
                           <Avatar className="h-12 w-12">
+                            <AvatarImage src={student.profile_picture_url} />
                             <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                              {student.name.split(' ').map(n => n[0]).join('')}
+                              {getInitials(student.name)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
                             <h3 className="font-semibold text-foreground">{student.name}</h3>
-                            <p className="text-sm text-muted-foreground">{student.availability}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{student.assignments} active assignments</p>
+                            <p className="text-sm text-muted-foreground">{availabilityText}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{activeAssignments} active assignments</p>
                           </div>
                         </div>
-                        <Badge className={`${
-                          student.status === "Available" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                        }`}>
-                          {student.status}
+                        <Badge variant={activeAssignments > 0 ? "default" : "secondary"}>
+                          {activeAssignments > 0 ? "Active" : "Idle"}
                         </Badge>
-                      </div>
-                      <div className="mt-4 pt-4 border-t border-border">
-                        <div className="grid grid-cols-7 gap-1 text-center">
-                          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
-                            <div key={i} className="text-xs">
-                              <div className="font-semibold text-muted-foreground">{day}</div>
-                              <div className={`w-full h-4 rounded mt-1 ${
-                                index % 2 === 0 
-                                  ? (i < 5 ? 'bg-green-400 dark:bg-green-600' : 'bg-muted') 
-                                  : (i > 0 && i < 6 ? 'bg-green-400 dark:bg-green-600' : 'bg-muted')
-                              }`}></div>
-                            </div>
-                          ))}
-                        </div>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                )})}
+                {filteredStudents.length === 0 && (
+                    <div className="col-span-full text-center py-12 text-muted-foreground">
+                        No students found matching your search.
+                    </div>
+                )}
               </div>
             </div>
           )}
@@ -490,58 +521,36 @@ function SupervisorDashboard() {
               {/* Assignment Timeline */}
               <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                 <CardHeader>
-                  <CardTitle>Assignment Schedule Timeline</CardTitle>
+                  <CardTitle>Upcoming Assignments</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      { 
-                        title: "Chapel Audio Setup", 
-                        student: "John Doe", 
-                        time: "Monday 9:00 AM - 11:00 AM", 
-                        status: "In Progress",
-                        type: "Audio"
-                      },
-                      { 
-                        title: "Video Production - Event", 
-                        student: "Jane Smith", 
-                        time: "Tuesday 2:00 PM - 6:00 PM", 
-                        status: "Scheduled",
-                        type: "Video"
-                      },
-                      { 
-                        title: "Lighting Setup - Conference", 
-                        student: "Mike Johnson", 
-                        time: "Wednesday 8:00 AM - 12:00 PM", 
-                        status: "Scheduled",
-                        type: "Lighting"
-                      },
-                      { 
-                        title: "Live Stream Support", 
-                        student: "Sarah Wilson", 
-                        time: "Thursday 10:00 AM - 2:00 PM", 
-                        status: "Pending",
-                        type: "Streaming"
-                      },
-                    ].map((assignment, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border-l-4 border-purple-500 dark:border-purple-400">
+                    {assignments
+                        .filter(a => new Date(a.event_start_datetime) >= new Date())
+                        .sort((a, b) => new Date(a.event_start_datetime).getTime() - new Date(b.event_start_datetime).getTime())
+                        .slice(0, 5)
+                        .map((assignment, index) => (
+                      <div key={assignment.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border-l-4 border-purple-500 dark:border-purple-400">
                         <div className="flex items-center space-x-4">
                           <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                             <ClipboardList className="w-6 h-6 text-primary" />
                           </div>
                           <div>
-                            <h4 className="font-semibold text-foreground">{assignment.title}</h4>
-                            <p className="text-sm text-muted-foreground">Assigned to: {assignment.student}</p>
-                            <p className="text-xs text-muted-foreground">{assignment.time}</p>
+                            <h4 className="font-semibold text-foreground">{assignment.assignment_name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                                {assignment.users && assignment.users.length > 0 
+                                    ? `Assigned to: ${assignment.users.map(u => u.name).join(', ')}`
+                                    : 'Unassigned'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                {new Date(assignment.event_start_datetime).toLocaleString()}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Badge variant="secondary" className="text-xs px-2 py-1">
-                            {assignment.type}
-                          </Badge>
                           <Badge className={`text-xs px-2 py-1 ${
-                            assignment.status === "In Progress" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" :
-                            assignment.status === "Scheduled" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
+                            assignment.status === "pending" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" :
+                            assignment.status === "confirmed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
                             "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
                           }`}>
                             {assignment.status}
@@ -549,35 +558,21 @@ function SupervisorDashboard() {
                         </div>
                       </div>
                     ))}
+                    {assignments.filter(a => new Date(a.event_start_datetime) >= new Date()).length === 0 && (
+                        <div className="text-center py-4 text-muted-foreground">No upcoming assignments found.</div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Weekly Calendar View */}
-              <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
-                <CardHeader>
-                  <CardTitle>This Week's Assignment Calendar</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-7 gap-2 text-center">
-                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="font-semibold text-muted-foreground text-sm">{day}</div>
-                        <div className="min-h-24 p-2 bg-muted/50 rounded border border-border">
-                          {index < 4 && (
-                            <div className="text-xs p-1 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 rounded mb-1">
-                              {index === 0 && "Chapel Audio"}
-                              {index === 1 && "Video Event"}
-                              {index === 2 && "Lighting"}
-                              {index === 3 && "Live Stream"}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Calendar View */}
+              <div className="h-[700px]">
+                <CalendarComponent 
+                  events={calendarEvents}
+                  view={calendarView}
+                  onViewChange={setCalendarView}
+                />
+              </div>
             </div>
           )}
         </main>
