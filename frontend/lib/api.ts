@@ -734,7 +734,7 @@ export const userAPI = {
 
   // Force delete user (permanent)
   async forceDeleteUser(id: number | string): Promise<{ message: string }> {
-    return apiCall<{ message: string }>(`/users/${id}/force-delete`, {
+    return apiCall<{ message: string }>(`/users/${id}/force`, {
       method: 'DELETE',
     });
   },
