@@ -290,56 +290,24 @@ function SupervisorDashboard() {
           {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <div className="space-y-6">
-              {/* Key Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-blue-500/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Total Students</p>
-                        <p className="text-2xl font-bold text-primary">{stats.totalStudents}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Active students</p>
-                      </div>
-                      <Users className="h-8 w-8 text-primary" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-green-500/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">This Month</p>
-                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">{Math.round(stats.monthlyHours)}h</p>
-                        <p className="text-xs text-muted-foreground mt-1">Estimated monthly hours</p>
-                      </div>
-                      <Clock className="h-8 w-8 text-green-600 dark:text-green-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-orange-500/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Average Hours</p>
-                        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.averageHours.toFixed(1)}h</p>
-                        <p className="text-xs text-muted-foreground mt-1">per student/week</p>
-                      </div>
-                      <TrendingUp className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Completion Rate</p>
-                        <p className="text-2xl font-bold text-primary">{Math.round(stats.completionRate)}%</p>
-                        <p className="text-xs text-muted-foreground mt-1">Average completion</p>
-                      </div>
-                      <CheckCircle className="h-8 w-8 text-primary" />
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Key Metrics - Compact View */}
+              <div className="flex flex-wrap gap-3">
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <Users className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">{stats.totalStudents} Students</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <Clock className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm font-medium">{Math.round(stats.monthlyHours)}h This Month</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <TrendingUp className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                  <span className="text-sm font-medium">{stats.averageHours.toFixed(1)}h Avg/Week</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <CheckCircle className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">{Math.round(stats.completionRate)}% Completion</span>
+                </div>
               </div>
 
               {/* Monthly Hours Chart */}
@@ -481,41 +449,20 @@ function SupervisorDashboard() {
           {/* Assignment Schedules Tab */}
           {activeTab === "assignment-schedules" && (
             <div className="space-y-6">
-              {/* Assignment Overview Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-blue-500/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Active Assignments</p>
-                        <p className="text-2xl font-bold text-primary">{assignmentStats.active}</p>
-                      </div>
-                      <ClipboardList className="h-8 w-8 text-primary" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-green-500/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Completed Today</p>
-                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">{assignmentStats.completedToday}</p>
-                      </div>
-                      <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-orange-500/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Upcoming</p>
-                        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{assignmentStats.upcoming}</p>
-                      </div>
-                      <Clock className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Assignment Overview Stats - Compact View */}
+              <div className="flex flex-wrap gap-3">
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <ClipboardList className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">{assignmentStats.active} Active</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm font-medium">{assignmentStats.completedToday} Completed Today</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                  <span className="text-sm font-medium">{assignmentStats.upcoming} Upcoming</span>
+                </div>
               </div>
 
               {/* Assignment Timeline */}

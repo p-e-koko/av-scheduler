@@ -514,52 +514,24 @@ function StudentDashboard() {
           {/* Assignments Tab */}
           {activeTab === "assignments" && (
             <div className="space-y-6">
-              {/* Assignment Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20">
-                  <CardContent className="p-4 md:p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Total Assignments</p>
-                        <p className="text-xl md:text-2xl font-bold text-primary">{assignmentStats.total}</p>
-                      </div>
-                      <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-green-500/20">
-                  <CardContent className="p-4 md:p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                        <p className="text-xl md:text-2xl font-bold text-green-600 dark:text-green-400">{assignmentStats.completed}</p>
-                      </div>
-                      <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-green-600 dark:text-green-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-orange-500/20">
-                  <CardContent className="p-4 md:p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">In Progress</p>
-                        <p className="text-xl md:text-2xl font-bold text-orange-600 dark:text-orange-400">{assignmentStats.inProgress}</p>
-                      </div>
-                      <Clock className="h-6 w-6 md:h-8 md:w-8 text-orange-600 dark:text-orange-400" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-red-500/20">
-                  <CardContent className="p-4 md:p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Pending</p>
-                        <p className="text-xl md:text-2xl font-bold text-red-600 dark:text-red-400">{assignmentStats.pending}</p>
-                      </div>
-                      <AlertCircle className="h-6 w-6 md:h-8 md:w-8 text-red-600 dark:text-red-400" />
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Assignment Stats - Compact View */}
+              <div className="flex flex-wrap gap-3">
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <CheckCircle className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">{assignmentStats.total} Total</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm font-medium">{assignmentStats.completed} Completed</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                  <span className="text-sm font-medium">{assignmentStats.inProgress} In Progress</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
+                  <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                  <span className="text-sm font-medium">{assignmentStats.pending} Pending</span>
+                </div>
               </div>
 
               {/* Assignments List */}
