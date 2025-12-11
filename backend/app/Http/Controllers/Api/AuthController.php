@@ -48,13 +48,13 @@ class AuthController extends Controller
 
         event(new Registered($user));
 
-        // Login the user with session instead of creating token
-        Auth::login($user);
+        // Do not login the user automatically
+        // Auth::login($user);
 
         AuditLogger::log('User Registered', ['email' => $user->email, 'role' => $user->role]);
 
         return response()->json([
-            'message' => 'User registered successfully',
+            'message' => 'User registered successfully. Please check your email for verification.',
             'user' => new UserResource($user),
         ], 201);
     }
@@ -77,6 +77,15 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
+        }
+
+        // Check if email is verified
+        if (!$user->hasVerifiedEmail()) {
+            AuditLogger::log('Unverified Login Attempt', ['email' => $user->email]);
+            return response()->json([
+                'message' => 'Your email address is not verified. Please check your email for the verification link.',
+                'email_verified' => false
+            ], 403);
         }
 
         // Login the user with session

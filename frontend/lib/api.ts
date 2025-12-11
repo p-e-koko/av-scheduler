@@ -340,10 +340,10 @@ export const authAPI = {
 
       const result = await response.json();
       
-      // Store user data
-      if (result.user) {
-        setStoredUser(result.user);
-      }
+      // Do not store user data on register as they need to verify email first
+      // if (result.user) {
+      //   setStoredUser(result.user);
+      // }
 
       return result;
     } else {
@@ -353,10 +353,10 @@ export const authAPI = {
         body: JSON.stringify(userData),
       });
 
-      // Store user data
-      if (response.user) {
-        setStoredUser(response.user);
-      }
+      // Do not store user data on register as they need to verify email first
+      // if (response.user) {
+      //   setStoredUser(response.user);
+      // }
 
       return response;
     }
