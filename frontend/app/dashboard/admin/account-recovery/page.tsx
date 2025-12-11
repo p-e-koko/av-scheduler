@@ -15,7 +15,9 @@ import {
   RotateCcw,
   Trash2,
   UserX,
-  FileText
+  FileText,
+  CheckCircle,
+  XCircle
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -317,7 +319,14 @@ export default function AccountRecovery() {
                             <div>
                               <h3 className="font-semibold text-foreground text-sm truncate line-through">{user.name}</h3>
                               <p className="text-xs text-muted-foreground truncate">{user.student_id || 'No Student ID'}</p>
-                              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={user.email}>{user.email}</p>
+                                {user.email_verified_at ? (
+                                  <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                ) : (
+                                  <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                                )}
+                              </div>
                             </div>
                             
                             <div className="flex items-center gap-2">
@@ -399,7 +408,14 @@ export default function AccountRecovery() {
                                 <div className="ml-4">
                                   <div className="text-sm font-medium text-foreground line-through">{user.name}</div>
                                   <div className="text-sm text-muted-foreground">{user.student_id || 'No Student ID'}</div>
-                                  <div className="text-xs text-muted-foreground">{user.email}</div>
+                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                    {user.email}
+                                    {user.email_verified_at ? (
+                                      <CheckCircle className="w-3 h-3 text-green-500" />
+                                    ) : (
+                                      <XCircle className="w-3 h-3 text-red-500" />
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </td>

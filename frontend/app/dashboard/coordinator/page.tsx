@@ -23,6 +23,7 @@ import {
   MapPin,
   Clock,
   CheckCircle,
+  XCircle,
   AlertCircle,
   Eye
 } from "lucide-react"
@@ -635,6 +636,14 @@ function CoordinatorDashboard() {
                                 <div>
                                   <h3 className="font-semibold text-foreground text-sm truncate">{student.name}</h3>
                                   <p className="text-xs text-muted-foreground truncate">Student ID: {student.student_id || 'N/A'}</p>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={student.email}>{student.email}</p>
+                                    {student.email_verified_at ? (
+                                      <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                    ) : (
+                                      <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="secondary" className="text-xs px-2 py-0.5">Student</Badge>
@@ -710,7 +719,14 @@ function CoordinatorDashboard() {
                                   </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                                  {student.email}
+                                  <div className="flex items-center gap-2">
+                                    {student.email}
+                                    {student.email_verified_at ? (
+                                      <CheckCircle className="w-4 h-4 text-green-500" />
+                                    ) : (
+                                      <XCircle className="w-4 h-4 text-red-500" />
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                   <Button 

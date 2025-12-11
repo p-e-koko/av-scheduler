@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { authAPI, formatAPIError, testConnection } from "@/lib/api"
+import { authAPI, formatAPIError, testConnection, APIError } from "@/lib/api"
 import { getRoleBasedDashboardPath } from "@/lib/role-routing"
 
 export default function LoginPage() {
@@ -54,6 +54,11 @@ export default function LoginPage() {
         router.push(redirectPath);
       }
     } catch (error) {
+      // Handle unverified email error specifically
+      if (error instanceof APIError && error.status === 403 && (error.message.includes('verified') || (error as any).email_verified === false)) {
+        router.push('/auth/verify?reason=unverified');
+        return;
+      }
       setError(formatAPIError(error))
     } finally {
       setIsLoading(false)

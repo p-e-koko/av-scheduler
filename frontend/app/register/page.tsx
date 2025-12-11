@@ -12,6 +12,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { authAPI, formatAPIError, testConnection } from "@/lib/api"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -28,6 +36,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
 
@@ -109,8 +118,8 @@ export default function RegisterPage() {
       const response = await authAPI.register(submitData)
       
       if (response.user) {
-        // Redirect to verification page with a success flag
-        router.push('/auth/verify?registered=true')
+        // Show success dialog instead of immediate redirect
+        setShowSuccessDialog(true)
       }
     } catch (error) {
       setError(formatAPIError(error))
@@ -119,8 +128,29 @@ export default function RegisterPage() {
     }
   }
 
+  const handleDialogClose = () => {
+    setShowSuccessDialog(false)
+    router.push('/auth/verify?registered=true')
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      <Dialog open={showSuccessDialog} onOpenChange={handleDialogClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Account Created Successfully</DialogTitle>
+            <DialogDescription>
+              Your account has been created. Please check your email to verify your account before logging in.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleDialogClose}>
+              Go to Verification
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="absolute top-4 right-4">
         <ModeToggle />
       </div>

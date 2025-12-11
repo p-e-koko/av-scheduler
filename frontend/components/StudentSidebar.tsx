@@ -60,7 +60,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
   if (!currentUser) return null
 
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <div className="bg-card/80 backdrop-blur-xl border-r border-border shadow-lg shadow-gray-100/50 dark:shadow-none h-full flex flex-col">
+    <div className="w-full bg-card/80 backdrop-blur-xl border-r border-border shadow-lg shadow-gray-100/50 dark:shadow-none h-full flex flex-col">
       {/* Sidebar Header - App Branding */}
       <div className="bg-gradient-to-r from-primary to-primary-medium text-primary-foreground border-0 p-4">
         <div className="flex items-center justify-between">
@@ -210,7 +210,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={`hidden md:flex ${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0`}>
+      <div className={`hidden md:flex h-full ${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0 relative z-20`}>
         <SidebarContent />
       </div>
 
