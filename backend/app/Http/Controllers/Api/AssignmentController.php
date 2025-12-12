@@ -23,9 +23,21 @@ class AssignmentController extends Controller
     public function index(Request $request): JsonResponse
     {
         // Auto-complete past assignments
-        Assignment::where('status', 'confirmed')
+        Assignment::where('status', '!=', 'complete')
             ->where('event_end_datetime', '<', now())
             ->update(['status' => 'complete']);
+
+        // Auto-confirm assignments where all users have accepted
+        $assignmentsToConfirm = Assignment::where('status', 'pending')
+            ->whereHas('users')
+            ->whereDoesntHave('users', function ($q) {
+                $q->where('assignment_users.status', '!=', 'accepted');
+            })
+            ->pluck('id');
+
+        if ($assignmentsToConfirm->isNotEmpty()) {
+            Assignment::whereIn('id', $assignmentsToConfirm)->update(['status' => 'confirmed']);
+        }
 
         $query = Assignment::with(['creator', 'users']);
 
@@ -413,6 +425,12 @@ class AssignmentController extends Controller
         }
 
         $assignment->updateUserStatus($user, 'accepted');
+
+        // Check if all assigned users have accepted
+        $allAccepted = $assignment->users()->wherePivot('status', '!=', 'accepted')->doesntExist();
+        if ($allAccepted && $assignment->users()->count() > 0) {
+            $assignment->update(['status' => 'confirmed']);
+        }
 
         // Notify coordinator
         if ($assignment->creator) {

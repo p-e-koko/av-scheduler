@@ -71,7 +71,7 @@ function CoordinatorDashboard() {
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null)
   const [isDeleteAssignmentConfirmationOpen, setIsDeleteAssignmentConfirmationOpen] = useState(false)
   const [assignmentToDelete, setAssignmentToDelete] = useState<number | null>(null)
-  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'pending' | 'completed'>('all')
+  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all')
   const [assignmentSearchQuery, setAssignmentSearchQuery] = useState("")
   const [positionFilter, setPositionFilter] = useState<string>('all')
   const [studentFilter, setStudentFilter] = useState<string>('all')
@@ -388,7 +388,7 @@ function CoordinatorDashboard() {
                           onClick={() => setAssignmentFilter('all')}
                           className={`transition-all duration-200 ${
                             assignmentFilter === 'all' 
-                              ? 'bg-background text-primary shadow-sm font-medium' 
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                           }`}
                         >
@@ -400,7 +400,7 @@ function CoordinatorDashboard() {
                           onClick={() => setAssignmentFilter('pending')}
                           className={`transition-all duration-200 ${
                             assignmentFilter === 'pending' 
-                              ? 'bg-background text-primary shadow-sm font-medium' 
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                           }`}
                         >
@@ -409,10 +409,22 @@ function CoordinatorDashboard() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => setAssignmentFilter('confirmed')}
+                          className={`transition-all duration-200 ${
+                            assignmentFilter === 'confirmed' 
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
+                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                          }`}
+                        >
+                          Confirmed
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setAssignmentFilter('completed')}
                           className={`transition-all duration-200 ${
                             assignmentFilter === 'completed' 
-                              ? 'bg-background text-primary shadow-sm font-medium' 
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                           }`}
                         >
@@ -472,6 +484,7 @@ function CoordinatorDashboard() {
                           // Filter by status
                           if (assignmentFilter !== 'all') {
                             if (assignmentFilter === 'completed' && assignment.status !== 'complete') return false;
+                            if (assignmentFilter === 'confirmed' && assignment.status !== 'confirmed') return false;
                             if (assignmentFilter === 'pending' && assignment.status !== 'pending') return false;
                           }
 
@@ -503,7 +516,7 @@ function CoordinatorDashboard() {
                         <div key={`${assignment.id}-${index}`} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                           <div className="flex items-center space-x-4">
                             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                              <ClipboardList className="w-5 h-5 text-primary" />
+                              <ClipboardList className="w-5 h-5 text-primary dark:text-white" />
                             </div>
                             <div>
                               <h4 className="font-medium text-foreground">{assignment.assignment_name}</h4>
@@ -515,7 +528,7 @@ function CoordinatorDashboard() {
                               variant="secondary" 
                               className={`text-xs px-2 py-0.5 border-none ${
                                 assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                assignment.status === 'confirmed' ? 'bg-primary/10 text-primary' :
+                                assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
                                 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                               }`}
                             >
