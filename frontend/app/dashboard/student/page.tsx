@@ -47,6 +47,7 @@ import {
   type Availability
 } from "@/lib/api"
 import { StudentSidebar } from "@/components/StudentSidebar"
+import { RejectAssignmentModal } from "@/components/RejectAssignmentModal"
 
 function StudentDashboard() {
   const router = useRouter()
@@ -58,6 +59,8 @@ function StudentDashboard() {
   const [assignmentFilter, setAssignmentFilter] = useState<"all" | "me">("all")
   const [viewMode, setViewMode] = useState<"card" | "list">("card")
   const [isAddAvailabilityModalOpen, setIsAddAvailabilityModalOpen] = useState(false)
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
+  const [selectedAssignmentForRejection, setSelectedAssignmentForRejection] = useState<Assignment | null>(null)
 
   // Data states
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -165,6 +168,74 @@ function StudentDashboard() {
     fetchData()
   }, [currentUser, activeTab])
 
+  const refreshAssignments = async () => {
+    try {
+      setLoading(true)
+      const [allAssignmentsResponse, myAssignmentsResponse] = await Promise.all([
+        assignmentAPI.getAssignments({ per_page: 50 }),
+        assignmentAPI.getMyAssignments({ per_page: 50 })
+      ])
+      
+      setAssignments(allAssignmentsResponse.data)
+      setMyAssignments(myAssignmentsResponse.data)
+      
+      // Recalculate stats
+      const stats = myAssignmentsResponse.data.reduce((acc, assignment) => {
+        acc.total++
+        switch (assignment.status) {
+          case 'complete':
+            acc.completed++
+            break
+          case 'confirmed':
+            acc.inProgress++
+            break
+          case 'pending':
+            acc.pending++
+            break
+          default:
+            break
+        }
+        return acc
+      }, { total: 0, completed: 0, inProgress: 0, pending: 0 })
+      
+      setAssignmentStats(stats)
+    } catch (err) {
+      console.error("Failed to refresh assignments", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAcceptAssignment = async (id: number) => {
+    try {
+      await assignmentAPI.acceptAssignment(id)
+      refreshAssignments()
+    } catch (err) {
+      console.error("Failed to accept assignment", err)
+      setError(formatAPIError(err))
+    }
+  }
+
+  const handleRejectAssignment = (id: number) => {
+    const assignment = myAssignments.find(a => a.id === id)
+    if (assignment) {
+      setSelectedAssignmentForRejection(assignment)
+      setIsRejectModalOpen(true)
+    }
+  }
+
+  const confirmRejectAssignment = async (reason: string) => {
+    if (!selectedAssignmentForRejection) return
+
+    try {
+      await assignmentAPI.rejectAssignment(selectedAssignmentForRejection.id, reason)
+      refreshAssignments()
+    } catch (err) {
+      console.error("Failed to reject assignment", err)
+      setError(formatAPIError(err))
+    }
+  }
+
   // Calculate hours data
   const hoursData = React.useMemo(() => {
     if (!currentUser) return { promised: 0, worked: 0, remaining: 0, percentage: 0 }
@@ -216,29 +287,6 @@ function StudentDashboard() {
 
     return { promised, worked, remaining, percentage }
   }, [currentUser, myAssignments])
-
-  const handleAcceptAssignment = async (assignmentId: number) => {
-    try {
-      await assignmentAPI.acceptAssignment(assignmentId)
-      // Refresh data
-      const response = await assignmentAPI.getMyAssignments({ per_page: 50 })
-      setMyAssignments(response.data)
-    } catch (err) {
-      alert(formatAPIError(err))
-    }
-  }
-
-  const handleRejectAssignment = async (assignmentId: number) => {
-    if (!confirm("Are you sure you want to reject this assignment?")) return
-    try {
-      await assignmentAPI.rejectAssignment(assignmentId)
-      // Refresh data
-      const response = await assignmentAPI.getMyAssignments({ per_page: 50 })
-      setMyAssignments(response.data)
-    } catch (err) {
-      alert(formatAPIError(err))
-    }
-  }
 
   const calendarEvents = React.useMemo(() => {
     return availability.map(slot => {
@@ -729,6 +777,14 @@ function StudentDashboard() {
         onClose={() => setIsAddAvailabilityModalOpen(false)} 
         onSuccess={handleAvailabilityAdded}
       />
+      {selectedAssignmentForRejection && (
+        <RejectAssignmentModal
+          isOpen={isRejectModalOpen}
+          onClose={() => setIsRejectModalOpen(false)}
+          onConfirm={confirmRejectAssignment}
+          assignmentName={selectedAssignmentForRejection.assignment_name}
+        />
+      )}
     </div>
   )
 }

@@ -70,6 +70,7 @@ export interface Assignment {
     status: string;
     checked_in: number;
     position?: string;
+    rejection_reason?: string;
   };
 }
 
@@ -800,6 +801,21 @@ export const assignmentAPI = {
     return apiCall<{ message: string; assignment: Assignment }>('/assignments', {
       method: 'POST',
       body: JSON.stringify(assignmentData),
+    });
+  },
+
+  // Accept assignment
+  async acceptAssignment(id: number | string): Promise<{ message: string; assignment: Assignment }> {
+    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${id}/accept`, {
+      method: 'POST',
+    });
+  },
+
+  // Reject assignment
+  async rejectAssignment(id: number | string, reason: string): Promise<{ message: string; assignment: Assignment }> {
+    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
     });
   },
 

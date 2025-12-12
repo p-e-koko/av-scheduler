@@ -170,6 +170,11 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment }: Assignmen
                           {(user as any).pivot.status}
                         </Badge>
                       )}
+                      {(user as any).pivot?.status === 'rejected' && (user as any).pivot?.rejection_reason && (
+                        <p className="text-[10px] text-red-600 dark:text-red-400 max-w-[150px] text-right truncate" title={(user as any).pivot.rejection_reason}>
+                          Reason: {(user as any).pivot.rejection_reason}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}

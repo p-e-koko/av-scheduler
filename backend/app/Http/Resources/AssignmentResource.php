@@ -83,6 +83,16 @@ class AssignmentResource extends JsonResource
 
             // User-specific data if authenticated user is assigned
             'current_user_assignment' => $this->getCurrentUserAssignment($request),
+
+            // Pivot data if available (e.g. when fetching my assignments)
+            'pivot' => $this->when($this->pivot, function () {
+                return [
+                    'status' => $this->pivot->status,
+                    'checked_in' => $this->pivot->checked_in,
+                    'position' => $this->pivot->position,
+                    'rejection_reason' => $this->pivot->rejection_reason ?? null,
+                ];
+            }),
         ];
     }
 

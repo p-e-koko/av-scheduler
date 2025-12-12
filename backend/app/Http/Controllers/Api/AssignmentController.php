@@ -11,6 +11,9 @@ use App\Models\Assignment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Helpers\AuditLogger;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AssignmentAssigned;
+use App\Mail\AssignmentStatusUpdated;
 
 class AssignmentController extends Controller
 {
@@ -228,6 +231,9 @@ class AssignmentController extends Controller
             $request->position
         );
 
+        $assignedUser = \App\Models\User::find($request->user_id);
+        Mail::to($assignedUser->email)->send(new AssignmentAssigned($assignment, $assignedUser));
+
         AuditLogger::log('User Assigned to Assignment', [
             'assignment_id' => $assignment->id,
             'assignment_name' => $assignment->assignment_name,
@@ -408,6 +414,11 @@ class AssignmentController extends Controller
 
         $assignment->updateUserStatus($user, 'accepted');
 
+        // Notify coordinator
+        if ($assignment->creator) {
+            Mail::to($assignment->creator->email)->send(new AssignmentStatusUpdated($assignment, $user, 'accepted'));
+        }
+
         AuditLogger::log('Assignment Accepted', [
             'assignment_id' => $assignment->id,
             'assignment_name' => $assignment->assignment_name
@@ -424,6 +435,10 @@ class AssignmentController extends Controller
      */
     public function rejectAssignment(Request $request, Assignment $assignment): JsonResponse
     {
+        $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
         $user = auth()->user();
 
         // Check if user is assigned
@@ -433,11 +448,17 @@ class AssignmentController extends Controller
             ], 422);
         }
 
-        $assignment->updateUserStatus($user, 'rejected');
+        $assignment->updateUserStatus($user, 'rejected', $request->reason);
+
+        // Notify coordinator
+        if ($assignment->creator) {
+            Mail::to($assignment->creator->email)->send(new AssignmentStatusUpdated($assignment, $user, 'rejected', $request->reason));
+        }
 
         AuditLogger::log('Assignment Rejected', [
             'assignment_id' => $assignment->id,
-            'assignment_name' => $assignment->assignment_name
+            'assignment_name' => $assignment->assignment_name,
+            'reason' => $request->reason
         ]);
 
         return response()->json([
