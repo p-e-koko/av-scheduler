@@ -46,6 +46,14 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
   const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState<Partial<UserType>>({})
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Fetch student data
   useEffect(() => {
@@ -243,7 +251,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 md:gap-0">
           <div className="flex items-center space-x-4">
             <Button 
               onClick={() => router.back()} 
@@ -262,16 +270,16 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
           {!isEditing ? (
             <Button 
               onClick={() => setIsEditing(true)}
-              className="bg-primary hover:bg-primary/90"
+              className="bg-primary hover:bg-primary/90 w-full md:w-auto"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit Profile
             </Button>
           ) : (
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 w-full md:w-auto">
               <Button 
                 onClick={handleSaveEdit}
-                className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
+                className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 flex-1 md:flex-none"
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save
@@ -279,6 +287,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
               <Button 
                 onClick={cancelEdit}
                 variant="outline"
+                className="flex-1 md:flex-none"
               >
                 <X className="w-4 h-4 mr-2" />
                 Cancel
@@ -389,6 +398,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                   events={calendarEvents}
                   view="day"
                   className="border-0 shadow-none h-[400px]"
+                  isMobile={isMobile}
                 />
               </div>
             </div>

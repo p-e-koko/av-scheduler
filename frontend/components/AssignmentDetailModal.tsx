@@ -70,7 +70,7 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment }: Assignmen
           <div className="space-y-2">
             <div className="flex items-start space-x-3">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <FileText className="w-4 h-4 text-primary" />
+                <FileText className="w-4 h-4 text-primary dark:text-white" />
               </div>
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground">Event Name</h4>
@@ -80,7 +80,7 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment }: Assignmen
 
             <div className="flex items-start space-x-3">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <MapPin className="w-4 h-4 text-primary" />
+                <MapPin className="w-4 h-4 text-primary dark:text-white" />
               </div>
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground">Location</h4>
@@ -90,7 +90,7 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment }: Assignmen
 
             <div className="flex items-start space-x-3">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <Calendar className="w-4 h-4 text-primary" />
+                <Calendar className="w-4 h-4 text-primary dark:text-white" />
               </div>
               <div>
                 <h4 className="text-sm font-medium text-muted-foreground">Date & Time</h4>
@@ -106,7 +106,7 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment }: Assignmen
             {assignment.description && (
               <div className="flex items-start space-x-3">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <HelpCircle className="w-4 h-4 text-primary" />
+                  <HelpCircle className="w-4 h-4 text-primary dark:text-white" />
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground">Description</h4>

@@ -465,7 +465,7 @@ function CoordinatorDashboard() {
                     
                     <div className="flex flex-col md:flex-row gap-4">
                       {/* Filter Buttons */}
-                      <div className="flex items-center bg-muted p-1 rounded-lg">
+                      <div className="grid grid-cols-2 sm:flex items-center bg-muted p-1 rounded-lg gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -473,7 +473,7 @@ function CoordinatorDashboard() {
                             setAssignmentFilter('all')
                             setAssignmentCurrentPage(1)
                           }}
-                          className={`transition-all duration-200 ${
+                          className={`transition-all duration-200 w-full sm:w-auto ${
                             assignmentFilter === 'all' 
                               ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -488,7 +488,7 @@ function CoordinatorDashboard() {
                             setAssignmentFilter('pending')
                             setAssignmentCurrentPage(1)
                           }}
-                          className={`transition-all duration-200 ${
+                          className={`transition-all duration-200 w-full sm:w-auto ${
                             assignmentFilter === 'pending' 
                               ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -503,7 +503,7 @@ function CoordinatorDashboard() {
                             setAssignmentFilter('confirmed')
                             setAssignmentCurrentPage(1)
                           }}
-                          className={`transition-all duration-200 ${
+                          className={`transition-all duration-200 w-full sm:w-auto ${
                             assignmentFilter === 'confirmed' 
                               ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -518,7 +518,7 @@ function CoordinatorDashboard() {
                             setAssignmentFilter('completed')
                             setAssignmentCurrentPage(1)
                           }}
-                          className={`transition-all duration-200 ${
+                          className={`transition-all duration-200 w-full sm:w-auto ${
                             assignmentFilter === 'completed' 
                               ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
@@ -528,9 +528,9 @@ function CoordinatorDashboard() {
                         </Button>
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
                         <select
-                          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground max-w-[150px]"
+                          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground w-full sm:w-auto max-w-none sm:max-w-[150px]"
                           value={studentFilter}
                           onChange={(e) => setStudentFilter(e.target.value)}
                         >
@@ -543,7 +543,7 @@ function CoordinatorDashboard() {
                         </select>
 
                         <select
-                          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground"
+                          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground w-full sm:w-auto max-w-none sm:max-w-[150px]"
                           value={positionFilter}
                           onChange={(e) => setPositionFilter(e.target.value)}
                         >
@@ -555,11 +555,11 @@ function CoordinatorDashboard() {
                           ))}
                         </select>
 
-                        <div className="relative">
+                        <div className="relative w-full sm:w-auto">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             placeholder="Search assignments..."
-                            className="pl-10 w-64 bg-background/80 backdrop-blur-xl border-input focus-visible:ring-0 focus-visible:border-primary"
+                            className="pl-10 w-full sm:w-64 bg-background/80 backdrop-blur-xl border-input focus-visible:ring-0 focus-visible:border-primary"
                             value={assignmentSearchQuery}
                             onChange={(e) => setAssignmentSearchQuery(e.target.value)}
                           />
@@ -614,17 +614,17 @@ function CoordinatorDashboard() {
                           return true;
                         })
                         .map((assignment, index) => (
-                        <div key={`${assignment.id}-${index}`} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <div key={`${assignment.id}-${index}`} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4">
+                          <div className="flex items-center space-x-4 w-full md:w-auto">
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                               <ClipboardList className="w-5 h-5 text-primary dark:text-white" />
                             </div>
-                            <div>
-                              <h4 className="font-medium text-foreground">{assignment.assignment_name}</h4>
-                              <p className="text-sm text-muted-foreground">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString('en-US')}</p>
+                            <div className="min-w-0">
+                              <h4 className="font-medium text-foreground truncate">{assignment.assignment_name}</h4>
+                              <p className="text-sm text-muted-foreground truncate">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString('en-US')}</p>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
                             <Badge 
                               variant="secondary" 
                               className={`text-xs px-2 py-0.5 border-none ${
@@ -679,7 +679,7 @@ function CoordinatorDashboard() {
 
                   {/* Assignment Pagination */}
                   {assignmentPagination && assignmentPagination.last_page > 1 && (
-                    <div className="flex items-center justify-between mt-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
                       <div className="text-sm text-gray-500">
                         Showing {assignmentPagination.from} to {assignmentPagination.to} of {assignmentPagination.total} results
                       </div>
@@ -715,7 +715,7 @@ function CoordinatorDashboard() {
           {activeTab === "students" && (
             <div className="space-y-6">
               {/* Controls */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
                 {/* View Toggle */}
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
@@ -748,7 +748,7 @@ function CoordinatorDashboard() {
                       placeholder="Search students..."
                       value={studentSearchQuery}
                       onChange={(e) => setStudentSearchQuery(e.target.value)}
-                      className="pl-10 w-64 bg-card/80 backdrop-blur-xl border-border focus:border-primary"
+                      className="pl-10 w-full md:w-64 bg-card/80 backdrop-blur-xl border-border focus:border-primary"
                     />
                   </div>
                 </div>
@@ -895,7 +895,7 @@ function CoordinatorDashboard() {
 
                   {/* Pagination */}
                   {studentPagination && studentPagination.last_page > 1 && (
-                    <div className="flex items-center justify-between mt-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
                       <div className="text-sm text-gray-500">
                         Showing {studentPagination.from} to {studentPagination.to} of {studentPagination.total} results
                       </div>
@@ -935,7 +935,7 @@ function CoordinatorDashboard() {
           {activeTab === "schedules" && (
             <div className="space-y-6">
               <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardHeader className="flex flex-col md:flex-row items-center justify-between pb-2 gap-4">
                   <CardTitle className="text-foreground font-bold">Daily Availability View</CardTitle>
                   <div className="flex items-center bg-card rounded-lg border border-border shadow-sm p-1">
                     <Button 
@@ -1081,6 +1081,7 @@ function CoordinatorDashboard() {
                     </Button>
                   </div>
                   <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-muted/50">
                         <tr>
@@ -1096,7 +1097,7 @@ function CoordinatorDashboard() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center space-x-3">
                                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <MapPin className="w-4 h-4 text-primary" />
+                                  <MapPin className="w-4 h-4 text-primary dark:text-white" />
                                 </div>
                                 <span className="font-medium text-foreground">{position.name}</span>
                               </div>
@@ -1123,6 +1124,7 @@ function CoordinatorDashboard() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                     {(positions || []).length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">No positions found</div>
                     )}
@@ -1146,6 +1148,7 @@ function CoordinatorDashboard() {
               ) : (
                 <>
                   <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-muted/50">
                       <tr>
@@ -1206,6 +1209,7 @@ function CoordinatorDashboard() {
                       ))}
                     </tbody>
                   </table>
+                  </div>
                   {(trashedAssignments || []).length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">No trashed assignments found</div>
                   )}
@@ -1213,7 +1217,7 @@ function CoordinatorDashboard() {
 
                 {/* Recycle Bin Pagination */}
                 {recycleBinPagination && recycleBinPagination.last_page > 1 && (
-                  <div className="flex items-center justify-between mt-4">
+                  <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
                     <div className="text-sm text-gray-500">
                       Showing {recycleBinPagination.from} to {recycleBinPagination.to} of {recycleBinPagination.total} results
                     </div>
