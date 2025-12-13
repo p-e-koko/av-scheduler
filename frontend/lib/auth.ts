@@ -49,7 +49,7 @@ export const auth = {
     return authAPI.verifyEmail(url);
   },
 
-  async resendVerificationEmail() {
-    return authAPI.resendVerificationEmail();
+  async resendVerificationEmail(email: string) {
+    return authAPI.resendVerificationEmail(email);
   },
 };

@@ -28,6 +28,9 @@ Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
+        ->middleware(['throttle:6,1'])
+        ->name('verification.send');
 });
 
 // Email Verification Route
@@ -49,9 +52,6 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
-        ->middleware(['throttle:6,1'])
-        ->name('verification.send');
 });
 
 // Protected User Management Routes - Role-Based Access Control

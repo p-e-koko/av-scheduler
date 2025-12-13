@@ -54,7 +54,7 @@ class AuthController extends Controller
                     $user->assignRole($userData['role']);
                 } else {
                     AuditLogger::log('Role Assignment Failed', ['email' => $user->email, 'role' => $userData['role'], 'reason' => 'Role does not exist']);
-                    // Optionally create the role or just log it. 
+                    // Optionally create the role or just log it.
                     // For now, we continue without assigning the Spatie role, but the 'role' column is set.
                 }
 
@@ -295,11 +295,20 @@ class AuthController extends Controller
      */
     public function resendVerificationEmail(Request $request): JsonResponse
     {
-        if ($request->user()->hasVerifiedEmail()) {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            // Return success to prevent email enumeration
+            return response()->json(['message' => 'If an account with that email exists, a verification link has been sent.']);
+        }
+
+        if ($user->hasVerifiedEmail()) {
             return response()->json(['message' => 'Email already verified.']);
         }
 
-        $request->user()->sendEmailVerificationNotification();
+        $user->sendEmailVerificationNotification();
 
         return response()->json(['message' => 'Verification link sent.']);
     }

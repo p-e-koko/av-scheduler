@@ -66,7 +66,7 @@ export default function LoginPage() {
     } catch (error) {
       // Handle unverified email error specifically
       if (error instanceof APIError && error.status === 403 && (error.message.includes('verified') || (error as any).email_verified === false)) {
-        router.push('/auth/verify?reason=unverified');
+        router.push(`/auth/verify?reason=unverified&email=${encodeURIComponent(email)}`);
         return;
       }
       setError(formatAPIError(error))

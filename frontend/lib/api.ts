@@ -465,9 +465,10 @@ export const authAPI = {
   },
 
   // Resend verification email
-  async resendVerificationEmail(): Promise<ApiResponse> {
+  async resendVerificationEmail(email: string): Promise<ApiResponse> {
     return apiCall<ApiResponse>('/auth/email/verification-notification', {
       method: 'POST',
+      body: JSON.stringify({ email }),
     });
   },
 };

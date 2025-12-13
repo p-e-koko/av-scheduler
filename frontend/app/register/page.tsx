@@ -130,7 +130,7 @@ export default function RegisterPage() {
 
   const handleDialogClose = () => {
     setShowSuccessDialog(false)
-    router.push('/auth/verify?registered=true')
+    router.push(`/auth/verify?registered=true&email=${encodeURIComponent(formData.email)}`)
   }
 
   return (

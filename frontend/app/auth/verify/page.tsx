@@ -13,6 +13,7 @@ function VerifyEmailContent() {
   const verifyUrl = searchParams.get('url');
   const isRegistered = searchParams.get('registered') === 'true';
   const reason = searchParams.get('reason');
+  const email = searchParams.get('email');
   
   const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -40,9 +41,13 @@ function VerifyEmailContent() {
   };
 
   const handleResend = async () => {
+    if (!email) {
+      setMessage('Email address not found. Please try logging in again.');
+      return;
+    }
     setResending(true);
     try {
-      await auth.resendVerificationEmail();
+      await auth.resendVerificationEmail(email);
       setMessage('Verification link has been resent to your email.');
     } catch (error: any) {
       setMessage(error.message || 'Failed to resend verification email.');
