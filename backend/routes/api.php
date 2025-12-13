@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Google\Client as GoogleClient;
+use Google\Service\Calendar as GoogleCalendar;
 
 /*
 |--------------------------------------------------------------------------
@@ -170,4 +172,46 @@ Route::get('/health', function () {
         'timestamp' => now()->toISOString(),
         'service' => 'Laravel API'
     ]);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Step 3: Create Google Calendar Event
+    Route::post('/booking/google', function (Request $request) {
+        $user = $request->user();
+
+        $client = new GoogleClient();
+        $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+        $client->setAccessToken([
+            'access_token' => $user->google_access_token,
+            'refresh_token' => $user->google_refresh_token,
+        ]);
+
+        // Refresh token if expired
+        if ($client->isAccessTokenExpired()) {
+            $client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
+            $user->google_access_token = $client->getAccessToken()['access_token'];
+            $user->save();
+        }
+
+        $service = new GoogleCalendar($client);
+
+        // Format dates to ensure seconds are included (required by Google API)
+        // We use the string format Y-m-d\TH:i:s and let Google handle the timezone via the timeZone parameter
+        $startDateTime = \Carbon\Carbon::parse($request->start)->format('Y-m-d\TH:i:s');
+        $endDateTime = \Carbon\Carbon::parse($request->end)->format('Y-m-d\TH:i:s');
+
+        $event = new GoogleCalendar\Event([
+            'summary' => $request->title,
+            'start' => ['dateTime' => $startDateTime, 'timeZone' => 'Asia/Bangkok'],
+            'end' => ['dateTime' => $endDateTime, 'timeZone' => 'Asia/Bangkok'],
+        ]);
+
+        $service->events->insert('primary', $event);
+
+        return response()->json(['success' => true]);
+    });
+
 });

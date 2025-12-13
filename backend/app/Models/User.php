@@ -31,6 +31,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'profile_picture',
         'promised_hours_per_week',
         'remaining_hours_this_week',
+        'google_access_token',
+        'google_refresh_token',
+        'google_token_expires_at',
     ];
 
     /**
