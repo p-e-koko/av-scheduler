@@ -233,14 +233,6 @@ function AdminDashboard() {
           {hasAnyRole(['admin']) && (
             <div className="flex space-x-2">
               <Button 
-                variant="outline"
-                onClick={() => router.push('/student')}
-                className="bg-card/80 backdrop-blur-xl border-border"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                All Students
-              </Button>
-              <Button 
                 className="bg-gradient-to-r from-primary to-primary-medium text-primary-foreground hover:shadow-lg transition-all"
                 onClick={handleAddUser}
               >
