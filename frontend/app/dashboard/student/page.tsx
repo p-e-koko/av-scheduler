@@ -459,7 +459,7 @@ function StudentDashboard() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="px-4 md:px-6 py-4 pt-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
             <div className="flex items-center gap-4">
               <Button
                 variant="ghost"
@@ -483,8 +483,8 @@ function StudentDashboard() {
             </div>
             </div>
             {activeTab === "assignments" && (
-              <div className="flex items-center space-x-2">
-                <div className="flex items-center bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
+              <div className="flex items-center space-x-2 w-full md:w-auto">
+                <div className="flex items-center bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border w-full md:w-auto">
                   <Button
                     variant={assignmentFilter === "all" ? "default" : "ghost"}
                     size="sm"
@@ -492,7 +492,7 @@ function StudentDashboard() {
                       setAssignmentFilter("all")
                       setAssignmentCurrentPage(1)
                     }}
-                    className={assignmentFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                    className={`flex-1 md:flex-none ${assignmentFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     All
                   </Button>
@@ -503,7 +503,7 @@ function StudentDashboard() {
                       setAssignmentFilter("me")
                       setAssignmentCurrentPage(1)
                     }}
-                    className={assignmentFilter === "me" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                    className={`flex-1 md:flex-none ${assignmentFilter === "me" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     Mine
                   </Button>
@@ -627,24 +627,24 @@ function StudentDashboard() {
               {/* Assignments List */}
               <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                 <CardHeader>
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between space-y-4 md:space-y-0">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
                     <CardTitle>
                       {assignmentFilter === "all" ? "All Assignments" : "My Assignments"}
                     </CardTitle>
-                    <div className="flex items-center space-x-2">
-                      <div className="relative">
+                    <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+                      <div className="relative w-full sm:w-auto">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           placeholder="Search..."
-                          className="pl-10 w-full md:w-64 bg-card/80"
+                          className="pl-10 w-full sm:w-64 bg-card/80"
                         />
                       </div>
-                      <div className="flex items-center bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
+                      <div className="flex items-center bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border w-full sm:w-auto">
                         <Button
                           variant={viewMode === "card" ? "default" : "ghost"}
                           size="sm"
                           onClick={() => setViewMode("card")}
-                          className={viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                          className={`flex-1 sm:flex-none ${viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                         >
                           <Grid className="w-4 h-4" />
                         </Button>
@@ -652,7 +652,7 @@ function StudentDashboard() {
                           variant={viewMode === "list" ? "default" : "ghost"}
                           size="sm"
                           onClick={() => setViewMode("list")}
-                          className={viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                          className={`flex-1 sm:flex-none ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                         >
                           <List className="w-4 h-4" />
                         </Button>
@@ -675,9 +675,9 @@ function StudentDashboard() {
                         <div key={assignment.id} className={`${
                           viewMode === "card" 
                             ? "p-4 bg-muted/50 rounded-lg border border-border" 
-                            : "flex items-center justify-between p-4 bg-muted/50 rounded-lg"
+                            : "flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4 sm:gap-0"
                         }`}>
-                          <div className={`${viewMode === "card" ? "space-y-3" : "flex items-center space-x-4"}`}>
+                          <div className={`${viewMode === "card" ? "space-y-3" : "flex items-center space-x-4 w-full sm:w-auto"}`}>
                             {viewMode === "card" && (
                               <div className="flex items-center justify-between">
                                 <Badge className={`${
@@ -690,20 +690,20 @@ function StudentDashboard() {
                                 <Clock className="w-4 h-4 text-muted-foreground" />
                               </div>
                             )}
-                            <div className={`${viewMode === "card" ? "" : "flex items-center space-x-3"}`}>
+                            <div className={`${viewMode === "card" ? "" : "flex items-center space-x-3 flex-1 min-w-0"}`}>
                               {viewMode === "list" && (
                                 <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
                                   <MapPin className="w-5 h-5 text-blue-600 dark:text-white" />
                                 </div>
                               )}
-                              <div>
-                                <h4 className="font-semibold text-foreground">{assignment.assignment_name}</h4>
-                                <p className="text-sm text-muted-foreground">{assignment.event_name} • {assignment.event_location}</p>
+                              <div className="min-w-0">
+                                <h4 className="font-semibold text-foreground truncate">{assignment.assignment_name}</h4>
+                                <p className="text-sm text-muted-foreground truncate">{assignment.event_name} • {assignment.event_location}</p>
                                 <p className="text-xs text-muted-foreground">{new Date(assignment.event_start_datetime).toLocaleDateString()}</p>
                               </div>
                             </div>
                             {viewMode === "list" && (
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-2 sm:hidden pl-14">
                                 <Badge className={`${
                                   assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
                                   assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
@@ -772,6 +772,17 @@ function StudentDashboard() {
                               )}
                             </div>
                           )}
+                          {viewMode === "list" && (
+                              <div className="hidden sm:flex items-center space-x-2">
+                                <Badge className={`${
+                                  assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
+                                }`}>
+                                  {assignment.status}
+                                </Badge>
+                              </div>
+                            )}
                         </div>
                       ))}
                       {(assignmentFilter === "all" ? assignments : myAssignments).length === 0 && (
@@ -784,7 +795,7 @@ function StudentDashboard() {
 
                   {/* Pagination */}
                   {assignmentPagination && assignmentPagination.last_page > 1 && (
-                    <div className="flex items-center justify-between mt-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4 sm:gap-0">
                       <div className="text-sm text-gray-500">
                         Showing {assignmentPagination.from} to {assignmentPagination.to} of {assignmentPagination.total} results
                       </div>

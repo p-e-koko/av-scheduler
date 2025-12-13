@@ -225,9 +225,9 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={`hidden md:flex h-full ${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0 relative z-20`}>
+      <aside className={`hidden md:flex flex-col ${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0 h-screen sticky top-0 z-30`}>
         <SidebarContent />
-      </div>
+      </aside>
 
       {/* Mobile Sidebar Overlay */}
       {isOpen && (
