@@ -834,6 +834,33 @@ export const assignmentAPI = {
     });
   },
 
+  // Restore assignment (coordinator only)
+  async restoreAssignment(id: number): Promise<{ message: string; assignment: Assignment }> {
+    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${id}/restore`, {
+      method: 'POST',
+    });
+  },
+
+  // Force delete assignment (coordinator only)
+  async forceDeleteAssignment(id: number): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/assignments/${id}/force`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Get trashed assignments (coordinator only)
+  async getTrashedAssignments(params: AssignmentsQueryParams = {}): Promise<AssignmentsListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/assignments/trashed?${queryString}` : '/assignments/trashed';
+    
+    return apiCall<AssignmentsListResponse>(endpoint);
+  },
+
   // Assign user to assignment (coordinator only)
   async assignUser(assignmentId: number, userId: string | number, data: { status?: string; position?: string } = {}): Promise<{ message: string }> {
     return apiCall<{ message: string }>(`/assignments/${assignmentId}/assign-user`, {

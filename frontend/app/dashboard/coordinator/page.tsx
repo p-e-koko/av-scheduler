@@ -63,7 +63,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 function CoordinatorDashboard() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<"assignments" | "students" | "schedules" | "positions">("assignments")
+  const [activeTab, setActiveTab] = useState<"assignments" | "students" | "schedules" | "positions" | "recycle-bin">("assignments")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -77,6 +77,13 @@ function CoordinatorDashboard() {
   const [studentFilter, setStudentFilter] = useState<string>('all')
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+  // Recycle Bin State
+  const [trashedAssignments, setTrashedAssignments] = useState<Assignment[]>([])
+  const [isRestoreConfirmationOpen, setIsRestoreConfirmationOpen] = useState(false)
+  const [isForceDeleteConfirmationOpen, setIsForceDeleteConfirmationOpen] = useState(false)
+  const [assignmentToRestore, setAssignmentToRestore] = useState<number | null>(null)
+  const [assignmentToForceDelete, setAssignmentToForceDelete] = useState<number | null>(null)
 
   // Position Management State
   const [isPositionModalOpen, setIsPositionModalOpen] = useState(false)
@@ -196,6 +203,11 @@ function CoordinatorDashboard() {
           const positionsResponse = await positionAPI.getPositions()
           setPositions(positionsResponse.positions)
           break
+
+        case 'recycle-bin':
+          const trashedResponse = await assignmentAPI.getTrashedAssignments({ per_page: 50 })
+          setTrashedAssignments(trashedResponse.data)
+          break
       }
     } catch (err) {
       setError(formatAPIError(err))
@@ -212,6 +224,32 @@ function CoordinatorDashboard() {
   const handleCreateAssignment = () => {
     setEditingAssignment(null)
     setIsCreateAssignmentModalOpen(true)
+  }
+
+  const handleRestoreAssignment = async () => {
+    if (!assignmentToRestore) return
+    try {
+      await assignmentAPI.restoreAssignment(assignmentToRestore)
+      setTrashedAssignments(prev => prev.filter(a => a.id !== assignmentToRestore))
+      setIsRestoreConfirmationOpen(false)
+      setAssignmentToRestore(null)
+    } catch (error) {
+      console.error('Failed to restore assignment:', error)
+      setError('Failed to restore assignment')
+    }
+  }
+
+  const handleForceDeleteAssignment = async () => {
+    if (!assignmentToForceDelete) return
+    try {
+      await assignmentAPI.forceDeleteAssignment(assignmentToForceDelete)
+      setTrashedAssignments(prev => prev.filter(a => a.id !== assignmentToForceDelete))
+      setIsForceDeleteConfirmationOpen(false)
+      setAssignmentToForceDelete(null)
+    } catch (error) {
+      console.error('Failed to force delete assignment:', error)
+      setError('Failed to force delete assignment')
+    }
   }
 
   const handleEditAssignment = (assignment: Assignment) => {
@@ -995,6 +1033,87 @@ function CoordinatorDashboard() {
               )}
             </div>
           )}
+
+          {/* Recycle Bin Tab */}
+          {activeTab === "recycle-bin" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold tracking-tight">Recycle Bin</h2>
+              </div>
+
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">Loading trashed assignments...</div>
+              ) : error ? (
+                <div className="text-center py-8 text-destructive">{error}</div>
+              ) : (
+                <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Assignment</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Event</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Deleted At</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {(trashedAssignments || []).map((assignment) => (
+                        <tr key={assignment.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </div>
+                              <span className="font-medium text-foreground">{assignment.assignment_name}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">{assignment.event_name}</span>
+                              <span className="text-xs text-muted-foreground">{new Date(assignment.event_start_datetime).toLocaleDateString()}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-muted-foreground">
+                              {assignment.deleted_at ? new Date(assignment.deleted_at).toLocaleDateString() : 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => {
+                                  setAssignmentToRestore(assignment.id)
+                                  setIsRestoreConfirmationOpen(true)
+                                }}
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                              >
+                                Restore
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                onClick={() => {
+                                  setAssignmentToForceDelete(assignment.id)
+                                  setIsForceDeleteConfirmationOpen(true)
+                                }}
+                              >
+                                Delete Forever
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {(trashedAssignments || []).length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">No trashed assignments found</div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </main>
       </div>
       <CreateAssignmentModal 
@@ -1030,6 +1149,25 @@ function CoordinatorDashboard() {
         title="Delete Assignment"
         description="Are you sure you want to delete this assignment? This action cannot be undone."
         confirmText="Delete"
+        variant="destructive"
+      />
+      <ConfirmationDialog
+        isOpen={isRestoreConfirmationOpen}
+        onClose={() => setIsRestoreConfirmationOpen(false)}
+        onConfirm={handleRestoreAssignment}
+        title="Restore Assignment"
+        description="Are you sure you want to restore this assignment? It will be moved back to the active assignments list."
+        confirmText="Restore"
+        cancelText="Cancel"
+      />
+      <ConfirmationDialog
+        isOpen={isForceDeleteConfirmationOpen}
+        onClose={() => setIsForceDeleteConfirmationOpen(false)}
+        onConfirm={handleForceDeleteAssignment}
+        title="Delete Forever"
+        description="Are you sure you want to permanently delete this assignment? This action cannot be undone."
+        confirmText="Delete Forever"
+        cancelText="Cancel"
         variant="destructive"
       />
     </div>

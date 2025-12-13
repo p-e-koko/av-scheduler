@@ -12,7 +12,8 @@ import {
   ChevronRight,
   LogOut,
   X,
-  Loader2
+  Loader2,
+  Trash2
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -27,8 +28,8 @@ import {
 } from "@/components/ui/dialog"
 
 interface CoordinatorSidebarProps {
-  activeTab: "assignments" | "students" | "schedules" | "positions"
-  onTabChange: (tab: "assignments" | "students" | "schedules" | "positions") => void
+  activeTab: "assignments" | "students" | "schedules" | "positions" | "recycle-bin"
+  onTabChange: (tab: "assignments" | "students" | "schedules" | "positions" | "recycle-bin") => void
   isOpen?: boolean
   onClose?: () => void
   user?: UserType | null
@@ -191,6 +192,23 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
           >
             <Grid3X3 className={`w-5 h-5 ${activeTab === "positions" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Positions</span>}
+          </div>
+
+          <div 
+            onClick={() => {
+                onTabChange("recycle-bin")
+                if (isMobile && onClose) onClose()
+            }}
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
+              activeTab === "recycle-bin" 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
+                : 'text-muted-foreground hover:bg-accent'
+            } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
+              activeTab === "recycle-bin" ? 'border-primary/20' : 'border-transparent'
+            }`}
+          >
+            <Trash2 className={`w-5 h-5 ${activeTab === "recycle-bin" ? 'text-primary dark:text-white' : ''}`} />
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Recycle Bin</span>}
           </div>
         </nav>
       </div>
