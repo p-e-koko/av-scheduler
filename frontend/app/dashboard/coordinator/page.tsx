@@ -345,28 +345,6 @@ function CoordinatorDashboard() {
               </p>
             </div>
             </div>
-            <div className="flex items-center gap-4">
-              <ModeToggle />
-              {activeTab !== "schedules" && (
-                <Button 
-                  className="bg-gradient-to-r from-primary to-primary-medium text-primary-foreground hover:shadow-lg transition-all"
-                  onClick={() => {
-                    if (activeTab === "assignments") {
-                      handleCreateAssignment()
-                    } else if (activeTab === "positions") {
-                      handleCreatePosition()
-                    } else {
-                      router.push('/student')
-                    }
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {activeTab === "assignments" && "Add Assignment"}
-                  {activeTab === "students" && "View All Students"}
-                  {activeTab === "positions" && "Add Position"}
-                </Button>
-              )}
-            </div>
           </div>
         </header>
 
@@ -378,7 +356,16 @@ function CoordinatorDashboard() {
               <div className="bg-card/80 backdrop-blur-xl rounded-lg border border-border overflow-hidden">
                 <div className="p-6 border-b border-border">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h3 className="text-lg font-semibold text-foreground">Assignments</h3>
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-lg font-semibold text-foreground">Assignments</h3>
+                      <Button 
+                        onClick={handleCreateAssignment}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        size="sm"
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Add Assignment
+                      </Button>
+                    </div>
                     
                     <div className="flex flex-col md:flex-row gap-4">
                       {/* Filter Buttons */}
