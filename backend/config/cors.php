@@ -19,7 +19,12 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    'allowed_origins' => [
+        'http://localhost:3000', 
+        'http://127.0.0.1:3000',
+        env('FRONTEND_URL', '*'), // Allow configured frontend URL
+        'https://' . env('RAILWAY_PUBLIC_DOMAIN', 'localhost'), // Allow Railway domain
+    ],
 
     'allowed_origins_patterns' => [],
 
