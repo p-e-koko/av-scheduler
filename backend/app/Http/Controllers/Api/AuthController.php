@@ -111,7 +111,10 @@ class AuthController extends Controller
 
         // For Sanctum API authentication, delete the current access token
         if ($request->user() && $request->user()->currentAccessToken()) {
-            $request->user()->currentAccessToken()->delete();
+            $accessToken = $request->user()->currentAccessToken();
+            if (!($accessToken instanceof \Laravel\Sanctum\TransientToken)) {
+                $accessToken->delete();
+            }
         }
 
         // Also handle session-based logout if present

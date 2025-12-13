@@ -11,13 +11,20 @@ import {
   LogOut,
   UserX,
   FileText,
-  X
+  X,
+  Loader2
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ModeToggle } from "@/components/mode-toggle"
 import { authAPI, getStoredUser, type User } from "@/lib/api"
+import ConfirmationDialog from "@/components/ConfirmationDialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface AdminSidebarProps {
   isOpen?: boolean
@@ -29,6 +36,8 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   useEffect(() => {
     const user = getStoredUser()
@@ -37,7 +46,13 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     }
   }, [])
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true)
+  }
+
+  const handleLogoutConfirm = async () => {
+    setShowLogoutDialog(false)
+    setIsLoggingOut(true)
     try {
       await authAPI.logout()
       router.push('/login')
@@ -180,7 +195,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                   variant="ghost" 
                   size="icon" 
                   className="h-8 w-8 flex-shrink-0"
-                  onClick={handleLogout}
+                  onClick={handleLogoutClick}
                 >
                   <LogOut className="w-4 h-4" />
                 </Button>
@@ -195,7 +210,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               variant="ghost" 
               size="icon" 
               className="h-8 w-8"
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               title="Logout"
             >
               <LogOut className="w-4 h-4" />
@@ -221,6 +236,24 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
            </div>
         </div>
       )}
+
+      <ConfirmationDialog
+        isOpen={showLogoutDialog}
+        onClose={() => setShowLogoutDialog(false)}
+        onConfirm={handleLogoutConfirm}
+        title="Logout"
+        description="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        variant="destructive"
+      />
+
+      <Dialog open={isLoggingOut} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-[425px] flex flex-col items-center justify-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <DialogTitle className="text-lg font-medium">Logging out...</DialogTitle>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

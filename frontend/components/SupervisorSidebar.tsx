@@ -10,13 +10,20 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  X
+  X,
+  Loader2
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ModeToggle } from "@/components/mode-toggle"
 import { authAPI, getStoredUser, type User as UserType } from "@/lib/api"
+import ConfirmationDialog from "@/components/ConfirmationDialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface SupervisorSidebarProps {
   activeTab: "dashboard" | "student-schedules" | "assignment-schedules"
@@ -29,6 +36,8 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
   const router = useRouter()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [currentUser, setCurrentUser] = useState<UserType | null>(null)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   useEffect(() => {
     const user = getStoredUser()
@@ -37,7 +46,13 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
     }
   }, [])
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setShowLogoutDialog(true)
+  }
+
+  const handleLogoutConfirm = async () => {
+    setShowLogoutDialog(false)
+    setIsLoggingOut(true)
     try {
       await authAPI.logout()
       router.push('/login')
@@ -178,7 +193,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               >
                 <LogOut className="w-4 h-4" />
@@ -192,7 +207,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
             <Button 
               variant="ghost" 
               size="icon" 
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             >
               <LogOut className="w-4 h-4" />
@@ -218,6 +233,24 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
            </div>
         </div>
       )}
+
+      <ConfirmationDialog
+        isOpen={showLogoutDialog}
+        onClose={() => setShowLogoutDialog(false)}
+        onConfirm={handleLogoutConfirm}
+        title="Logout"
+        description="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Cancel"
+        variant="destructive"
+      />
+
+      <Dialog open={isLoggingOut} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-[425px] flex flex-col items-center justify-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <DialogTitle className="text-lg font-medium">Logging out...</DialogTitle>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
