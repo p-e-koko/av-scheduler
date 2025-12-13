@@ -716,11 +716,11 @@ function CoordinatorDashboard() {
                                       {student.promised_hours_per_week || '0'}h Promised
                                     </Badge>
                                     <Badge variant="outline" className={`text-xs w-fit ${
-                                      (student.remaining_hours || 0) > 0 
+                                      (Number(student.remaining_hours_this_week) || 0) > 0 
                                         ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800' 
                                         : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
                                     }`}>
-                                      {student.remaining_hours ? Number(student.remaining_hours).toFixed(1) : '0'}h Remaining
+                                      {student.remaining_hours_this_week ? Number(student.remaining_hours_this_week).toFixed(1) : '0'}h Remaining
                                     </Badge>
                                   </div>
                                 </td>

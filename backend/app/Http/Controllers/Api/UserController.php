@@ -135,8 +135,8 @@ class UserController extends Controller
 
         $user->update($userData);
 
-        // Recalculate remaining hours if promised hours changed
-        if (isset($userData['promised_hours_per_week'])) {
+        // Always recalculate remaining hours for students to ensure consistency
+        if ($user->role === 'student') {
             $this->recalculateRemainingHours($user);
         }
 
@@ -178,8 +178,8 @@ class UserController extends Controller
 
         $user->update($userData);
 
-        // Recalculate remaining hours if promised hours changed
-        if (isset($userData['promised_hours_per_week'])) {
+        // Always recalculate remaining hours for students to ensure consistency
+        if ($user->role === 'student') {
             $this->recalculateRemainingHours($user);
         }
 
