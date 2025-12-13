@@ -62,6 +62,10 @@ function StudentDashboard() {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [selectedAssignmentForRejection, setSelectedAssignmentForRejection] = useState<Assignment | null>(null)
 
+  // Pagination
+  const [assignmentPagination, setAssignmentPagination] = useState<any>(null)
+  const [assignmentCurrentPage, setAssignmentCurrentPage] = useState(1)
+
   // Data states
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [myAssignments, setMyAssignments] = useState<Assignment[]>([])
@@ -122,35 +126,81 @@ function StudentDashboard() {
             break
 
           case 'assignments':
-            // Fetch both all assignments and my assignments
-            const [allAssignmentsResponse, myAssignmentsResponse] = await Promise.all([
-              assignmentAPI.getAssignments({ per_page: 50 }),
-              assignmentAPI.getMyAssignments({ per_page: 50 })
-            ])
-            
-            setAssignments(allAssignmentsResponse.data)
-            setMyAssignments(myAssignmentsResponse.data)
-            
-            // Calculate stats from my assignments
-            const stats = myAssignmentsResponse.data.reduce((acc, assignment) => {
-              acc.total++
-              switch (assignment.status) {
-                case 'complete':
-                  acc.completed++
-                  break
-                case 'confirmed':
-                  acc.inProgress++
-                  break
-                case 'pending':
-                  acc.pending++
-                  break
-                default:
-                  break
-              }
-              return acc
-            }, { total: 0, completed: 0, inProgress: 0, pending: 0 })
-            
-            setAssignmentStats(stats)
+            if (assignmentFilter === 'all') {
+              const [allAssignmentsResponse, myAssignmentsResponse] = await Promise.all([
+                assignmentAPI.getAssignments({ 
+                  per_page: 10, 
+                  page: assignmentCurrentPage 
+                }),
+                assignmentAPI.getMyAssignments({ per_page: 100 })
+              ])
+              
+              setAssignments(allAssignmentsResponse.data)
+              setAssignmentPagination({
+                current_page: allAssignmentsResponse.current_page,
+                last_page: allAssignmentsResponse.last_page,
+                total: allAssignmentsResponse.total,
+                from: allAssignmentsResponse.from,
+                to: allAssignmentsResponse.to
+              })
+              
+              const stats = myAssignmentsResponse.data.reduce((acc, assignment) => {
+                acc.total++
+                switch (assignment.status) {
+                  case 'complete':
+                    acc.completed++
+                    break
+                  case 'confirmed':
+                    acc.inProgress++
+                    break
+                  case 'pending':
+                    acc.pending++
+                    break
+                  default:
+                    break
+                }
+                return acc
+              }, { total: 0, completed: 0, inProgress: 0, pending: 0 })
+              
+              setAssignmentStats(stats)
+            } else {
+              const [myAssignmentsResponse, allMyAssignmentsResponse] = await Promise.all([
+                assignmentAPI.getMyAssignments({ 
+                  per_page: 10, 
+                  page: assignmentCurrentPage 
+                }),
+                assignmentAPI.getMyAssignments({ per_page: 100 })
+              ])
+              
+              setMyAssignments(myAssignmentsResponse.data)
+              setAssignmentPagination({
+                current_page: myAssignmentsResponse.current_page,
+                last_page: myAssignmentsResponse.last_page,
+                total: myAssignmentsResponse.total,
+                from: myAssignmentsResponse.from,
+                to: myAssignmentsResponse.to
+              })
+              
+              const stats = allMyAssignmentsResponse.data.reduce((acc, assignment) => {
+                acc.total++
+                switch (assignment.status) {
+                  case 'complete':
+                    acc.completed++
+                    break
+                  case 'confirmed':
+                    acc.inProgress++
+                    break
+                  case 'pending':
+                    acc.pending++
+                    break
+                  default:
+                    break
+                }
+                return acc
+              }, { total: 0, completed: 0, inProgress: 0, pending: 0 })
+              
+              setAssignmentStats(stats)
+            }
             break
 
           case 'schedule':
@@ -166,7 +216,7 @@ function StudentDashboard() {
     }
 
     fetchData()
-  }, [currentUser, activeTab])
+  }, [currentUser, activeTab, assignmentCurrentPage, assignmentFilter])
 
   const refreshAssignments = async () => {
     try {
@@ -413,7 +463,10 @@ function StudentDashboard() {
                   <Button
                     variant={assignmentFilter === "all" ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => setAssignmentFilter("all")}
+                    onClick={() => {
+                      setAssignmentFilter("all")
+                      setAssignmentCurrentPage(1)
+                    }}
                     className={assignmentFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                   >
                     All
@@ -421,7 +474,10 @@ function StudentDashboard() {
                   <Button
                     variant={assignmentFilter === "me" ? "default" : "ghost"}
                     size="sm"
-                    onClick={() => setAssignmentFilter("me")}
+                    onClick={() => {
+                      setAssignmentFilter("me")
+                      setAssignmentCurrentPage(1)
+                    }}
                     className={assignmentFilter === "me" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                   >
                     Mine
@@ -739,6 +795,36 @@ function StudentDashboard() {
                           No assignments found
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Pagination */}
+                  {assignmentPagination && assignmentPagination.last_page > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="text-sm text-gray-500">
+                        Showing {assignmentPagination.from} to {assignmentPagination.to} of {assignmentPagination.total} results
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAssignmentCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={assignmentCurrentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="text-sm font-medium">
+                          Page {assignmentCurrentPage} of {assignmentPagination.last_page}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAssignmentCurrentPage(p => Math.min(assignmentPagination.last_page, p + 1))}
+                          disabled={assignmentCurrentPage === assignmentPagination.last_page}
+                        >
+                          Next
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>

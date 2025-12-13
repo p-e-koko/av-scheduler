@@ -95,7 +95,7 @@ function AdminDashboard() {
       
       const response = await userAPI.getUsers({
         page: currentPage,
-        per_page: 12,
+        per_page: 10,
         search: searchQuery || undefined,
         role: selectedRole || undefined
       })
@@ -491,29 +491,27 @@ function AdminDashboard() {
 
               {/* Pagination */}
               {pagination && pagination.last_page > 1 && (
-                <div className="mt-6 flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-sm text-gray-500">
                     Showing {pagination.from} to {pagination.to} of {pagination.total} results
-                  </p>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      onClick={() => setCurrentPage(currentPage - 1)}
-                      className="bg-card/80 backdrop-blur-xl border-border"
                     >
                       Previous
                     </Button>
-                    <span className="text-sm text-muted-foreground">
+                    <div className="text-sm font-medium">
                       Page {currentPage} of {pagination.last_page}
-                    </span>
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(pagination.last_page, p + 1))}
                       disabled={currentPage === pagination.last_page}
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                      className="bg-card/80 backdrop-blur-xl border-border"
                     >
                       Next
                     </Button>

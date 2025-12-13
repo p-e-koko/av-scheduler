@@ -97,6 +97,14 @@ function CoordinatorDashboard() {
   const [studentPagination, setStudentPagination] = useState<any>(null)
   const [studentCurrentPage, setStudentCurrentPage] = useState(1)
 
+  // Assignment Pagination
+  const [assignmentPagination, setAssignmentPagination] = useState<any>(null)
+  const [assignmentCurrentPage, setAssignmentCurrentPage] = useState(1)
+
+  // Recycle Bin Pagination
+  const [recycleBinPagination, setRecycleBinPagination] = useState<any>(null)
+  const [recycleBinCurrentPage, setRecycleBinCurrentPage] = useState(1)
+
   // Availability View State
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const d = new Date();
@@ -143,11 +151,23 @@ function CoordinatorDashboard() {
       switch (activeTab) {
         case 'assignments': {
           const [assignmentsResponse, positionsData, studentsResponse] = await Promise.all([
-            assignmentAPI.getAssignments({ per_page: 50 }),
+            assignmentAPI.getAssignments({ 
+              per_page: 10,
+              page: assignmentCurrentPage,
+              search: assignmentSearchQuery || undefined,
+              status: assignmentFilter !== 'all' ? assignmentFilter : undefined
+            }),
             positionAPI.getPositions(),
             userAPI.getUsers({ role: 'student', per_page: 100 })
           ])
           setAssignments(assignmentsResponse.data)
+          setAssignmentPagination({
+            current_page: assignmentsResponse.current_page,
+            last_page: assignmentsResponse.last_page,
+            total: assignmentsResponse.total,
+            from: assignmentsResponse.from,
+            to: assignmentsResponse.to
+          })
           setPositions(positionsData.positions)
           setStudents(studentsResponse.data)
           
@@ -183,7 +203,7 @@ function CoordinatorDashboard() {
         case 'students':
           const studentsResponse = await userAPI.getUsers({ 
             role: 'student', 
-            per_page: 12,
+            per_page: 10,
             page: studentCurrentPage,
             search: studentSearchQuery || undefined
           })
@@ -205,8 +225,18 @@ function CoordinatorDashboard() {
           break
 
         case 'recycle-bin':
-          const trashedResponse = await assignmentAPI.getTrashedAssignments({ per_page: 50 })
+          const trashedResponse = await assignmentAPI.getTrashedAssignments({ 
+            per_page: 10,
+            page: recycleBinCurrentPage
+          })
           setTrashedAssignments(trashedResponse.data)
+          setRecycleBinPagination({
+            current_page: trashedResponse.current_page,
+            last_page: trashedResponse.last_page,
+            total: trashedResponse.total,
+            from: trashedResponse.from,
+            to: trashedResponse.to
+          })
           break
       }
     } catch (err) {
@@ -331,6 +361,34 @@ function CoordinatorDashboard() {
     }
   }, [studentSearchQuery])
 
+  // Assignment pagination change
+  useEffect(() => {
+    if (activeTab === 'assignments') {
+      fetchData()
+    }
+  }, [assignmentCurrentPage, assignmentFilter])
+
+  // Assignment search debounce
+  useEffect(() => {
+    if (activeTab === 'assignments') {
+      const timeout = setTimeout(() => {
+        if (assignmentCurrentPage !== 1) {
+          setAssignmentCurrentPage(1)
+        } else {
+          fetchData()
+        }
+      }, 300)
+      return () => clearTimeout(timeout)
+    }
+  }, [assignmentSearchQuery])
+
+  // Recycle Bin pagination change
+  useEffect(() => {
+    if (activeTab === 'recycle-bin') {
+      fetchData()
+    }
+  }, [recycleBinCurrentPage])
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -411,7 +469,10 @@ function CoordinatorDashboard() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setAssignmentFilter('all')}
+                          onClick={() => {
+                            setAssignmentFilter('all')
+                            setAssignmentCurrentPage(1)
+                          }}
                           className={`transition-all duration-200 ${
                             assignmentFilter === 'all' 
                               ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
@@ -423,7 +484,10 @@ function CoordinatorDashboard() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setAssignmentFilter('pending')}
+                          onClick={() => {
+                            setAssignmentFilter('pending')
+                            setAssignmentCurrentPage(1)
+                          }}
                           className={`transition-all duration-200 ${
                             assignmentFilter === 'pending' 
                               ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
@@ -435,7 +499,10 @@ function CoordinatorDashboard() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setAssignmentFilter('confirmed')}
+                          onClick={() => {
+                            setAssignmentFilter('confirmed')
+                            setAssignmentCurrentPage(1)
+                          }}
                           className={`transition-all duration-200 ${
                             assignmentFilter === 'confirmed' 
                               ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
@@ -447,7 +514,10 @@ function CoordinatorDashboard() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setAssignmentFilter('completed')}
+                          onClick={() => {
+                            setAssignmentFilter('completed')
+                            setAssignmentCurrentPage(1)
+                          }}
                           className={`transition-all duration-200 ${
                             assignmentFilter === 'completed' 
                               ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
@@ -604,6 +674,36 @@ function CoordinatorDashboard() {
                       {assignments.length === 0 && (
                         <div className="text-center py-8 text-muted-foreground">No assignments found</div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Assignment Pagination */}
+                  {assignmentPagination && assignmentPagination.last_page > 1 && (
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="text-sm text-gray-500">
+                        Showing {assignmentPagination.from} to {assignmentPagination.to} of {assignmentPagination.total} results
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAssignmentCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={assignmentCurrentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="text-sm font-medium">
+                          Page {assignmentCurrentPage} of {assignmentPagination.last_page}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAssignmentCurrentPage(p => Math.min(assignmentPagination.last_page, p + 1))}
+                          disabled={assignmentCurrentPage === assignmentPagination.last_page}
+                        >
+                          Next
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -795,29 +895,27 @@ function CoordinatorDashboard() {
 
                   {/* Pagination */}
                   {studentPagination && studentPagination.last_page > 1 && (
-                    <div className="mt-6 flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="text-sm text-gray-500">
                         Showing {studentPagination.from} to {studentPagination.to} of {studentPagination.total} results
-                      </p>
+                      </div>
                       <div className="flex items-center space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => setStudentCurrentPage(p => Math.max(1, p - 1))}
                           disabled={studentCurrentPage === 1}
-                          onClick={() => setStudentCurrentPage(studentCurrentPage - 1)}
-                          className="bg-card/80 backdrop-blur-xl border-border"
                         >
                           Previous
                         </Button>
-                        <span className="text-sm text-muted-foreground">
+                        <div className="text-sm font-medium">
                           Page {studentCurrentPage} of {studentPagination.last_page}
-                        </span>
+                        </div>
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => setStudentCurrentPage(p => Math.min(studentPagination.last_page, p + 1))}
                           disabled={studentCurrentPage === studentPagination.last_page}
-                          onClick={() => setStudentCurrentPage(studentCurrentPage + 1)}
-                          className="bg-card/80 backdrop-blur-xl border-border"
                         >
                           Next
                         </Button>
@@ -1046,7 +1144,8 @@ function CoordinatorDashboard() {
               ) : error ? (
                 <div className="text-center py-8 text-destructive">{error}</div>
               ) : (
-                <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+                <>
+                  <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
                   <table className="w-full">
                     <thead className="bg-muted/50">
                       <tr>
@@ -1111,6 +1210,37 @@ function CoordinatorDashboard() {
                     <div className="text-center py-8 text-muted-foreground">No trashed assignments found</div>
                   )}
                 </div>
+
+                {/* Recycle Bin Pagination */}
+                {recycleBinPagination && recycleBinPagination.last_page > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="text-sm text-gray-500">
+                      Showing {recycleBinPagination.from} to {recycleBinPagination.to} of {recycleBinPagination.total} results
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRecycleBinCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={recycleBinCurrentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <div className="text-sm font-medium">
+                        Page {recycleBinCurrentPage} of {recycleBinPagination.last_page}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRecycleBinCurrentPage(p => Math.min(recycleBinPagination.last_page, p + 1))}
+                        disabled={recycleBinCurrentPage === recycleBinPagination.last_page}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </div>
           )}
