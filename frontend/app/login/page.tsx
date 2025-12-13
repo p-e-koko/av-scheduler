@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { authAPI, formatAPIError, testConnection, APIError, initializeSanctum } from "@/lib/api"
+import { authAPI, formatAPIError, testConnection, APIError } from "@/lib/api"
 import { getRoleBasedDashboardPath } from "@/lib/role-routing"
 
 export default function LoginPage() {
@@ -29,8 +29,6 @@ export default function LoginPage() {
       if (!isConnected) {
         setError("Cannot connect to backend server. Please check your connection.");
       }
-      // Initialize session cookie
-      await initializeSanctum();
     };
     
     checkConnection();
@@ -53,6 +51,10 @@ export default function LoginPage() {
 
         // Redirect based on user role using role-based routing
         const redirectPath = getRoleBasedDashboardPath(response.user.role);
+        
+        // Small delay to ensure session cookies are properly set before redirecting
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         router.push(redirectPath);
       }
     } catch (error) {
