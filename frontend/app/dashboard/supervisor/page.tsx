@@ -23,12 +23,14 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { SupervisorSidebar } from "@/components/SupervisorSidebar"
 import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
+import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 
 import { 
   authAPI,
@@ -70,6 +72,14 @@ function SupervisorDashboard() {
   
   // Calendar state
   const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month")
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+  // Availability View State
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })
 
   // Search states
   const [studentSearchQuery, setStudentSearchQuery] = useState("")
@@ -101,15 +111,13 @@ function SupervisorDashboard() {
         setError(null)
 
         // Always fetch students and assignments as they are used across tabs or for stats
-        const [studentsResponse, assignmentsResponse, availabilityResponse] = await Promise.all([
+        const [studentsResponse, assignmentsResponse] = await Promise.all([
             userAPI.getUsers({ role: 'student', per_page: 100 }),
-            assignmentAPI.getAssignments({ per_page: 100 }),
-            availabilityAPI.getAvailability({ per_page: 100 })
+            assignmentAPI.getAssignments({ per_page: 100 })
         ]);
 
         setStudents(studentsResponse.data)
         setAssignments(assignmentsResponse.data)
-        setAvailability(availabilityResponse.data)
 
         // Calculate Dashboard Stats
         const totalHours = studentsResponse.data.reduce((acc, student) => 
@@ -158,6 +166,22 @@ function SupervisorDashboard() {
 
     fetchData()
   }, [currentUser]) // Fetch once on load/user change, not on tab change to avoid flickering
+
+  // Fetch availability when date changes
+  useEffect(() => {
+    if (!currentUser) return
+    
+    const fetchAvailability = async () => {
+      try {
+        const response = await availabilityAPI.getAvailability({ per_page: 100, date: selectedDate })
+        setAvailability(response.data)
+      } catch (err) {
+        console.error("Failed to fetch availability:", err)
+      }
+    }
+
+    fetchAvailability()
+  }, [currentUser, selectedDate])
 
   const getInitials = (name: string) => {
     return name
@@ -210,7 +234,13 @@ function SupervisorDashboard() {
       return `${studentAvail.length} slots available`;
   };
 
-
+  const handleEventClick = (event: CalendarEvent) => {
+    const assignment = assignments.find(a => a.id.toString() === event.id)
+    if (assignment) {
+      setSelectedAssignment(assignment)
+      setIsDetailModalOpen(true)
+    }
+  }
 
   // Prepare calendar events
   const calendarEvents: CalendarEvent[] = assignments.map(assignment => {
@@ -249,7 +279,7 @@ function SupervisorDashboard() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
         {/* Header */}
         <header className="bg-card/70 backdrop-blur-xl border-b border-border px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
@@ -274,13 +304,6 @@ function SupervisorDashboard() {
                 {activeTab === "assignment-schedules" && "View assignment timelines and schedules"}
               </p>
             </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Badge className="bg-primary/10 text-primary">
-                <Eye className="w-3 h-3 mr-1" />
-                View Only
-              </Badge>
-              <ModeToggle />
             </div>
           </div>
         </header>
@@ -392,79 +415,141 @@ function SupervisorDashboard() {
           {/* Student Schedules Tab */}
           {activeTab === "student-schedules" && (
             <div className="space-y-6">
-              {/* Search and Filter */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search students..."
-                      className="pl-10 w-64 bg-card/80 backdrop-blur-xl border-border focus:border-primary"
-                      value={studentSearchQuery}
-                      onChange={(e) => setStudentSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
+              <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-foreground font-bold">Daily Availability View</CardTitle>
+                  <div className="flex items-center bg-card rounded-lg border border-border shadow-sm p-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
+                      onClick={() => {
+                        const date = new Date(selectedDate)
+                        date.setDate(date.getDate() - 1)
+                        setSelectedDate(date.toISOString().split('T')[0])
+                      }}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
 
-              {/* Students Schedule Overview */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {filteredStudents.map((student) => {
-                    const activeAssignments = getStudentAssignmentCount(student.id);
-                    const availabilityText = getStudentAvailability(student.id);
-                    
-                    return (
-                  <Card key={student.id} className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-4">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={student.profile_picture_url} />
-                            <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-                              {getInitials(student.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-semibold text-foreground">{student.name}</h3>
-                            <p className="text-sm text-muted-foreground">{availabilityText}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{activeAssignments} active assignments</p>
-                          </div>
-                        </div>
-                        <Badge variant={activeAssignments > 0 ? "default" : "secondary"}>
-                          {activeAssignments > 0 ? "Active" : "Idle"}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )})}
-                {filteredStudents.length === 0 && (
-                    <div className="col-span-full text-center py-12 text-muted-foreground">
-                        No students found matching your search.
+                    <div className="flex items-center px-2">
+                      <Label htmlFor="date-picker" className="sr-only">Select Date</Label>
+                      <Input 
+                        id="date-picker"
+                        type="date" 
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="w-auto border-0 focus-visible:ring-0 h-8 font-medium text-foreground bg-transparent p-0"
+                      />
                     </div>
-                )}
-              </div>
+
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
+                      onClick={() => {
+                        const date = new Date(selectedDate)
+                        date.setDate(date.getDate() + 1)
+                        setSelectedDate(date.toISOString().split('T')[0])
+                      }}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {loading ? (
+                      <div className="text-center py-8 text-muted-foreground">Loading availability...</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => { // 7 AM to 9 PM
+                          const timeString = `${hour.toString().padStart(2, '0')}:00`;
+                          
+                          // Filter students available at this hour
+                          const availableStudents = availability.filter(a => {
+                            if (a.date !== selectedDate) return false;
+                            if (a.status !== 'available') return false;
+                            
+                            const startHour = parseInt(a.start_time.split(':')[0]);
+                            const endHour = parseInt(a.end_time.split(':')[0]);
+                            
+                            return hour >= startHour && hour < endHour;
+                          });
+
+                          // Remove duplicates and ensure user object exists
+                          const uniqueStudents = Array.from(new Map(availableStudents.map(item => [item.student_id, item.user])).values()).filter(Boolean);
+
+                          return (
+                            <div key={hour} className="flex border-b border-border py-3 last:border-0">
+                              <div className="w-20 flex-shrink-0 font-medium text-muted-foreground pt-2">
+                                {timeString}
+                              </div>
+                              <div className="flex-1">
+                                {uniqueStudents.length > 0 ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {uniqueStudents.map((student: any) => {
+                                      // Pen Hex Colors Reference - Darker Shades
+                                      const colors = [
+                                        // Blue
+                                        { border: 'border-[#2874A6]', bg: 'bg-[#2874A6]' },
+                                        // Red
+                                        { border: 'border-[#910100]', bg: 'bg-[#910100]' },
+                                        // Purple
+                                        { border: 'border-[#7B4384]', bg: 'bg-[#7B4384]' },
+                                        // Yellow
+                                        { border: 'border-[#FAA300]', bg: 'bg-[#FAA300]' },
+                                      ];
+                                      const colorIndex = student.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) % colors.length;
+                                      const style = colors[colorIndex];
+
+                                      return (
+                                        <div 
+                                          key={student.id} 
+                                          className={`
+                                            flex items-center space-x-2 
+                                            bg-card border-l-[3px] ${style.border}
+                                            rounded-r-lg rounded-l-[2px]
+                                            pl-2 pr-3 py-1.5 
+                                            cursor-pointer 
+                                            transition-all duration-300 
+                                            hover:scale-105 shadow-sm hover:shadow-md hover:bg-muted
+                                            border-y border-r border-border
+                                            group
+                                          `}
+                                          onClick={() => router.push(`/student/${student.id}`)}
+                                        >
+                                          <Avatar className={`h-6 w-6 border ${style.border}`}>
+                                            <AvatarImage src={student.profile_picture_url || ""} />
+                                            <AvatarFallback className={`text-[9px] ${style.bg} text-white font-bold`}>
+                                              {getInitials(student.name)}
+                                            </AvatarFallback>
+                                          </Avatar>
+                                          <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors tracking-wide">
+                                            {student.name}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <div className="text-sm text-muted-foreground italic pt-2">No students available</div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
           {/* Assignment Schedules Tab */}
           {activeTab === "assignment-schedules" && (
             <div className="space-y-6">
-              {/* Assignment Overview Stats - Compact View */}
-              <div className="flex flex-wrap gap-3">
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
-                  <ClipboardList className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">{assignmentStats.active} Active</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
-                  <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
-                  <span className="text-sm font-medium">{assignmentStats.completedToday} Completed Today</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
-                  <Clock className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                  <span className="text-sm font-medium">{assignmentStats.upcoming} Upcoming</span>
-                </div>
-              </div>
-
               {/* Assignment Timeline */}
               <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                 <CardHeader>
@@ -518,12 +603,18 @@ function SupervisorDashboard() {
                   events={calendarEvents}
                   view={calendarView}
                   onViewChange={setCalendarView}
+                  onEventClick={handleEventClick}
                 />
               </div>
             </div>
           )}
         </main>
       </div>
+      <AssignmentDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        assignment={selectedAssignment}
+      />
     </div>
   )
 }

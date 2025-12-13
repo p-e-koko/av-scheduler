@@ -221,9 +221,9 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={`hidden md:flex ${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0`}>
+      <aside className={`hidden md:flex flex-col ${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0 h-screen sticky top-0 z-30`}>
         <SidebarContent />
-      </div>
+      </aside>
 
       {/* Mobile Sidebar Overlay */}
       {isOpen && (

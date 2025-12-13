@@ -376,47 +376,6 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
 
           {/* Right Column - Assignments & Availability */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Hours Summary Card */}
-            <Card className="bg-card/90 backdrop-blur-xl border-border shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center text-foreground">
-                  <Clock className="w-5 h-5 mr-2 text-primary" />
-                  Hours Summary (This Week)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-3 gap-1 p-1 bg-muted/40 rounded-xl border border-border/50">
-                    <div className="flex flex-col items-center justify-center p-3 bg-background rounded-lg shadow-sm border border-border/50">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Promised</p>
-                      <p className="text-xl font-bold text-foreground">{hoursData.promised}h</p>
-                    </div>
-                    <div className="flex flex-col items-center justify-center p-3 bg-background rounded-lg shadow-sm border border-border/50">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Worked</p>
-                      <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{hoursData.worked.toFixed(1)}h</p>
-                    </div>
-                    <div className="flex flex-col items-center justify-center p-3 bg-background rounded-lg shadow-sm border border-border/50">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Remaining</p>
-                      <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{hoursData.remaining.toFixed(1)}h</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Progress</span>
-                      <span>{Math.round(hoursData.percentage)}%</span>
-                    </div>
-                    <div className="h-3 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary transition-all duration-500 ease-out"
-                        style={{ width: `${hoursData.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Availability Schedule */}
             <div className="bg-card/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-border">
               <div className="p-6 border-b border-border">
