@@ -1,5 +1,27 @@
 // API configuration and utilities
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+
+// Handle Mixed Content issues automatically
+if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+  // If we are on HTTPS but API is configured as HTTP
+  if (API_BASE_URL.startsWith('http:')) {
+    try {
+      const apiObj = new URL(API_BASE_URL);
+      // If the API host is the same as the window host (ignoring port), use relative path
+      // This fixes the issue where API is configured as http://domain:8080/api but we are on https://domain
+      if (apiObj.hostname === window.location.hostname) {
+        API_BASE_URL = '/api';
+        console.log('Automatically switched to relative API path to prevent Mixed Content');
+      } else {
+        // If different host, force https
+        API_BASE_URL = API_BASE_URL.replace('http:', 'https:');
+        console.log('Automatically upgraded API URL to HTTPS');
+      }
+    } catch (e) {
+      console.error('Error parsing API URL:', e);
+    }
+  }
+}
 
 console.log('Configured API_BASE_URL:', API_BASE_URL);
 
