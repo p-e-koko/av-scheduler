@@ -48,6 +48,8 @@ import {
 } from "@/lib/api"
 import { StudentSidebar } from "@/components/StudentSidebar"
 import { RejectAssignmentModal } from "@/components/RejectAssignmentModal"
+import ConfirmationDialog from "@/components/ConfirmationDialog"
+import { LoadingDialog } from "@/components/LoadingDialog"
 
 function StudentDashboard() {
   const router = useRouter()
@@ -61,6 +63,9 @@ function StudentDashboard() {
   const [isAddAvailabilityModalOpen, setIsAddAvailabilityModalOpen] = useState(false)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [selectedAssignmentForRejection, setSelectedAssignmentForRejection] = useState<Assignment | null>(null)
+  const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false)
+  const [selectedAssignmentForAcceptance, setSelectedAssignmentForAcceptance] = useState<Assignment | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   // Pagination
   const [assignmentPagination, setAssignmentPagination] = useState<any>(null)
@@ -256,13 +261,28 @@ function StudentDashboard() {
     }
   }
 
-  const handleAcceptAssignment = async (id: number) => {
+  const handleAcceptAssignment = (id: number) => {
+    const assignment = assignments.find(a => a.id === id) || myAssignments.find(a => a.id === id)
+    if (assignment) {
+      setSelectedAssignmentForAcceptance(assignment)
+      setIsAcceptModalOpen(true)
+    }
+  }
+
+  const confirmAcceptAssignment = async () => {
+    if (!selectedAssignmentForAcceptance) return
+
     try {
-      await assignmentAPI.acceptAssignment(id)
-      refreshAssignments()
+      setIsProcessing(true)
+      await assignmentAPI.acceptAssignment(selectedAssignmentForAcceptance.id)
+      await refreshAssignments()
+      setIsAcceptModalOpen(false)
+      setSelectedAssignmentForAcceptance(null)
     } catch (err) {
       console.error("Failed to accept assignment", err)
       setError(formatAPIError(err))
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -278,11 +298,16 @@ function StudentDashboard() {
     if (!selectedAssignmentForRejection) return
 
     try {
+      setIsProcessing(true)
       await assignmentAPI.rejectAssignment(selectedAssignmentForRejection.id, reason)
-      refreshAssignments()
+      await refreshAssignments()
+      setIsRejectModalOpen(false)
+      setSelectedAssignmentForRejection(null)
     } catch (err) {
       console.error("Failed to reject assignment", err)
       setError(formatAPIError(err))
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -871,6 +896,19 @@ function StudentDashboard() {
           assignmentName={selectedAssignmentForRejection.assignment_name}
         />
       )}
+      <ConfirmationDialog
+        isOpen={isAcceptModalOpen}
+        onClose={() => setIsAcceptModalOpen(false)}
+        onConfirm={confirmAcceptAssignment}
+        title="Accept Assignment"
+        description={`Are you sure you want to accept the assignment "${selectedAssignmentForAcceptance?.assignment_name}"?`}
+        confirmText="Accept"
+      />
+      <LoadingDialog
+        isOpen={isProcessing}
+        title="Processing"
+        description="Please wait while we update the assignment status..."
+      />
     </div>
   )
 }
