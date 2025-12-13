@@ -152,24 +152,24 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
         onClick={handleClose}
       />
       
       {/* Modal */}
-      <div className="relative bg-white/95 backdrop-blur-xl rounded-lg shadow-2xl shadow-primary/20 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-card backdrop-blur-xl rounded-lg shadow-2xl shadow-primary/20 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto border border-border">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200/30">
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Add New User</h2>
-            <p className="text-sm text-gray-600 mt-1">Create a new user account</p>
+            <h2 className="text-xl font-semibold text-foreground">Add New User</h2>
+            <p className="text-sm text-muted-foreground mt-1">Create a new user account</p>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleClose}
             disabled={loading}
-            className="h-8 w-8"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -179,14 +179,14 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm">
               {error}
             </div>
           )}
 
           {/* Name */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="name" className="text-sm font-medium text-foreground">
               Full Name *
             </Label>
             <Input
@@ -197,14 +197,14 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               value={formData.name}
               onChange={handleInputChange}
               disabled={loading}
-              className="bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary placeholder:text-gray-600 text-gray-900"
+              className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
               placeholder="Enter full name"
             />
           </div>
 
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="email" className="text-sm font-medium text-foreground">
               Email Address *
             </Label>
             <Input
@@ -215,14 +215,14 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               value={formData.email}
               onChange={handleInputChange}
               disabled={loading}
-              className="bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary placeholder:text-gray-600 text-gray-900"
+              className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
               placeholder="Enter email address"
             />
           </div>
 
           {/* Password */}
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="password" className="text-sm font-medium text-foreground">
               Password *
             </Label>
             <Input
@@ -233,7 +233,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               value={formData.password}
               onChange={handleInputChange}
               disabled={loading}
-              className="bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary placeholder:text-gray-600 text-gray-900"
+              className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
               placeholder="Enter password"
               minLength={8}
             />
@@ -241,7 +241,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
 
           {/* Student ID */}
           <div className="space-y-2">
-            <Label htmlFor="student_id" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="student_id" className="text-sm font-medium text-foreground">
               Student ID
             </Label>
             <Input
@@ -251,14 +251,14 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               value={formData.student_id}
               onChange={handleInputChange}
               disabled={loading}
-              className="bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary placeholder:text-gray-600 text-gray-900"
+              className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
               placeholder="Enter student ID (optional)"
             />
           </div>
 
           {/* Username */}
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="username" className="text-sm font-medium text-foreground">
               Username
             </Label>
             <Input
@@ -268,14 +268,14 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               value={formData.username}
               onChange={handleInputChange}
               disabled={loading}
-              className="bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary placeholder:text-gray-600 text-gray-900"
+              className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
               placeholder="Enter username (optional)"
             />
           </div>
 
           {/* Role */}
           <div className="space-y-2">
-            <Label htmlFor="role" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="role" className="text-sm font-medium text-foreground">
               Role *
             </Label>
             <select
@@ -285,7 +285,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               value={formData.role}
               onChange={handleInputChange}
               disabled={loading}
-              className="w-full px-3 py-2 bg-white/80 backdrop-blur-xl border border-gray-300/30 rounded-md focus:border-primary focus:ring-1 focus:ring-primary text-sm text-gray-900"
+              className="w-full px-3 py-2 bg-background/80 backdrop-blur-xl border border-input rounded-md focus:border-primary focus:ring-1 focus:ring-primary text-sm text-foreground"
             >
               <option value="student">Student</option>
               <option value="coordinator">Coordinator</option>
@@ -296,7 +296,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
 
           {/* Promised Hours */}
           <div className="space-y-2">
-            <Label htmlFor="promised_hours_per_week" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="promised_hours_per_week" className="text-sm font-medium text-foreground">
               Promised Hours per Week {formData.role === 'student' && '*'}
             </Label>
             <Input
@@ -310,19 +310,19 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               onChange={handleInputChange}
               disabled={loading}
               required={formData.role === 'student'}
-              className="bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary placeholder:text-gray-600 text-gray-900"
+              className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
               placeholder={formData.role === 'student' ? "Required for students (1-20 hours)" : "0-20 hours"}
             />
             {formData.role === 'student' ? (
-              <p className="text-xs text-gray-600">Students must promise 1-20 hours per week</p>
+              <p className="text-xs text-muted-foreground">Students must promise 1-20 hours per week</p>
             ) : (
-              <p className="text-xs text-gray-600">Maximum 20 hours per week</p>
+              <p className="text-xs text-muted-foreground">Maximum 20 hours per week</p>
             )}
           </div>
 
           {/* Profile Picture */}
           <div className="space-y-2">
-            <Label htmlFor="profile_picture" className="text-sm font-medium text-gray-700">
+            <Label htmlFor="profile_picture" className="text-sm font-medium text-foreground">
               Profile Picture
             </Label>
             <Input
@@ -332,15 +332,15 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               accept="image/jpeg,image/png,image/jpg,image/gif"
               onChange={handleFileChange}
               disabled={loading}
-              className="bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+              className="bg-background/80 backdrop-blur-xl border-input focus:border-primary text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary dark:file:text-white hover:file:bg-primary/20 h-16 pt-3"
             />
-            <p className="text-xs text-gray-600">Maximum file size: 500MB. Supported formats: JPEG, PNG, JPG, GIF</p>
+            <p className="text-xs text-muted-foreground">Maximum file size: 500MB. Supported formats: JPEG, PNG, JPG, GIF</p>
             {profilePreview && (
               <div className="mt-2">
                 <img
                   src={profilePreview}
                   alt="Profile preview"
-                  className="h-20 w-20 rounded-full object-cover border-2 border-gray-200"
+                  className="h-32 w-32 rounded-full object-cover border-2 border-border"
                 />
               </div>
             )}
@@ -353,18 +353,18 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               variant="outline"
               onClick={handleClose}
               disabled={loading}
-              className="flex-1 bg-white/80 backdrop-blur-xl border-gray-300/30 text-gray-800"
+              className="flex-1 bg-background/80 backdrop-blur-xl border-input text-foreground hover:bg-accent hover:text-accent-foreground"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
+              className="flex-1 bg-gradient-to-r from-primary to-primary-medium text-primary-foreground hover:shadow-lg transition-all"
             >
               {loading ? (
                 <div className="flex items-center">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2" />
                   Creating...
                 </div>
               ) : (

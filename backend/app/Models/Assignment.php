@@ -50,7 +50,8 @@ class Assignment extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'assignment_users', 'assignment_id', 'user_id')
-                    ->withPivot('status', 'checked_in', 'position')
+                    ->using(AssignmentUser::class)
+                    ->withPivot('status', 'checked_in', 'position', 'rejection_reason')
                     ->withTimestamps();
     }
 
@@ -213,9 +214,13 @@ class Assignment extends Model
     /**
      * Update the user's assignment status.
      */
-    public function updateUserStatus(User $user, string $status): void
+    public function updateUserStatus(User $user, string $status, ?string $rejection_reason = null): void
     {
-        $this->users()->updateExistingPivot($user->id, ['status' => $status]);
+        $data = ['status' => $status];
+        if ($rejection_reason !== null) {
+            $data['rejection_reason'] = $rejection_reason;
+        }
+        $this->users()->updateExistingPivot($user->id, $data);
     }
 
     /**

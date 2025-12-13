@@ -38,7 +38,7 @@ export function BarChart({
   }, [animated])
 
   return (
-    <Card className={cn("bg-white/90 backdrop-blur-xl border-0 shadow-lg", className)}>
+    <Card className={cn("bg-card/90 backdrop-blur-xl border-0 shadow-lg", className)}>
       {title && (
         <CardHeader>
           <CardTitle>{title}</CardTitle>
@@ -50,7 +50,7 @@ export function BarChart({
           {showGrid && (
             <div className="absolute inset-0 flex flex-col justify-between">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="border-t border-gray-200 first:border-t-0" />
+                <div key={i} className="border-t border-border first:border-t-0" />
               ))}
             </div>
           )}
@@ -67,7 +67,7 @@ export function BarChart({
                   <div className="flex flex-col items-center justify-end" style={{ height: height - 40 }}>
                     <div 
                       className={cn(
-                        "w-full rounded-t-md min-h-[4px] flex items-end justify-center text-white text-xs font-semibold transition-all duration-1000 ease-out",
+                        "w-full rounded-t-md min-h-[4px] flex items-end justify-center text-primary-foreground text-xs font-semibold transition-all duration-1000 ease-out",
                         item.color || "bg-gradient-to-t from-blue-500 to-blue-400"
                       )}
                       style={{ 
@@ -82,13 +82,13 @@ export function BarChart({
                   </div>
                   
                   {/* Label */}
-                  <div className="text-xs font-medium text-gray-600 text-center">
+                  <div className="text-xs font-medium text-muted-foreground text-center">
                     {item.label}
                   </div>
                   
                   {/* Value below label if bar is too short */}
                   {showValues && actualHeight <= 20 && (
-                    <div className="text-xs font-semibold text-gray-700">
+                    <div className="text-xs font-semibold text-foreground">
                       {item.value}
                     </div>
                   )}
@@ -158,7 +158,7 @@ export function LineChart({
     .join(' ')
 
   return (
-    <Card className={cn("bg-white/90 backdrop-blur-xl border-0 shadow-lg", className)}>
+    <Card className={cn("bg-card/90 backdrop-blur-xl border-0 shadow-lg", className)}>
       {title && (
         <CardHeader>
           <CardTitle>{title}</CardTitle>
@@ -171,12 +171,12 @@ export function LineChart({
             <>
               <div className="absolute inset-0 flex flex-col justify-between">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="border-t border-gray-200 first:border-t-0" />
+                  <div key={i} className="border-t border-border first:border-t-0" />
                 ))}
               </div>
               <div className="absolute inset-0 flex justify-between">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="border-l border-gray-200 first:border-l-0" />
+                  <div key={i} className="border-l border-border first:border-l-0" />
                 ))}
               </div>
             </>
@@ -229,7 +229,7 @@ export function LineChart({
           {/* Labels */}
           <div className="absolute bottom-0 left-0 right-0 flex justify-between">
             {data.map((item, index) => (
-              <div key={index} className="text-xs font-medium text-gray-600 text-center">
+              <div key={index} className="text-xs font-medium text-muted-foreground text-center">
                 {item.label}
               </div>
             ))}
@@ -312,7 +312,7 @@ export function PieChart({
   })
 
   return (
-    <Card className={cn("bg-white/90 backdrop-blur-xl border-0 shadow-lg", className)}>
+    <Card className={cn("bg-card/90 backdrop-blur-xl border-0 shadow-lg", className)}>
       {title && (
         <CardHeader>
           <CardTitle>{title}</CardTitle>
@@ -342,8 +342,8 @@ export function PieChart({
                     style={{ backgroundColor: slice.color }}
                   />
                   <div className="text-sm">
-                    <span className="font-medium">{slice.label}</span>
-                    <span className="text-gray-600 ml-2">
+                    <span className="font-medium text-foreground">{slice.label}</span>
+                    <span className="text-muted-foreground ml-2">
                       {slice.value} ({slice.percentage.toFixed(1)}%)
                     </span>
                   </div>

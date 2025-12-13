@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Helpers\AuditLogger;
 
 class AvailabilityController extends Controller
 {
@@ -106,6 +107,12 @@ class AvailabilityController extends Controller
         $availability = Availability::create($availabilityData);
         $availability->load('user');
 
+        AuditLogger::log('Availability Created', [
+            'availability_id' => $availability->id,
+            'date' => $availability->date,
+            'student_id' => $availability->student_id
+        ]);
+
         return response()->json([
             'message' => 'Availability created successfully',
             'availability' => new AvailabilityResource($availability)
@@ -119,7 +126,7 @@ class AvailabilityController extends Controller
     {
         // Authorize access using policy
         $this->authorize('view', $availability);
-        
+
         $availability->load('user');
 
         return response()->json([
@@ -134,10 +141,16 @@ class AvailabilityController extends Controller
     {
         // Authorize access using policy
         $this->authorize('update', $availability);
-        
+
         $availabilityData = $request->validated();
         $availability->update($availabilityData);
         $availability->load('user');
+
+        AuditLogger::log('Availability Updated', [
+            'availability_id' => $availability->id,
+            'date' => $availability->date,
+            'student_id' => $availability->student_id
+        ]);
 
         return response()->json([
             'message' => 'Availability updated successfully',
@@ -152,8 +165,14 @@ class AvailabilityController extends Controller
     {
         // Authorize access using policy
         $this->authorize('delete', $availability);
-        
+
         $availability->delete();
+
+        AuditLogger::log('Availability Deleted', [
+            'availability_id' => $availability->id,
+            'date' => $availability->date,
+            'student_id' => $availability->student_id
+        ]);
 
         return response()->json([
             'message' => 'Availability deleted successfully'
@@ -235,6 +254,11 @@ class AvailabilityController extends Controller
             $availability->load('user');
             $created[] = new AvailabilityResource($availability);
         }
+
+        AuditLogger::log('Availability Bulk Created', [
+            'count' => count($created),
+            'student_id' => $currentUser->id
+        ]);
 
         return response()->json([
             'message' => 'Availability slots created successfully',

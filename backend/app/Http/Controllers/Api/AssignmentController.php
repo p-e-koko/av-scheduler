@@ -10,6 +10,12 @@ use App\Http\Resources\AssignmentResource;
 use App\Models\Assignment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Helpers\AuditLogger;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\AssignmentAssigned;
+use App\Mail\AssignmentStatusUpdated;
+use Google\Client as GoogleClient;
+use Google\Service\Calendar as GoogleCalendar;
 
 class AssignmentController extends Controller
 {
@@ -19,9 +25,21 @@ class AssignmentController extends Controller
     public function index(Request $request): JsonResponse
     {
         // Auto-complete past assignments
-        Assignment::where('status', 'confirmed')
+        Assignment::where('status', '!=', 'complete')
             ->where('event_end_datetime', '<', now())
             ->update(['status' => 'complete']);
+
+        // Auto-confirm assignments where all users have accepted
+        $assignmentsToConfirm = Assignment::where('status', 'pending')
+            ->whereHas('users')
+            ->whereDoesntHave('users', function ($q) {
+                $q->where('assignment_users.status', '!=', 'accepted');
+            })
+            ->pluck('id');
+
+        if ($assignmentsToConfirm->isNotEmpty()) {
+            Assignment::whereIn('id', $assignmentsToConfirm)->update(['status' => 'confirmed']);
+        }
 
         $query = Assignment::with(['creator', 'users']);
 
@@ -83,6 +101,8 @@ class AssignmentController extends Controller
 
         $assignment = Assignment::create($assignmentData);
 
+        AuditLogger::log('Assignment Created', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
+
         // Load relationships for response
         $assignment->load(['creator', 'users']);
 
@@ -114,6 +134,8 @@ class AssignmentController extends Controller
 
         $assignment->update($assignmentData);
 
+        AuditLogger::log('Assignment Updated', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
+
         // Reset all users status to pending
         foreach ($assignment->users as $user) {
             $assignment->updateUserStatus($user, 'pending');
@@ -135,6 +157,8 @@ class AssignmentController extends Controller
     {
         $assignment->delete();
 
+        AuditLogger::log('Assignment Deleted (Soft)', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
+
         return response()->json([
             'message' => 'Assignment deleted successfully'
         ]);
@@ -147,6 +171,8 @@ class AssignmentController extends Controller
     {
         $assignment = Assignment::withTrashed()->findOrFail($id);
         $assignment->restore();
+
+        AuditLogger::log('Assignment Restored', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
 
         // Load relationships for response
         $assignment->load(['creator', 'users']);
@@ -164,6 +190,8 @@ class AssignmentController extends Controller
     {
         $assignment = Assignment::withTrashed()->findOrFail($id);
         $assignment->forceDelete();
+
+        AuditLogger::log('Assignment Deleted (Permanent)', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
 
         return response()->json([
             'message' => 'Assignment permanently deleted'
@@ -211,11 +239,29 @@ class AssignmentController extends Controller
             ], 422);
         }
 
+        $status = $request->get('status', 'pending');
+        $user = \App\Models\User::find($request->user_id);
+
         $assignment->assignUser(
-            \App\Models\User::find($request->user_id),
-            $request->get('status', 'pending'),
+            $user,
+            $status,
             $request->position
         );
+
+        if ($status === 'accepted') {
+            $duration = abs($assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60);
+            $user->remaining_hours_this_week = max(0, $user->remaining_hours_this_week - $duration);
+            $user->save();
+        }
+
+        $assignedUser = $user;
+        Mail::to($assignedUser->email)->send(new AssignmentAssigned($assignment, $assignedUser));
+
+        AuditLogger::log('User Assigned to Assignment', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'assigned_user_id' => $request->user_id
+        ]);
 
         // Load relationships for response
         $assignment->load(['creator', 'users']);
@@ -244,7 +290,23 @@ class AssignmentController extends Controller
             ], 422);
         }
 
+        // Check previous status to restore hours if needed
+        $currentStatus = $assignment->users()->where('user_id', $user->id)->first()->pivot->status;
+
         $assignment->unassignUser($user);
+
+        // If previously accepted, restore hours
+        if ($currentStatus === 'accepted') {
+            $duration = abs($assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60);
+            $user->remaining_hours_this_week = min($user->promised_hours_per_week, $user->remaining_hours_this_week + $duration);
+            $user->save();
+        }
+
+        AuditLogger::log('User Unassigned from Assignment', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'unassigned_user_id' => $request->user_id
+        ]);
 
         // Load relationships for response
         $assignment->load(['creator', 'users']);
@@ -283,6 +345,13 @@ class AssignmentController extends Controller
 
         $assignment->updateUserPosition($user, $request->position);
 
+        AuditLogger::log('User Position Updated in Assignment', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'user_id' => $request->user_id,
+            'new_position' => $request->position
+        ]);
+
         // Load relationships for response
         $assignment->load(['creator', 'users']);
 
@@ -311,6 +380,12 @@ class AssignmentController extends Controller
         }
 
         $assignment->checkInUser($user);
+
+        AuditLogger::log('User Checked In', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'user_id' => $request->user_id
+        ]);
 
         // Load relationships for response
         $assignment->load(['creator', 'users']);
@@ -341,6 +416,12 @@ class AssignmentController extends Controller
 
         $assignment->checkOutUser($user);
 
+        AuditLogger::log('User Checked Out', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'user_id' => $request->user_id
+        ]);
+
         // Load relationships for response
         $assignment->load(['creator', 'users']);
 
@@ -366,6 +447,27 @@ class AssignmentController extends Controller
 
         $assignment->updateUserStatus($user, 'accepted');
 
+        // Calculate duration in hours and update remaining hours
+        $duration = abs($assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60);
+        $user->remaining_hours_this_week = max(0, $user->remaining_hours_this_week - $duration);
+        $user->save();
+
+        // Check if all assigned users have accepted
+        $allAccepted = $assignment->users()->wherePivot('status', '!=', 'accepted')->doesntExist();
+        if ($allAccepted && $assignment->users()->count() > 0) {
+            $assignment->update(['status' => 'confirmed']);
+        }
+
+        // Notify coordinator
+        if ($assignment->creator) {
+            Mail::to($assignment->creator->email)->send(new AssignmentStatusUpdated($assignment, $user, 'accepted'));
+        }
+
+        AuditLogger::log('Assignment Accepted', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name
+        ]);
+
         return response()->json([
             'message' => 'Assignment accepted successfully',
             'assignment' => new AssignmentResource($assignment->load(['creator', 'users']))
@@ -377,6 +479,10 @@ class AssignmentController extends Controller
      */
     public function rejectAssignment(Request $request, Assignment $assignment): JsonResponse
     {
+        $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
         $user = auth()->user();
 
         // Check if user is assigned
@@ -386,7 +492,28 @@ class AssignmentController extends Controller
             ], 422);
         }
 
-        $assignment->updateUserStatus($user, 'rejected');
+        // Check previous status to restore hours if needed
+        $currentStatus = $assignment->users()->where('user_id', $user->id)->first()->pivot->status;
+
+        $assignment->updateUserStatus($user, 'rejected', $request->reason);
+
+        // If previously accepted, restore hours
+        if ($currentStatus === 'accepted') {
+            $duration = abs($assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60);
+            $user->remaining_hours_this_week = min($user->promised_hours_per_week, $user->remaining_hours_this_week + $duration);
+            $user->save();
+        }
+
+        // Notify coordinator
+        if ($assignment->creator) {
+            Mail::to($assignment->creator->email)->send(new AssignmentStatusUpdated($assignment, $user, 'rejected', $request->reason));
+        }
+
+        AuditLogger::log('Assignment Rejected', [
+            'assignment_id' => $assignment->id,
+            'assignment_name' => $assignment->assignment_name,
+            'reason' => $request->reason
+        ]);
 
         return response()->json([
             'message' => 'Assignment rejected successfully',
@@ -427,5 +554,114 @@ class AssignmentController extends Controller
         $assignments = $query->paginate($perPage);
 
         return response()->json(new AssignmentCollection($assignments));
+    }
+
+    public function addToCalendar(Request $request, Assignment $assignment)
+    {
+        $user = $request->user();
+
+        // Check if user is assigned to this assignment
+        $pivot = $assignment->users()->where('user_id', $user->id)->first();
+        if (!$pivot) {
+            return response()->json(['message' => 'You are not assigned to this assignment'], 403);
+        }
+
+        // Check if already added
+        if ($pivot->pivot->google_event_id) {
+             return response()->json(['message' => 'Already added to calendar'], 400);
+        }
+
+        // Check Google Tokens
+        if (!$user->google_access_token) {
+            return response()->json(['message' => 'Google account not connected', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+        }
+
+        $client = new GoogleClient();
+        $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+        $client->setAccessToken([
+            'access_token' => $user->google_access_token,
+            'refresh_token' => $user->google_refresh_token,
+        ]);
+
+        if ($client->isAccessTokenExpired()) {
+            if ($user->google_refresh_token) {
+                $client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
+                $user->google_access_token = $client->getAccessToken()['access_token'];
+                $user->save();
+            } else {
+                 return response()->json(['message' => 'Google session expired', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+            }
+        }
+
+        $service = new GoogleCalendar($client);
+
+        $startDateTime = \Carbon\Carbon::parse($assignment->event_start_datetime)->format('Y-m-d\TH:i:s');
+        $endDateTime = \Carbon\Carbon::parse($assignment->event_end_datetime)->format('Y-m-d\TH:i:s');
+
+        $event = new GoogleCalendar\Event([
+            'summary' => $assignment->assignment_name,
+            'description' => $assignment->description,
+            'location' => $assignment->event_location,
+            'start' => ['dateTime' => $startDateTime, 'timeZone' => 'Asia/Bangkok'],
+            'end' => ['dateTime' => $endDateTime, 'timeZone' => 'Asia/Bangkok'],
+        ]);
+
+        try {
+            $createdEvent = $service->events->insert('primary', $event);
+            $assignment->users()->updateExistingPivot($user->id, ['google_event_id' => $createdEvent->id]);
+            return response()->json(['message' => 'Added to calendar', 'google_event_id' => $createdEvent->id]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to add to calendar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function removeFromCalendar(Request $request, Assignment $assignment)
+    {
+        $user = $request->user();
+
+        $pivot = $assignment->users()->where('user_id', $user->id)->first();
+        if (!$pivot || !$pivot->pivot->google_event_id) {
+            return response()->json(['message' => 'Event not found in calendar'], 404);
+        }
+
+        // Check Google Tokens
+        if (!$user->google_access_token) {
+             return response()->json(['message' => 'Google account not connected', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+        }
+
+        $client = new GoogleClient();
+        $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+        $client->setAccessToken([
+            'access_token' => $user->google_access_token,
+            'refresh_token' => $user->google_refresh_token,
+        ]);
+
+        if ($client->isAccessTokenExpired()) {
+             if ($user->google_refresh_token) {
+                $client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
+                $user->google_access_token = $client->getAccessToken()['access_token'];
+                $user->save();
+            } else {
+                 return response()->json(['message' => 'Google session expired', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+            }
+        }
+
+        $service = new GoogleCalendar($client);
+
+        try {
+            $service->events->delete('primary', $pivot->pivot->google_event_id);
+            $assignment->users()->updateExistingPivot($user->id, ['google_event_id' => null]);
+            return response()->json(['message' => 'Removed from calendar']);
+        } catch (\Exception $e) {
+             if ($e->getCode() == 404) {
+                $assignment->users()->updateExistingPivot($user->id, ['google_event_id' => null]);
+                return response()->json(['message' => 'Removed from calendar (was already deleted from Google)']);
+             }
+            return response()->json(['message' => 'Failed to remove from calendar: ' . $e->getMessage()], 500);
+        }
     }
 }

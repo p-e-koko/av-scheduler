@@ -22,10 +22,10 @@ export default function DashboardRedirect() {
   }, [router])
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-white">
+    <div className="flex items-center justify-center h-screen bg-background">
       <div className="text-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-600">Redirecting to your dashboard...</p>
+        <p className="text-muted-foreground">Redirecting to your dashboard...</p>
       </div>
     </div>
   )

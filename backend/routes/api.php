@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Google\Client as GoogleClient;
+use Google\Service\Calendar as GoogleCalendar;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +30,11 @@ Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
+// Email Verification Route
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
+
 // CSRF Token Route - Available to all stateful domains
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->noContent();
@@ -42,6 +49,9 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
+    Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
+        ->middleware(['throttle:6,1'])
+        ->name('verification.send');
 });
 
 // Protected User Management Routes - Role-Based Access Control
@@ -49,6 +59,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
     // User Management - Admin only with sensitive rate limiting
     Route::middleware(['role:admin', 'throttle:sensitive'])->group(function () {
+        Route::get('/audit-logs', [\App\Http\Controllers\Api\AuditLogController::class, 'index']);
         Route::apiResource('users', UserController::class)->except(['index', 'show']);
         Route::prefix('users')->group(function () {
             Route::post('/create-with-files', [UserController::class, 'storeWithFiles']);
@@ -108,6 +119,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
             $request->merge(['user_id' => $request->user()->id]);
             return app(AssignmentController::class)->checkOutUser($request, $assignment);
         });
+        Route::post('/assignments/{assignment}/add-to-calendar', [AssignmentController::class, 'addToCalendar']);
+        Route::post('/assignments/{assignment}/remove-from-calendar', [AssignmentController::class, 'removeFromCalendar']);
     });
 
     // Availability Management Routes - Role-Based Access Control
@@ -161,4 +174,46 @@ Route::get('/health', function () {
         'timestamp' => now()->toISOString(),
         'service' => 'Laravel API'
     ]);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Step 3: Create Google Calendar Event
+    Route::post('/booking/google', function (Request $request) {
+        $user = $request->user();
+
+        $client = new GoogleClient();
+        $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+        $client->setAccessToken([
+            'access_token' => $user->google_access_token,
+            'refresh_token' => $user->google_refresh_token,
+        ]);
+
+        // Refresh token if expired
+        if ($client->isAccessTokenExpired()) {
+            $client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
+            $user->google_access_token = $client->getAccessToken()['access_token'];
+            $user->save();
+        }
+
+        $service = new GoogleCalendar($client);
+
+        // Format dates to ensure seconds are included (required by Google API)
+        // We use the string format Y-m-d\TH:i:s and let Google handle the timezone via the timeZone parameter
+        $startDateTime = \Carbon\Carbon::parse($request->start)->format('Y-m-d\TH:i:s');
+        $endDateTime = \Carbon\Carbon::parse($request->end)->format('Y-m-d\TH:i:s');
+
+        $event = new GoogleCalendar\Event([
+            'summary' => $request->title,
+            'start' => ['dateTime' => $startDateTime, 'timeZone' => 'Asia/Bangkok'],
+            'end' => ['dateTime' => $endDateTime, 'timeZone' => 'Asia/Bangkok'],
+        ]);
+
+        $service->events->insert('primary', $event);
+
+        return response()->json(['success' => true]);
+    });
+
 });

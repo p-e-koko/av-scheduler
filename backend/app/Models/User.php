@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +11,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasApiTokens, SoftDeletes, HasRoles, HasUuid;
@@ -31,6 +31,9 @@ class User extends Authenticatable
         'profile_picture',
         'promised_hours_per_week',
         'remaining_hours_this_week',
+        'google_access_token',
+        'google_refresh_token',
+        'google_token_expires_at',
     ];
 
     /**
@@ -79,7 +82,8 @@ class User extends Authenticatable
     public function assignments()
     {
         return $this->belongsToMany(Assignment::class, 'assignment_users', 'user_id', 'assignment_id')
-                    ->withPivot('status', 'checked_in', 'position')
+                    ->using(AssignmentUser::class)
+                    ->withPivot('status', 'checked_in', 'position', 'rejection_reason')
                     ->withTimestamps();
     }
 
@@ -210,18 +214,7 @@ class User extends Authenticatable
      */
     public function getRemainingHoursAttribute()
     {
-        $startOfWeek = now()->startOfWeek();
-        $endOfWeek = now()->endOfWeek();
-
-        $assignedHours = $this->assignments()
-            ->wherePivot('status', '!=', 'rejected')
-            ->whereBetween('event_start_datetime', [$startOfWeek, $endOfWeek])
-            ->get()
-            ->sum(function ($assignment) {
-                return $assignment->getDurationInHours();
-            });
-
-        return max(0, ($this->promised_hours_per_week ?? 0) - $assignedHours);
+        return $this->remaining_hours_this_week;
     }
 
     /**

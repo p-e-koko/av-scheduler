@@ -44,4 +44,12 @@ export const auth = {
   async getProfile() {
     return authAPI.getCurrentUser();
   },
+
+  async verifyEmail(url: string) {
+    return authAPI.verifyEmail(url);
+  },
+
+  async resendVerificationEmail() {
+    return authAPI.resendVerificationEmail();
+  },
 };

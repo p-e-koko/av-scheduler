@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
+use App\Helpers\AuditLogger;
+use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
@@ -44,11 +46,15 @@ class AuthController extends Controller
         // Assign Spatie role to ensure permissions work
         $user->assignRole($userData['role']);
 
-        // Login the user with session instead of creating token
-        Auth::login($user);
+        event(new Registered($user));
+
+        // Do not login the user automatically
+        // Auth::login($user);
+
+        AuditLogger::log('User Registered', ['email' => $user->email, 'role' => $user->role]);
 
         return response()->json([
-            'message' => 'User registered successfully',
+            'message' => 'User registered successfully. Please check your email for verification.',
             'user' => new UserResource($user),
         ], 201);
     }
@@ -67,13 +73,26 @@ class AuthController extends Controller
             ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            AuditLogger::log('Failed Login Attempt', ['email' => $request->email, 'ip' => $request->ip()]);
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
+        // Check if email is verified
+        if (!$user->hasVerifiedEmail()) {
+            AuditLogger::log('Unverified Login Attempt', ['email' => $user->email]);
+            return response()->json([
+                'message' => 'Your email address is not verified. Please check your email for the verification link.',
+                'email_verified' => false
+            ], 403);
+        }
+
         // Login the user with session
         Auth::login($user);
+        $request->session()->regenerate();
+
+        AuditLogger::log('User Logged In', ['email' => $user->email]);
 
         return response()->json([
             'message' => 'Login successful',
@@ -86,9 +105,17 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if ($user) {
+             AuditLogger::log('User Logged Out', ['email' => $user->email]);
+        }
+
         // For Sanctum API authentication, delete the current access token
         if ($request->user() && $request->user()->currentAccessToken()) {
-            $request->user()->currentAccessToken()->delete();
+            $accessToken = $request->user()->currentAccessToken();
+            if (!($accessToken instanceof \Laravel\Sanctum\TransientToken)) {
+                $accessToken->delete();
+            }
         }
 
         // Also handle session-based logout if present
@@ -213,5 +240,45 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Password reset successfully'
         ]);
+    }
+
+    /**
+     * Verify user email.
+     */
+    public function verifyEmail(Request $request): JsonResponse
+    {
+        $user = User::find($request->route('id'));
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid user.'], 400);
+        }
+
+        if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
+            return response()->json(['message' => 'Invalid verification link.'], 400);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email already verified.']);
+        }
+
+        if ($user->markEmailAsVerified()) {
+            event(new \Illuminate\Auth\Events\Verified($user));
+        }
+
+        return response()->json(['message' => 'Email verified successfully.']);
+    }
+
+    /**
+     * Resend verification email.
+     */
+    public function resendVerificationEmail(Request $request): JsonResponse
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email already verified.']);
+        }
+
+        $request->user()->sendEmailVerificationNotification();
+
+        return response()->json(['message' => 'Verification link sent.']);
     }
 }

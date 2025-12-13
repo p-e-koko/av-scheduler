@@ -122,7 +122,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] bg-white text-slate-900">
+      <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground">
         <DialogHeader>
           <DialogTitle>Add Availability</DialogTitle>
           <DialogDescription>
@@ -132,7 +132,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             {error && (
-              <div className="text-red-500 text-sm">{error}</div>
+              <div className="text-destructive text-sm">{error}</div>
             )}
             
             <div className="grid grid-cols-4 items-center gap-4">
@@ -145,7 +145,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="w-full cursor-pointer bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
+                  className="w-full cursor-pointer bg-background text-foreground border-input placeholder:text-muted-foreground"
                   required
                 />
               </div>
@@ -160,14 +160,14 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
                   id="repeat"
                   value={repeatType}
                   onChange={(e) => setRepeatType(e.target.value as any)}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ring-offset-background placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                 >
                   <option value="none">Does not repeat</option>
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
                   <option value="weekday">Every weekday (Monday to Friday)</option>
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                     <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
                   </svg>
@@ -186,7 +186,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
                     type="date"
                     value={endsOn}
                     onChange={(e) => setEndsOn(e.target.value)}
-                    className="w-full cursor-pointer bg-white text-gray-900 border-gray-300 placeholder:text-gray-500"
+                    className="w-full cursor-pointer bg-background text-foreground border-input placeholder:text-muted-foreground"
                     required={true}
                     min={formData.date}
                   />
@@ -203,7 +203,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
                   id="start_time"
                   value={formData.start_time}
                   onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ring-offset-background placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                   required
                 >
                   <option value="" disabled>Select start time</option>
@@ -213,7 +213,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
                     </option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                     <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
                   </svg>
@@ -230,7 +230,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
                   id="end_time"
                   value={formData.end_time}
                   onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ring-offset-background placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                   required
                 >
                   <option value="" disabled>Select end time</option>
@@ -240,7 +240,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
                     </option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                     <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
                   </svg>
@@ -257,13 +257,13 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
                   id="status"
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ring-offset-background placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                 >
                   <option value="available">Available</option>
                   <option value="class">Class</option>
                   <option value="unavailable">Unavailable</option>
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                     <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
                   </svg>
@@ -272,7 +272,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" className="text-white" onClick={onClose}>
+            <Button type="button" variant="outline" className="text-foreground" onClick={onClose}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>

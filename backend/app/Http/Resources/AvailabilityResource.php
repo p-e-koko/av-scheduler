@@ -52,7 +52,7 @@ class AvailabilityResource extends JsonResource
         $start = \Carbon\Carbon::createFromFormat('H:i:s', $this->start_time);
         $end = \Carbon\Carbon::createFromFormat('H:i:s', $this->end_time);
 
-        return $end->diffInMinutes($start);
+        return abs($end->diffInMinutes($start));
     }
 
     /**

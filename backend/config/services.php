@@ -41,4 +41,8 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 315e7340494b2aa24926c4b1c43185234e2dc267
 ];

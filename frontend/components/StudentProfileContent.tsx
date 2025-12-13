@@ -46,6 +46,14 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
   const [error, setError] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState<Partial<UserType>>({})
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Fetch student data
   useEffect(() => {
@@ -103,14 +111,14 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
       const startDateTime = new Date(`${dateStr}T${slot.start_time}`)
       const endDateTime = new Date(`${dateStr}T${slot.end_time}`)
       
-      let color = "bg-green-100 text-green-800 border-green-200"
+      let color = "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800"
       let title = "Available"
       
       if (slot.status === 'unavailable') {
-        color = "bg-red-100 text-red-800 border-red-200"
+        color = "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
         title = "Unavailable"
       } else if (slot.status === 'class') {
-        color = "bg-blue-100 text-blue-800 border-blue-200"
+        color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800"
         title = "Class"
       }
       
@@ -145,20 +153,20 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
     switch (status) {
       case 'confirmed':
       case 'complete':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
       case 'pending':
-        return 'bg-orange-100 text-orange-800'
+        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
       case 'available':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
       case 'class':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
       case 'busy':
       case 'unavailable':
-        return 'bg-red-100 text-red-800'
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
       case 'tentative':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-muted text-muted-foreground'
     }
   }
 
@@ -187,7 +195,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
       .reduce((acc, curr) => {
         const start = new Date(curr.event_start_datetime)
         const end = new Date(curr.event_end_datetime)
-        return acc + (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+        return acc + Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60)
       }, 0)
 
     const remaining = Math.max(0, promised - worked)
@@ -198,10 +206,10 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-white">
+      <div className="flex items-center justify-center h-screen bg-background">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading student profile...</p>
+          <p className="text-muted-foreground">Loading student profile...</p>
         </div>
       </div>
     )
@@ -209,12 +217,12 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-white">
+      <div className="flex items-center justify-center h-screen bg-background">
         <div className="text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Profile</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Button onClick={() => router.back()} variant="ghost" className="text-gray-900 hover:text-gray-900 hover:bg-gray-100">
+          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">Error Loading Profile</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Button onClick={() => router.back()} variant="ghost" className="text-foreground hover:text-foreground hover:bg-muted">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Go Back
           </Button>
@@ -225,12 +233,12 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
 
   if (!student) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-white">
+      <div className="flex items-center justify-center h-screen bg-background">
         <div className="text-center">
-          <User className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Student Not Found</h2>
-          <p className="text-gray-600 mb-4">The student profile you're looking for doesn't exist.</p>
-          <Button onClick={() => router.back()} variant="ghost" className="text-gray-900 hover:text-gray-900 hover:bg-gray-100">
+          <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">Student Not Found</h2>
+          <p className="text-muted-foreground mb-4">The student profile you're looking for doesn't exist.</p>
+          <Button onClick={() => router.back()} variant="ghost" className="text-foreground hover:text-foreground hover:bg-muted">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Go Back
           </Button>
@@ -240,38 +248,38 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white p-4 md:p-6">
+    <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 md:gap-0">
           <div className="flex items-center space-x-4">
             <Button 
               onClick={() => router.back()} 
               variant="ghost"
-              className="bg-white/80 backdrop-blur-xl hover:bg-gray-100 text-gray-900 hover:text-gray-900"
+              className="bg-card/80 backdrop-blur-xl hover:bg-muted text-foreground hover:text-foreground"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Student Profile</h1>
-              <p className="text-gray-600">Detailed view and management</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Student Profile</h1>
+              <p className="text-muted-foreground">Detailed view and management</p>
             </div>
           </div>
           
           {!isEditing ? (
             <Button 
               onClick={() => setIsEditing(true)}
-              className="bg-primary hover:bg-primary-dark"
+              className="bg-primary hover:bg-primary/90 w-full md:w-auto"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit Profile
             </Button>
           ) : (
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 w-full md:w-auto">
               <Button 
                 onClick={handleSaveEdit}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 flex-1 md:flex-none"
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save
@@ -279,6 +287,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
               <Button 
                 onClick={cancelEdit}
                 variant="outline"
+                className="flex-1 md:flex-none"
               >
                 <X className="w-4 h-4 mr-2" />
                 Cancel
@@ -291,13 +300,13 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
           {/* Left Column - Profile Info */}
           <div className="lg:col-span-1 space-y-6">
             {/* Profile Card */}
-            <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
+            <Card className="bg-card/90 backdrop-blur-xl border-border shadow-lg">
               <CardContent className="p-6">
                 <div className="text-center mb-6">
                   <div className="relative inline-block">
                     <Avatar className="h-24 w-24 mx-auto">
                       <AvatarImage src={student.profile_picture_url || ""} />
-                      <AvatarFallback className="bg-primary text-white text-2xl font-semibold">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
                         {getInitials(student.name)}
                       </AvatarFallback>
                     </Avatar>
@@ -305,10 +314,10 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                   
                   {!isEditing ? (
                     <>
-                      <h3 className="text-xl font-semibold text-gray-900 mt-4">{student.name}</h3>
-                      <p className="text-gray-600">{student.email}</p>
+                      <h3 className="text-xl font-semibold text-foreground mt-4">{student.name}</h3>
+                      <p className="text-muted-foreground">{student.email}</p>
                       {student.student_id && (
-                        <p className="text-sm text-gray-500 mt-1">ID: {student.student_id}</p>
+                        <p className="text-sm text-muted-foreground mt-1">ID: {student.student_id}</p>
                       )}
                     </>
                   ) : (
@@ -344,19 +353,19 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Status</span>
-                    <Badge className="bg-green-100 text-green-800">Active Student</Badge>
+                    <span className="text-sm text-muted-foreground">Status</span>
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active Student</Badge>
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Role</span>
+                    <span className="text-sm text-muted-foreground">Role</span>
                     <Badge variant="secondary">Student</Badge>
                   </div>
                   
                   {!isEditing ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Promised Hours/Week</span>
-                      <span className="font-medium text-gray-900">{student.promised_hours_per_week || '0'}h</span>
+                      <span className="text-sm text-muted-foreground">Promised Hours/Week</span>
+                      <span className="font-medium text-foreground">{student.promised_hours_per_week || '0'}h</span>
                     </div>
                   ) : (
                     <div>
@@ -376,51 +385,10 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
 
           {/* Right Column - Assignments & Availability */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Hours Summary Card */}
-            <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center text-gray-900">
-                  <Clock className="w-5 h-5 mr-2 text-primary" />
-                  Hours Summary (This Week)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">Promised</p>
-                      <p className="text-2xl font-bold text-blue-700">{hoursData.promised}h</p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">Worked</p>
-                      <p className="text-2xl font-bold text-green-700">{hoursData.worked.toFixed(1)}h</p>
-                    </div>
-                    <div className="p-4 bg-orange-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-1">Remaining</p>
-                      <p className="text-2xl font-bold text-orange-700">{hoursData.remaining.toFixed(1)}h</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-gray-600">
-                      <span>Progress</span>
-                      <span>{Math.round(hoursData.percentage)}%</span>
-                    </div>
-                    <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary transition-all duration-500 ease-out"
-                        style={{ width: `${hoursData.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Availability Schedule */}
-            <div className="bg-white/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden">
-              <div className="p-6 border-b border-gray-100">
-                <h3 className="text-lg font-semibold flex items-center text-gray-900">
+            <div className="bg-card/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-border">
+              <div className="p-6 border-b border-border">
+                <h3 className="text-lg font-semibold flex items-center text-foreground">
                   <Calendar className="w-5 h-5 mr-2 text-primary" />
                   Availability Schedule
                 </h3>
@@ -430,6 +398,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                   events={calendarEvents}
                   view="day"
                   className="border-0 shadow-none h-[400px]"
+                  isMobile={isMobile}
                 />
               </div>
             </div>

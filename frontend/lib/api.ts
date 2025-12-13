@@ -22,6 +22,7 @@ export interface ApiResponse<T = any> {
   user?: User;
   access_token?: string;
   token_type?: string;
+  reset_token?: string;
 }
 
 export interface User {
@@ -69,6 +70,8 @@ export interface Assignment {
     status: string;
     checked_in: number;
     position?: string;
+    rejection_reason?: string;
+    google_event_id?: string;
   };
 }
 
@@ -126,8 +129,14 @@ export const initializeSanctum = async (): Promise<void> => {
 // Helper function to get CSRF token
 export const getCSRFToken = async (): Promise<string | null> => {
   try {
-    // Initialize Sanctum first
-    await initializeSanctum();
+    // Check if we already have a CSRF token in cookies
+    // Note: This only works if the cookie is not HttpOnly, which XSRF-TOKEN is not.
+    const hasXsrfToken = typeof document !== 'undefined' && document.cookie.split(';').some((item) => item.trim().startsWith('XSRF-TOKEN='));
+    
+    if (!hasXsrfToken) {
+      // Initialize Sanctum first only if we don't have a token
+      await initializeSanctum();
+    }
     
     const response = await fetch(`${API_BASE_URL}/csrf-token`, {
       credentials: 'include',
@@ -339,10 +348,10 @@ export const authAPI = {
 
       const result = await response.json();
       
-      // Store user data
-      if (result.user) {
-        setStoredUser(result.user);
-      }
+      // Do not store user data on register as they need to verify email first
+      // if (result.user) {
+      //   setStoredUser(result.user);
+      // }
 
       return result;
     } else {
@@ -352,10 +361,10 @@ export const authAPI = {
         body: JSON.stringify(userData),
       });
 
-      // Store user data
-      if (response.user) {
-        setStoredUser(response.user);
-      }
+      // Do not store user data on register as they need to verify email first
+      // if (response.user) {
+      //   setStoredUser(response.user);
+      // }
 
       return response;
     }
@@ -411,6 +420,32 @@ export const authAPI = {
     return apiCall<ApiResponse>('/auth/reset-password', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  },
+
+  // Verify email
+  async verifyEmail(url: string): Promise<ApiResponse> {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new APIError(data.message || 'Verification failed', response.status);
+    }
+
+    return data;
+  },
+
+  // Resend verification email
+  async resendVerificationEmail(): Promise<ApiResponse> {
+    return apiCall<ApiResponse>('/auth/email/verification-notification', {
+      method: 'POST',
     });
   },
 };
@@ -707,7 +742,7 @@ export const userAPI = {
 
   // Force delete user (permanent)
   async forceDeleteUser(id: number | string): Promise<{ message: string }> {
-    return apiCall<{ message: string }>(`/users/${id}/force-delete`, {
+    return apiCall<{ message: string }>(`/users/${id}/force`, {
       method: 'DELETE',
     });
   },
@@ -763,6 +798,20 @@ export const assignmentAPI = {
     return apiCall<AssignmentsListResponse>(endpoint);
   },
 
+  // Add to Google Calendar
+  async addToCalendar(id: number): Promise<{ message: string; google_event_id: string }> {
+    return apiCall<{ message: string; google_event_id: string }>(`/assignments/${id}/add-to-calendar`, {
+      method: 'POST',
+    });
+  },
+
+  // Remove from Google Calendar
+  async removeFromCalendar(id: number): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/assignments/${id}/remove-from-calendar`, {
+      method: 'POST',
+    });
+  },
+
   // Get specific assignment
   async getAssignment(id: number): Promise<{ assignment: Assignment }> {
     return apiCall<{ assignment: Assignment }>(`/assignments/${id}`);
@@ -773,6 +822,21 @@ export const assignmentAPI = {
     return apiCall<{ message: string; assignment: Assignment }>('/assignments', {
       method: 'POST',
       body: JSON.stringify(assignmentData),
+    });
+  },
+
+  // Accept assignment
+  async acceptAssignment(id: number | string): Promise<{ message: string; assignment: Assignment }> {
+    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${id}/accept`, {
+      method: 'POST',
+    });
+  },
+
+  // Reject assignment
+  async rejectAssignment(id: number | string, reason: string): Promise<{ message: string; assignment: Assignment }> {
+    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
     });
   },
 
@@ -789,6 +853,33 @@ export const assignmentAPI = {
     return apiCall<{ message: string }>(`/assignments/${id}`, {
       method: 'DELETE',
     });
+  },
+
+  // Restore assignment (coordinator only)
+  async restoreAssignment(id: number): Promise<{ message: string; assignment: Assignment }> {
+    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${id}/restore`, {
+      method: 'POST',
+    });
+  },
+
+  // Force delete assignment (coordinator only)
+  async forceDeleteAssignment(id: number): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/assignments/${id}/force`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Get trashed assignments (coordinator only)
+  async getTrashedAssignments(params: AssignmentsQueryParams = {}): Promise<AssignmentsListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params.search) queryParams.append('search', params.search);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/assignments/trashed?${queryString}` : '/assignments/trashed';
+    
+    return apiCall<AssignmentsListResponse>(endpoint);
   },
 
   // Assign user to assignment (coordinator only)
@@ -840,20 +931,6 @@ export const assignmentAPI = {
     return apiCall<{ message: string }>(endpoint, {
       method: 'POST',
       body: JSON.stringify(body),
-    });
-  },
-
-  // Accept assignment (student only)
-  async acceptAssignment(assignmentId: number): Promise<{ message: string; assignment: Assignment }> {
-    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${assignmentId}/accept`, {
-      method: 'POST',
-    });
-  },
-
-  // Reject assignment (student only)
-  async rejectAssignment(assignmentId: number): Promise<{ message: string; assignment: Assignment }> {
-    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${assignmentId}/reject`, {
-      method: 'POST',
     });
   }
 };
@@ -969,3 +1046,58 @@ export const positionAPI = {
     });
   }
 };
+// Audit Log Types
+export interface AuditLog {
+  id: number;
+  user_id: string | null;
+  user_name: string | null;
+  role: string | null;
+  action: string;
+  details: any;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  updated_at: string;
+  user?: User;
+}
+
+export interface AuditLogsResponse {
+  current_page: number;
+  data: AuditLog[];
+  first_page_url: string;
+  from: number;
+  last_page: number;
+  last_page_url: string;
+  links: {
+    url: string | null;
+    label: string;
+    active: boolean;
+  }[];
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number;
+  total: number;
+}
+
+// Audit Log API
+export const auditLogAPI = {
+  getLogs: async (params: {
+    page?: number;
+    search?: string;
+    role?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<AuditLogsResponse> => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.search) queryParams.append('search', params.search);
+    if (params.role) queryParams.append('role', params.role);
+    if (params.start_date) queryParams.append('start_date', params.start_date);
+    if (params.end_date) queryParams.append('end_date', params.end_date);
+
+    return apiCall<AuditLogsResponse>(`/audit-logs?${queryParams.toString()}`);
+  },
+};
+

@@ -23,6 +23,7 @@ import {
   MapPin,
   Clock,
   CheckCircle,
+  XCircle,
   AlertCircle,
   Eye
 } from "lucide-react"
@@ -39,6 +40,7 @@ import { CreateAssignmentModal } from "@/components/CreateAssignmentModal"
 import { PositionModal } from "@/components/PositionModal"
 import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
+import { CoordinatorSidebar } from "@/components/CoordinatorSidebar"
 
 import { 
   authAPI,
@@ -56,24 +58,32 @@ import {
   type AssignmentsQueryParams,
   type UsersQueryParams
 } from "@/lib/api"
+import { ModeToggle } from "@/components/mode-toggle"
 
 function CoordinatorDashboard() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<"assignments" | "students" | "schedules" | "positions">("assignments")
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [activeTab, setActiveTab] = useState<"assignments" | "students" | "schedules" | "positions" | "recycle-bin">("assignments")
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false)
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null)
   const [isDeleteAssignmentConfirmationOpen, setIsDeleteAssignmentConfirmationOpen] = useState(false)
   const [assignmentToDelete, setAssignmentToDelete] = useState<number | null>(null)
-  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'pending' | 'completed'>('all')
+  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'pending' | 'confirmed' | 'complete'>('all')
   const [assignmentSearchQuery, setAssignmentSearchQuery] = useState("")
   const [positionFilter, setPositionFilter] = useState<string>('all')
   const [studentFilter, setStudentFilter] = useState<string>('all')
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+  // Recycle Bin State
+  const [trashedAssignments, setTrashedAssignments] = useState<Assignment[]>([])
+  const [isRestoreConfirmationOpen, setIsRestoreConfirmationOpen] = useState(false)
+  const [isForceDeleteConfirmationOpen, setIsForceDeleteConfirmationOpen] = useState(false)
+  const [assignmentToRestore, setAssignmentToRestore] = useState<number | null>(null)
+  const [assignmentToForceDelete, setAssignmentToForceDelete] = useState<number | null>(null)
 
   // Position Management State
   const [isPositionModalOpen, setIsPositionModalOpen] = useState(false)
@@ -86,6 +96,14 @@ function CoordinatorDashboard() {
   const [studentSearchQuery, setStudentSearchQuery] = useState("")
   const [studentPagination, setStudentPagination] = useState<any>(null)
   const [studentCurrentPage, setStudentCurrentPage] = useState(1)
+
+  // Assignment Pagination
+  const [assignmentPagination, setAssignmentPagination] = useState<any>(null)
+  const [assignmentCurrentPage, setAssignmentCurrentPage] = useState(1)
+
+  // Recycle Bin Pagination
+  const [recycleBinPagination, setRecycleBinPagination] = useState<any>(null)
+  const [recycleBinCurrentPage, setRecycleBinCurrentPage] = useState(1)
 
   // Availability View State
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -133,11 +151,23 @@ function CoordinatorDashboard() {
       switch (activeTab) {
         case 'assignments': {
           const [assignmentsResponse, positionsData, studentsResponse] = await Promise.all([
-            assignmentAPI.getAssignments({ per_page: 50 }),
+            assignmentAPI.getAssignments({ 
+              per_page: 10,
+              page: assignmentCurrentPage,
+              search: assignmentSearchQuery || undefined,
+              status: assignmentFilter !== 'all' ? assignmentFilter : undefined
+            }),
             positionAPI.getPositions(),
             userAPI.getUsers({ role: 'student', per_page: 100 })
           ])
           setAssignments(assignmentsResponse.data)
+          setAssignmentPagination({
+            current_page: assignmentsResponse.meta.current_page,
+            last_page: assignmentsResponse.meta.last_page,
+            total: assignmentsResponse.meta.total,
+            from: assignmentsResponse.meta.from,
+            to: assignmentsResponse.meta.to
+          })
           setPositions(positionsData.positions)
           setStudents(studentsResponse.data)
           
@@ -173,7 +203,7 @@ function CoordinatorDashboard() {
         case 'students':
           const studentsResponse = await userAPI.getUsers({ 
             role: 'student', 
-            per_page: 12,
+            per_page: 10,
             page: studentCurrentPage,
             search: studentSearchQuery || undefined
           })
@@ -193,6 +223,21 @@ function CoordinatorDashboard() {
           const positionsResponse = await positionAPI.getPositions()
           setPositions(positionsResponse.positions)
           break
+
+        case 'recycle-bin':
+          const trashedResponse = await assignmentAPI.getTrashedAssignments({ 
+            per_page: 10,
+            page: recycleBinCurrentPage
+          })
+          setTrashedAssignments(trashedResponse.data)
+          setRecycleBinPagination({
+            current_page: trashedResponse.meta.current_page,
+            last_page: trashedResponse.meta.last_page,
+            total: trashedResponse.meta.total,
+            from: trashedResponse.meta.from,
+            to: trashedResponse.meta.to
+          })
+          break
       }
     } catch (err) {
       setError(formatAPIError(err))
@@ -209,6 +254,32 @@ function CoordinatorDashboard() {
   const handleCreateAssignment = () => {
     setEditingAssignment(null)
     setIsCreateAssignmentModalOpen(true)
+  }
+
+  const handleRestoreAssignment = async () => {
+    if (!assignmentToRestore) return
+    try {
+      await assignmentAPI.restoreAssignment(assignmentToRestore)
+      setTrashedAssignments(prev => prev.filter(a => a.id !== assignmentToRestore))
+      setIsRestoreConfirmationOpen(false)
+      setAssignmentToRestore(null)
+    } catch (error) {
+      console.error('Failed to restore assignment:', error)
+      setError('Failed to restore assignment')
+    }
+  }
+
+  const handleForceDeleteAssignment = async () => {
+    if (!assignmentToForceDelete) return
+    try {
+      await assignmentAPI.forceDeleteAssignment(assignmentToForceDelete)
+      setTrashedAssignments(prev => prev.filter(a => a.id !== assignmentToForceDelete))
+      setIsForceDeleteConfirmationOpen(false)
+      setAssignmentToForceDelete(null)
+    } catch (error) {
+      console.error('Failed to force delete assignment:', error)
+      setError('Failed to force delete assignment')
+    }
   }
 
   const handleEditAssignment = (assignment: Assignment) => {
@@ -290,6 +361,34 @@ function CoordinatorDashboard() {
     }
   }, [studentSearchQuery])
 
+  // Assignment pagination change
+  useEffect(() => {
+    if (activeTab === 'assignments') {
+      fetchData()
+    }
+  }, [assignmentCurrentPage, assignmentFilter])
+
+  // Assignment search debounce
+  useEffect(() => {
+    if (activeTab === 'assignments') {
+      const timeout = setTimeout(() => {
+        if (assignmentCurrentPage !== 1) {
+          setAssignmentCurrentPage(1)
+        } else {
+          fetchData()
+        }
+      }, 300)
+      return () => clearTimeout(timeout)
+    }
+  }, [assignmentSearchQuery])
+
+  // Recycle Bin pagination change
+  useEffect(() => {
+    if (activeTab === 'recycle-bin') {
+      fetchData()
+    }
+  }, [recycleBinCurrentPage])
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -299,197 +398,49 @@ function CoordinatorDashboard() {
       .slice(0, 2)
   }
 
-  const handleLogout = async () => {
-    try {
-      await authAPI.logout()
-      router.push('/login')
-    } catch (error) {
-      console.error('Logout error:', error)
-      router.push('/login')
-    }
-  }
-
   if (!currentUser) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-white">
-      {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0`}>
-        <div className="bg-white/80 backdrop-blur-xl border-r border-gray-300/30 shadow-lg shadow-gray-100/50 h-full flex flex-col">
-          {/* Sidebar Header - App Branding */}
-          <div className="bg-gradient-to-r from-primary to-primary-medium text-white border-0 p-4">
-            <div className="flex items-center justify-between">
-              {!sidebarCollapsed ? (
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                    <Calendar className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h1 className="font-semibold text-lg">AV Scheduler</h1>
-                    <p className="text-xs text-white/80">Coordinator Dashboard</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                  <Calendar className="w-5 h-5" />
-                </div>
-              )}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
-              >
-                {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* Sidebar Navigation */}
-          <div className="flex-1 p-2">
-            <nav className="space-y-1">
-              <div 
-                onClick={() => setActiveTab("assignments")}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                  activeTab === "assignments" 
-                    ? 'text-primary bg-primary/10 border-primary/20' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors ${
-                  activeTab === "assignments" ? 'border' : ''
-                }`}
-              >
-                <ClipboardList className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span className="font-medium">Assignment Management</span>}
-              </div>
-              <div 
-                onClick={() => setActiveTab("students")}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                  activeTab === "students" 
-                    ? 'text-primary bg-primary/10 border-primary/20' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors ${
-                  activeTab === "students" ? 'border' : ''
-                }`}
-              >
-                <Users className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span className="font-medium">View Students</span>}
-              </div>
-              <div 
-                onClick={() => setActiveTab("schedules")}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                  activeTab === "schedules" 
-                    ? 'text-primary bg-primary/10 border-primary/20' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors ${
-                  activeTab === "schedules" ? 'border' : ''
-                }`}
-              >
-                <Clock className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span className="font-medium">Student Availability</span>}
-              </div>
-              <div 
-                onClick={() => setActiveTab("positions")}
-                className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} ${
-                  activeTab === "positions" 
-                    ? 'text-primary bg-primary/10 border-primary/20' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors ${
-                  activeTab === "positions" ? 'border' : ''
-                }`}
-              >
-                <MapPin className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && <span className="font-medium">Position Management</span>}
-              </div>
-            </nav>
-          </div>
-
-          {/* Sidebar Footer - Current User */}
-          <div className="p-4 border-t border-gray-200/30">
-            <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}>
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={currentUser.profile_picture_url || ""} />
-                <AvatarFallback className="bg-primary text-white font-semibold">
-                  {getInitials(currentUser.name)}
-                </AvatarFallback>
-              </Avatar>
-              {!sidebarCollapsed && (
-                <>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {currentUser.name}
-                    </p>
-                    <p className="text-xs text-gray-600 truncate">
-                      {currentUser.email}
-                    </p>
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 flex-shrink-0"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-            {sidebarCollapsed && (
-              <div className="mt-2 flex justify-center">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={handleLogout}
-                  title="Logout"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+    <div className="flex h-screen bg-background">
+      <CoordinatorSidebar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        user={currentUser}
+      />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
         {/* Header */}
-        <header className="bg-white/70 backdrop-blur-xl border-b border-gray-300/30 px-6 py-4 shadow-sm">
+        <header className="bg-card/70 backdrop-blur-xl border-b border-border px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+              <div>
+                <h1 className="text-2xl font-semibold text-foreground">
                 {activeTab === "assignments" && "Assignment Management"}
                 {activeTab === "students" && "View Students"}
                 {activeTab === "schedules" && "Student Availability"}
                 {activeTab === "positions" && "Position Management"}
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {activeTab === "assignments" && "Create and manage assignments for students"}
                 {activeTab === "students" && "View and manage student information"}
                 {activeTab === "schedules" && "Check who is available at specific times"}
                 {activeTab === "positions" && "Manage available positions and roles"}
               </p>
             </div>
-            {activeTab !== "schedules" && (
-              <Button 
-                className="bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
-                onClick={() => {
-                  if (activeTab === "assignments") {
-                    handleCreateAssignment()
-                  } else if (activeTab === "positions") {
-                    handleCreatePosition()
-                  } else {
-                    router.push('/student')
-                  }
-                }}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {activeTab === "assignments" && "Add Assignment"}
-                {activeTab === "students" && "View All Students"}
-                {activeTab === "positions" && "Add Position"}
-              </Button>
-            )}
+            </div>
           </div>
         </header>
 
@@ -498,22 +449,34 @@ function CoordinatorDashboard() {
           {/* Assignment Management Tab */}
           {activeTab === "assignments" && (
             <div className="space-y-6">
-              <div className="bg-white/80 backdrop-blur-xl rounded-lg border border-gray-300/30 overflow-hidden">
-                <div className="p-6 border-b border-gray-200/50">
+              <div className="bg-card/80 backdrop-blur-xl rounded-lg border border-border overflow-hidden">
+                <div className="p-6 border-b border-border">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Assignments</h3>
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-lg font-semibold text-foreground">Assignments</h3>
+                      <Button 
+                        onClick={handleCreateAssignment}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90"
+                        size="sm"
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Add Assignment
+                      </Button>
+                    </div>
                     
                     <div className="flex flex-col md:flex-row gap-4">
                       {/* Filter Buttons */}
-                      <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+                      <div className="grid grid-cols-2 sm:flex items-center bg-muted p-1 rounded-lg gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setAssignmentFilter('all')}
-                          className={`transition-all duration-200 ${
+                          onClick={() => {
+                            setAssignmentFilter('all')
+                            setAssignmentCurrentPage(1)
+                          }}
+                          className={`transition-all duration-200 w-full sm:w-auto ${
                             assignmentFilter === 'all' 
-                              ? 'bg-white text-primary shadow-sm font-medium' 
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
+                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                           }`}
                         >
                           All
@@ -521,11 +484,14 @@ function CoordinatorDashboard() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setAssignmentFilter('pending')}
-                          className={`transition-all duration-200 ${
+                          onClick={() => {
+                            setAssignmentFilter('pending')
+                            setAssignmentCurrentPage(1)
+                          }}
+                          className={`transition-all duration-200 w-full sm:w-auto ${
                             assignmentFilter === 'pending' 
-                              ? 'bg-white text-primary shadow-sm font-medium' 
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
+                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                           }`}
                         >
                           Pending
@@ -533,20 +499,38 @@ function CoordinatorDashboard() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setAssignmentFilter('completed')}
-                          className={`transition-all duration-200 ${
-                            assignmentFilter === 'completed' 
-                              ? 'bg-white text-primary shadow-sm font-medium' 
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/50'
+                          onClick={() => {
+                            setAssignmentFilter('confirmed')
+                            setAssignmentCurrentPage(1)
+                          }}
+                          className={`transition-all duration-200 w-full sm:w-auto ${
+                            assignmentFilter === 'confirmed' 
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
+                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                          }`}
+                        >
+                          Confirmed
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setAssignmentFilter('complete')
+                            setAssignmentCurrentPage(1)
+                          }}
+                          className={`transition-all duration-200 w-full sm:w-auto ${
+                            assignmentFilter === 'complete' 
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
+                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                           }`}
                         >
                           Completed
                         </Button>
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 w-full md:w-auto">
                         <select
-                          className="h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-gray-600 max-w-[150px]"
+                          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground w-full sm:w-auto max-w-none sm:max-w-[150px]"
                           value={studentFilter}
                           onChange={(e) => setStudentFilter(e.target.value)}
                         >
@@ -559,7 +543,7 @@ function CoordinatorDashboard() {
                         </select>
 
                         <select
-                          className="h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-gray-600"
+                          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary text-foreground w-full sm:w-auto max-w-none sm:max-w-[150px]"
                           value={positionFilter}
                           onChange={(e) => setPositionFilter(e.target.value)}
                         >
@@ -571,11 +555,11 @@ function CoordinatorDashboard() {
                           ))}
                         </select>
 
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <div className="relative w-full sm:w-auto">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input
                             placeholder="Search assignments..."
-                            className="pl-10 w-64 bg-white/80 backdrop-blur-xl border-gray-200 focus-visible:ring-0 focus-visible:border-primary"
+                            className="pl-10 w-full sm:w-64 bg-background/80 backdrop-blur-xl border-input focus-visible:ring-0 focus-visible:border-primary"
                             value={assignmentSearchQuery}
                             onChange={(e) => setAssignmentSearchQuery(e.target.value)}
                           />
@@ -586,16 +570,22 @@ function CoordinatorDashboard() {
                 </div>
                 <div className="p-6">
                   {loading ? (
-                    <div className="text-center py-8 text-gray-500">Loading assignments...</div>
+                    <div className="text-center py-8 text-muted-foreground">Loading assignments...</div>
                   ) : error ? (
-                    <div className="text-center py-8 text-red-500">{error}</div>
+                    <div className="flex flex-col items-center justify-center py-8 text-destructive space-y-4">
+                      <p>{error}</p>
+                      {error.includes("Session expired") && (
+                        <Button onClick={() => router.push('/login')}>Log in again</Button>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {(assignments || [])
                         .filter(assignment => {
                           // Filter by status
                           if (assignmentFilter !== 'all') {
-                            if (assignmentFilter === 'completed' && assignment.status !== 'complete') return false;
+                            if (assignmentFilter === 'complete' && assignment.status !== 'complete') return false;
+                            if (assignmentFilter === 'confirmed' && assignment.status !== 'confirmed') return false;
                             if (assignmentFilter === 'pending' && assignment.status !== 'pending') return false;
                           }
 
@@ -624,23 +614,23 @@ function CoordinatorDashboard() {
                           return true;
                         })
                         .map((assignment, index) => (
-                        <div key={`${assignment.id}-${index}`} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-lg">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                              <ClipboardList className="w-5 h-5 text-primary" />
+                        <div key={`${assignment.id}-${index}`} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4">
+                          <div className="flex items-center space-x-4 w-full md:w-auto">
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <ClipboardList className="w-5 h-5 text-primary dark:text-white" />
                             </div>
-                            <div>
-                              <h4 className="font-medium text-gray-900">{assignment.assignment_name}</h4>
-                              <p className="text-sm text-gray-600">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString('en-US')}</p>
+                            <div className="min-w-0">
+                              <h4 className="font-medium text-foreground truncate">{assignment.assignment_name}</h4>
+                              <p className="text-sm text-muted-foreground truncate">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString('en-US')}</p>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
                             <Badge 
                               variant="secondary" 
                               className={`text-xs px-2 py-0.5 border-none ${
-                                assignment.status === 'complete' ? 'bg-green-100 text-green-800' :
-                                assignment.status === 'confirmed' ? 'bg-primary/10 text-primary' :
-                                'bg-orange-100 text-orange-800'
+                                assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                                assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white' :
+                                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                               }`}
                             >
                               {assignment.status}
@@ -652,7 +642,7 @@ function CoordinatorDashboard() {
                                 e.stopPropagation();
                                 handleViewAssignment(assignment);
                               }} 
-                              className="text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                              className="text-muted-foreground hover:text-foreground hover:bg-muted"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -663,7 +653,7 @@ function CoordinatorDashboard() {
                                 e.stopPropagation();
                                 handleEditAssignment(assignment);
                               }} 
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-white dark:hover:bg-blue-900/20"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -674,7 +664,7 @@ function CoordinatorDashboard() {
                                 e.stopPropagation();
                                 handleDeleteAssignment(assignment.id);
                               }} 
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -682,8 +672,38 @@ function CoordinatorDashboard() {
                         </div>
                       ))}
                       {assignments.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">No assignments found</div>
+                        <div className="text-center py-8 text-muted-foreground">No assignments found</div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Assignment Pagination */}
+                  {assignmentPagination && assignmentPagination.last_page > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+                      <div className="text-sm text-gray-500">
+                        Showing {assignmentPagination.from} to {assignmentPagination.to} of {assignmentPagination.total} results
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAssignmentCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={assignmentCurrentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="text-sm font-medium">
+                          Page {assignmentCurrentPage} of {assignmentPagination.last_page}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setAssignmentCurrentPage(p => Math.min(assignmentPagination.last_page, p + 1))}
+                          disabled={assignmentCurrentPage === assignmentPagination.last_page}
+                        >
+                          Next
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -695,15 +715,15 @@ function CoordinatorDashboard() {
           {activeTab === "students" && (
             <div className="space-y-6">
               {/* Controls */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
                 {/* View Toggle */}
                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-xl rounded-lg p-1 border border-gray-300/30">
+                  <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
                     <Button
                       variant={viewMode === "card" ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setViewMode("card")}
-                      className={viewMode === "card" ? "bg-primary text-white" : "text-gray-700 hover:text-gray-900"}
+                      className={viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                     >
                       <Grid3X3 className="w-4 h-4 mr-1" />
                       Cards
@@ -712,7 +732,7 @@ function CoordinatorDashboard() {
                       variant={viewMode === "list" ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setViewMode("list")}
-                      className={viewMode === "list" ? "bg-primary text-white" : "text-gray-700 hover:text-gray-900"}
+                      className={viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                     >
                       <List className="w-4 h-4 mr-1" />
                       List
@@ -723,21 +743,21 @@ function CoordinatorDashboard() {
                 {/* Search */}
                 <div className="flex items-center space-x-3">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       placeholder="Search students..."
                       value={studentSearchQuery}
                       onChange={(e) => setStudentSearchQuery(e.target.value)}
-                      className="pl-10 w-64 bg-white/80 backdrop-blur-xl border-gray-300/30 focus:border-primary"
+                      className="pl-10 w-full md:w-64 bg-card/80 backdrop-blur-xl border-border focus:border-primary"
                     />
                   </div>
                 </div>
               </div>
 
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Loading students...</div>
+                <div className="text-center py-8 text-muted-foreground">Loading students...</div>
               ) : error ? (
-                <div className="text-center py-8 text-red-500">{error}</div>
+                <div className="text-center py-8 text-destructive">{error}</div>
               ) : (
                 <>
                   {viewMode === "card" ? (
@@ -745,21 +765,29 @@ function CoordinatorDashboard() {
                       {(students || []).map((student) => (
                         <Card 
                           key={student.id} 
-                          className="bg-white/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all cursor-pointer h-32"
+                          className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10 transition-all cursor-pointer h-32"
                           onClick={() => router.push(`/student/${student.id}`)}
                         >
                           <CardContent className="p-4 h-full">
                             <div className="flex items-center space-x-4 h-full">
                               <Avatar className="h-16 w-16 flex-shrink-0">
                                 <AvatarImage src={student.profile_picture_url || ""} />
-                                <AvatarFallback className="bg-primary text-white font-semibold text-lg">
+                                <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
                                   {getInitials(student.name)}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex-1 min-w-0 space-y-1">
                                 <div>
-                                  <h3 className="font-semibold text-gray-900 text-sm truncate">{student.name}</h3>
-                                  <p className="text-xs text-gray-600 truncate">Student ID: {student.student_id || 'N/A'}</p>
+                                  <h3 className="font-semibold text-foreground text-sm truncate">{student.name}</h3>
+                                  <p className="text-xs text-muted-foreground truncate">Student ID: {student.student_id || 'N/A'}</p>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={student.email}>{student.email}</p>
+                                    {student.email_verified_at ? (
+                                      <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                    ) : (
+                                      <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                                    )}
+                                  </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="secondary" className="text-xs px-2 py-0.5">Student</Badge>
@@ -772,46 +800,46 @@ function CoordinatorDashboard() {
                       ))}
                     </div>
                   ) : (
-                    <div className="bg-white/80 backdrop-blur-xl rounded-lg border border-gray-300/30 overflow-hidden">
+                    <div className="bg-card/80 backdrop-blur-xl rounded-lg border border-border overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="w-full">
-                          <thead className="bg-gray-50/50">
+                          <thead className="bg-muted/50">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Student
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Role
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Hours
                               </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Email
                               </th>
-                              <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Actions
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-200/50">
+                          <tbody className="divide-y divide-border">
                             {(students || []).map((student) => (
                               <tr 
                                 key={student.id} 
-                                className="hover:bg-gray-50/30 transition-colors cursor-pointer"
+                                className="hover:bg-muted/30 transition-colors cursor-pointer"
                                 onClick={() => router.push(`/student/${student.id}`)}
                               >
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex items-center">
                                     <Avatar className="h-10 w-10">
                                       <AvatarImage src={student.profile_picture_url || ""} />
-                                      <AvatarFallback className="bg-primary text-white font-semibold">
+                                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                                         {getInitials(student.name)}
                                       </AvatarFallback>
                                     </Avatar>
                                     <div className="ml-4">
-                                      <div className="text-sm font-medium text-gray-900">{student.name}</div>
-                                      <div className="text-sm text-gray-600">{student.student_id || 'No Student ID'}</div>
+                                      <div className="text-sm font-medium text-foreground">{student.name}</div>
+                                      <div className="text-sm text-muted-foreground">{student.student_id || 'No Student ID'}</div>
                                     </div>
                                   </div>
                                 </td>
@@ -822,20 +850,27 @@ function CoordinatorDashboard() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex flex-col gap-1">
-                                    <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200">
+                                    <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800">
                                       {student.promised_hours_per_week || '0'}h Promised
                                     </Badge>
                                     <Badge variant="outline" className={`text-xs w-fit ${
-                                      (student.remaining_hours || 0) > 0 
-                                        ? 'bg-orange-50 text-orange-700 border-orange-200' 
-                                        : 'bg-green-50 text-green-700 border-green-200'
+                                      (Number(student.remaining_hours_this_week) || 0) > 0 
+                                        ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800' 
+                                        : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
                                     }`}>
-                                      {student.remaining_hours ? Number(student.remaining_hours).toFixed(1) : '0'}h Remaining
+                                      {student.remaining_hours_this_week ? Number(student.remaining_hours_this_week).toFixed(1) : '0'}h Remaining
                                     </Badge>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                  {student.email}
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-2">
+                                    {student.email}
+                                    {student.email_verified_at ? (
+                                      <CheckCircle className="w-4 h-4 text-green-500" />
+                                    ) : (
+                                      <XCircle className="w-4 h-4 text-red-500" />
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
                                   <Button 
@@ -860,29 +895,27 @@ function CoordinatorDashboard() {
 
                   {/* Pagination */}
                   {studentPagination && studentPagination.last_page > 1 && (
-                    <div className="mt-6 flex items-center justify-between">
-                      <p className="text-sm text-gray-600">
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+                      <div className="text-sm text-gray-500">
                         Showing {studentPagination.from} to {studentPagination.to} of {studentPagination.total} results
-                      </p>
+                      </div>
                       <div className="flex items-center space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => setStudentCurrentPage(p => Math.max(1, p - 1))}
                           disabled={studentCurrentPage === 1}
-                          onClick={() => setStudentCurrentPage(studentCurrentPage - 1)}
-                          className="bg-white/80 backdrop-blur-xl border-gray-300/30"
                         >
                           Previous
                         </Button>
-                        <span className="text-sm text-gray-600">
+                        <div className="text-sm font-medium">
                           Page {studentCurrentPage} of {studentPagination.last_page}
-                        </span>
+                        </div>
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => setStudentCurrentPage(p => Math.min(studentPagination.last_page, p + 1))}
                           disabled={studentCurrentPage === studentPagination.last_page}
-                          onClick={() => setStudentCurrentPage(studentCurrentPage + 1)}
-                          className="bg-white/80 backdrop-blur-xl border-gray-300/30"
                         >
                           Next
                         </Button>
@@ -891,7 +924,7 @@ function CoordinatorDashboard() {
                   )}
 
                   {students.length === 0 && (
-                    <div className="col-span-full text-center py-8 text-gray-500">No students found</div>
+                    <div className="col-span-full text-center py-8 text-muted-foreground">No students found</div>
                   )}
                 </>
               )}
@@ -901,14 +934,14 @@ function CoordinatorDashboard() {
           {/* Schedules Tab */}
           {activeTab === "schedules" && (
             <div className="space-y-6">
-              <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-gray-900 font-bold">Daily Availability View</CardTitle>
-                  <div className="flex items-center bg-white rounded-lg border border-gray-200 shadow-sm p-1">
+              <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
+                <CardHeader className="flex flex-col md:flex-row items-center justify-between pb-2 gap-4">
+                  <CardTitle className="text-foreground font-bold">Daily Availability View</CardTitle>
+                  <div className="flex items-center bg-card rounded-lg border border-border shadow-sm p-1">
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 hover:bg-gray-100 rounded-md text-gray-600"
+                      className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
                       onClick={() => {
                         const date = new Date(selectedDate)
                         date.setDate(date.getDate() - 1)
@@ -925,14 +958,14 @@ function CoordinatorDashboard() {
                         type="date" 
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-auto border-0 focus-visible:ring-0 h-8 font-medium text-gray-700 bg-transparent p-0"
+                        className="w-auto border-0 focus-visible:ring-0 h-8 font-medium text-foreground bg-transparent p-0"
                       />
                     </div>
 
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 hover:bg-gray-100 rounded-md text-gray-600"
+                      className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
                       onClick={() => {
                         const date = new Date(selectedDate)
                         date.setDate(date.getDate() + 1)
@@ -946,7 +979,7 @@ function CoordinatorDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     {loading ? (
-                      <div className="text-center py-8 text-gray-500">Loading availability...</div>
+                      <div className="text-center py-8 text-muted-foreground">Loading availability...</div>
                     ) : (
                       <div className="space-y-2">
                         {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => { // 7 AM to 9 PM
@@ -967,8 +1000,8 @@ function CoordinatorDashboard() {
                           const uniqueStudents = Array.from(new Map(availableStudents.map(item => [item.student_id, item.user])).values()).filter(Boolean);
 
                           return (
-                            <div key={hour} className="flex border-b border-gray-100 py-3 last:border-0">
-                              <div className="w-20 flex-shrink-0 font-medium text-gray-500 pt-2">
+                            <div key={hour} className="flex border-b border-border py-3 last:border-0">
+                              <div className="w-20 flex-shrink-0 font-medium text-muted-foreground pt-2">
                                 {timeString}
                               </div>
                               <div className="flex-1">
@@ -994,13 +1027,13 @@ function CoordinatorDashboard() {
                                           key={student.id} 
                                           className={`
                                             flex items-center space-x-2 
-                                            bg-white border-l-[3px] ${style.border}
+                                            bg-card border-l-[3px] ${style.border}
                                             rounded-r-lg rounded-l-[2px]
                                             pl-2 pr-3 py-1.5 
                                             cursor-pointer 
                                             transition-all duration-300 
-                                            hover:scale-105 shadow-sm hover:shadow-md hover:bg-gray-50
-                                            border-y border-r border-gray-100
+                                            hover:scale-105 shadow-sm hover:shadow-md hover:bg-muted
+                                            border-y border-r border-border
                                             group
                                           `}
                                           onClick={() => router.push(`/student/${student.id}`)}
@@ -1011,7 +1044,7 @@ function CoordinatorDashboard() {
                                               {getInitials(student.name)}
                                             </AvatarFallback>
                                           </Avatar>
-                                          <span className="text-xs font-bold text-gray-700 group-hover:text-gray-900 transition-colors tracking-wide">
+                                          <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors tracking-wide">
                                             {student.name}
                                           </span>
                                         </div>
@@ -1019,7 +1052,7 @@ function CoordinatorDashboard() {
                                     })}
                                   </div>
                                 ) : (
-                                  <div className="text-sm text-gray-400 italic pt-2">No students available</div>
+                                  <div className="text-sm text-muted-foreground italic pt-2">No students available</div>
                                 )}
                               </div>
                             </div>
@@ -1037,39 +1070,40 @@ function CoordinatorDashboard() {
           {activeTab === "positions" && (
             <div className="space-y-6">
               {loading ? (
-                <div className="text-center py-8 text-gray-500">Loading positions...</div>
+                <div className="text-center py-8 text-muted-foreground">Loading positions...</div>
               ) : error ? (
-                <div className="text-center py-8 text-red-500">{error}</div>
+                <div className="text-center py-8 text-destructive">{error}</div>
               ) : (
                 <>
                   <div className="flex justify-end">
-                    <Button onClick={handleCreatePosition} className="bg-primary text-white hover:bg-primary/90">
+                    <Button onClick={handleCreatePosition} className="bg-primary text-primary-foreground hover:bg-primary/90">
                       <Plus className="mr-2 h-4 w-4" /> Add Position
                     </Button>
                   </div>
-                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+                    <div className="overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-gray-50/50">
+                      <thead className="bg-muted/50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Name</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Description</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Description</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200/50">
+                      <tbody className="divide-y divide-border">
                         {(positions || []).map((position) => (
-                          <tr key={position.id} className="hover:bg-gray-50/30 transition-colors">
+                          <tr key={position.id} className="hover:bg-muted/30 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center space-x-3">
                                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <MapPin className="w-4 h-4 text-primary" />
+                                  <MapPin className="w-4 h-4 text-primary dark:text-white" />
                                 </div>
-                                <span className="font-medium text-gray-900">{position.name}</span>
+                                <span className="font-medium text-foreground">{position.name}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <p className="text-sm text-gray-600 line-clamp-1">{position.description || 'No description'}</p>
+                              <p className="text-sm text-muted-foreground line-clamp-1">{position.description || 'No description'}</p>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <Badge variant={position.is_active ? "secondary" : "outline"}>
@@ -1079,9 +1113,9 @@ function CoordinatorDashboard() {
                             <td className="px-6 py-4 whitespace-nowrap text-right">
                               <div className="flex justify-end space-x-2">
                                 <Button variant="ghost" size="sm" onClick={() => handleEditPosition(position)} className="h-8 w-8 p-0">
-                                  <Edit className="h-4 w-4 text-gray-500" />
+                                  <Edit className="h-4 w-4 text-muted-foreground" />
                                 </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleDeletePosition(position.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50">
+                                <Button variant="ghost" size="sm" onClick={() => handleDeletePosition(position.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -1090,10 +1124,126 @@ function CoordinatorDashboard() {
                         ))}
                       </tbody>
                     </table>
+                    </div>
                     {(positions || []).length === 0 && (
-                      <div className="text-center py-8 text-gray-500">No positions found</div>
+                      <div className="text-center py-8 text-muted-foreground">No positions found</div>
                     )}
                   </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Recycle Bin Tab */}
+          {activeTab === "recycle-bin" && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold tracking-tight">Recycle Bin</h2>
+              </div>
+
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">Loading trashed assignments...</div>
+              ) : error ? (
+                <div className="text-center py-8 text-destructive">{error}</div>
+              ) : (
+                <>
+                  <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Assignment</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Event</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Deleted At</th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {(trashedAssignments || []).map((assignment) => (
+                        <tr key={assignment.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </div>
+                              <span className="font-medium text-foreground">{assignment.assignment_name}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">{assignment.event_name}</span>
+                              <span className="text-xs text-muted-foreground">{new Date(assignment.event_start_datetime).toLocaleDateString()}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-muted-foreground">
+                              {assignment.deleted_at ? new Date(assignment.deleted_at).toLocaleDateString() : 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <div className="flex justify-end space-x-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => {
+                                  setAssignmentToRestore(assignment.id)
+                                  setIsRestoreConfirmationOpen(true)
+                                }}
+                                className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                              >
+                                Restore
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                onClick={() => {
+                                  setAssignmentToForceDelete(assignment.id)
+                                  setIsForceDeleteConfirmationOpen(true)
+                                }}
+                              >
+                                Delete Forever
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  </div>
+                  {(trashedAssignments || []).length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">No trashed assignments found</div>
+                  )}
+                </div>
+
+                {/* Recycle Bin Pagination */}
+                {recycleBinPagination && recycleBinPagination.last_page > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+                    <div className="text-sm text-gray-500">
+                      Showing {recycleBinPagination.from} to {recycleBinPagination.to} of {recycleBinPagination.total} results
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRecycleBinCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={recycleBinCurrentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <div className="text-sm font-medium">
+                        Page {recycleBinCurrentPage} of {recycleBinPagination.last_page}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRecycleBinCurrentPage(p => Math.min(recycleBinPagination.last_page, p + 1))}
+                        disabled={recycleBinCurrentPage === recycleBinPagination.last_page}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 </>
               )}
             </div>
@@ -1133,6 +1283,25 @@ function CoordinatorDashboard() {
         title="Delete Assignment"
         description="Are you sure you want to delete this assignment? This action cannot be undone."
         confirmText="Delete"
+        variant="destructive"
+      />
+      <ConfirmationDialog
+        isOpen={isRestoreConfirmationOpen}
+        onClose={() => setIsRestoreConfirmationOpen(false)}
+        onConfirm={handleRestoreAssignment}
+        title="Restore Assignment"
+        description="Are you sure you want to restore this assignment? It will be moved back to the active assignments list."
+        confirmText="Restore"
+        cancelText="Cancel"
+      />
+      <ConfirmationDialog
+        isOpen={isForceDeleteConfirmationOpen}
+        onClose={() => setIsForceDeleteConfirmationOpen(false)}
+        onConfirm={handleForceDeleteAssignment}
+        title="Delete Forever"
+        description="Are you sure you want to permanently delete this assignment? This action cannot be undone."
+        confirmText="Delete Forever"
+        cancelText="Cancel"
         variant="destructive"
       />
     </div>
