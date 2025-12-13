@@ -35,18 +35,23 @@ RUN composer run-script post-autoload-dump || true
 # -----------------------
 FROM php:8.2-fpm-alpine
 
+# Install extension installer
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
+
 # install system deps for Laravel & Nginx & Supervisor
 RUN apk add --no-cache \
     nginx \
     supervisor \
     bash \
     curl \
-    libzip-dev \
-    oniguruma-dev \
-    icu-dev \
-    zlib-dev \
-    $PHPIZE_DEPS \
-    && docker-php-ext-install pdo_mysql mbstring zip intl
+    file
+
+# Install PHP extensions
+RUN install-php-extensions \
+    pdo_mysql \
+    mbstring \
+    zip \
+    intl
 
 # create app dir
 WORKDIR /var/www/html
