@@ -237,13 +237,22 @@ class AssignmentController extends Controller
             ], 422);
         }
 
+        $status = $request->get('status', 'pending');
+        $user = \App\Models\User::find($request->user_id);
+
         $assignment->assignUser(
-            \App\Models\User::find($request->user_id),
-            $request->get('status', 'pending'),
+            $user,
+            $status,
             $request->position
         );
 
-        $assignedUser = \App\Models\User::find($request->user_id);
+        if ($status === 'accepted') {
+            $duration = $assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60;
+            $user->remaining_hours_this_week = max(0, $user->remaining_hours_this_week - $duration);
+            $user->save();
+        }
+
+        $assignedUser = $user;
         Mail::to($assignedUser->email)->send(new AssignmentAssigned($assignment, $assignedUser));
 
         AuditLogger::log('User Assigned to Assignment', [
@@ -279,7 +288,17 @@ class AssignmentController extends Controller
             ], 422);
         }
 
+        // Check previous status to restore hours if needed
+        $currentStatus = $assignment->users()->where('user_id', $user->id)->first()->pivot->status;
+
         $assignment->unassignUser($user);
+
+        // If previously accepted, restore hours
+        if ($currentStatus === 'accepted') {
+            $duration = $assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60;
+            $user->remaining_hours_this_week = min($user->promised_hours_per_week, $user->remaining_hours_this_week + $duration);
+            $user->save();
+        }
 
         AuditLogger::log('User Unassigned from Assignment', [
             'assignment_id' => $assignment->id,
@@ -426,6 +445,11 @@ class AssignmentController extends Controller
 
         $assignment->updateUserStatus($user, 'accepted');
 
+        // Calculate duration in hours and update remaining hours
+        $duration = $assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60;
+        $user->remaining_hours_this_week = max(0, $user->remaining_hours_this_week - $duration);
+        $user->save();
+
         // Check if all assigned users have accepted
         $allAccepted = $assignment->users()->wherePivot('status', '!=', 'accepted')->doesntExist();
         if ($allAccepted && $assignment->users()->count() > 0) {
@@ -466,7 +490,17 @@ class AssignmentController extends Controller
             ], 422);
         }
 
+        // Check previous status to restore hours if needed
+        $currentStatus = $assignment->users()->where('user_id', $user->id)->first()->pivot->status;
+
         $assignment->updateUserStatus($user, 'rejected', $request->reason);
+
+        // If previously accepted, restore hours
+        if ($currentStatus === 'accepted') {
+            $duration = $assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60;
+            $user->remaining_hours_this_week = min($user->promised_hours_per_week, $user->remaining_hours_this_week + $duration);
+            $user->save();
+        }
 
         // Notify coordinator
         if ($assignment->creator) {
