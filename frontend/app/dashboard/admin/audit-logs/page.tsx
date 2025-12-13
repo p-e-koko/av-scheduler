@@ -142,8 +142,8 @@ function AuditLogsContent() {
   return (
     <>
       {/* Header */}
-      <header className="bg-card/70 backdrop-blur-xl border-b border-border px-6 py-4 shadow-sm">
-        <div className="flex items-center justify-between">
+      <header className="bg-card/70 backdrop-blur-xl border-b border-border px-4 sm:px-6 py-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
           <div>
             <h1 className="text-2xl font-semibold text-foreground">Audit Logs</h1>
             <p className="text-sm text-muted-foreground mt-1">View system activities and changes</p>
@@ -152,23 +152,23 @@ function AuditLogsContent() {
       </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           <Card className="border-none shadow-lg bg-card/80 backdrop-blur-sm">
             <CardHeader className="pb-2">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <CardTitle>System Activities</CardTitle>
-                <div className="flex items-center gap-2">
-                  <div className="relative w-64">
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+                  <div className="relative w-full sm:w-64">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search logs..."
-                      className="pl-8"
+                      className="pl-8 w-full"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                   </div>
                   <Select value={selectedRole} onValueChange={setSelectedRole}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Filter by Role" />
                     </SelectTrigger>
                     <SelectContent>
@@ -189,7 +189,7 @@ function AuditLogsContent() {
                 <div className="text-red-500 p-4">{error}</div>
               ) : (
                 <>
-                  <div className="rounded-md border">
+                  <div className="rounded-md border overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -242,7 +242,7 @@ function AuditLogsContent() {
 
                   {/* Pagination */}
                   {pagination && pagination.last_page > 1 && (
-                    <div className="flex items-center justify-between mt-4">
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4 sm:gap-0">
                       <div className="text-sm text-gray-500">
                         Showing {pagination.from} to {pagination.to} of {pagination.total} results
                       </div>

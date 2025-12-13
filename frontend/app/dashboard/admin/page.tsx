@@ -224,8 +224,8 @@ function AdminDashboard() {
   return (
     <>
       {/* Header */}
-      <header className="bg-card/70 backdrop-blur-xl border-b border-border px-6 py-4 shadow-sm">
-        <div className="flex items-center justify-between">
+      <header className="bg-card/70 backdrop-blur-xl border-b border-border px-4 sm:px-6 py-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
           <div>
             <h1 className="text-2xl font-semibold text-foreground">User Management</h1>
             <p className="text-sm text-muted-foreground mt-1">Manage users, roles, and permissions</p>
@@ -233,7 +233,7 @@ function AdminDashboard() {
           {hasAnyRole(['admin']) && (
             <div className="flex space-x-2">
               <Button 
-                className="bg-gradient-to-r from-primary to-primary-medium text-primary-foreground hover:shadow-lg transition-all"
+                className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary-medium text-primary-foreground hover:shadow-lg transition-all"
                 onClick={handleAddUser}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -245,17 +245,17 @@ function AdminDashboard() {
       </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-4 sm:p-6">
           {/* Controls */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
             {/* View Toggle */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
+            <div className="flex items-center space-x-4 w-full md:w-auto">
+              <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border w-full md:w-auto">
                 <Button
                   variant={viewMode === "card" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("card")}
-                  className={viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                  className={`flex-1 md:flex-none ${viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   <Grid3X3 className="w-4 h-4 mr-1" />
                   Cards
@@ -264,7 +264,7 @@ function AdminDashboard() {
                   variant={viewMode === "list" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className={viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                  className={`flex-1 md:flex-none ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   <List className="w-4 h-4 mr-1" />
                   List
@@ -273,20 +273,20 @@ function AdminDashboard() {
             </div>
 
             {/* Search and Filter */}
-            <div className="flex items-center space-x-3">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full md:w-auto">
+              <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search users..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-64 bg-card/80 backdrop-blur-xl border-border focus:border-primary"
+                  className="pl-10 w-full sm:w-64 bg-card/80 backdrop-blur-xl border-border focus:border-primary"
                 />
               </div>
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-3 py-2 rounded-md border border-border bg-card/80 backdrop-blur-xl text-foreground text-sm"
+                className="px-3 py-2 rounded-md border border-border bg-card/80 backdrop-blur-xl text-foreground text-sm w-full sm:w-auto"
               >
                 <option value="">All Roles</option>
                 <option value="admin">Admin</option>
@@ -491,7 +491,7 @@ function AdminDashboard() {
 
               {/* Pagination */}
               {pagination && pagination.last_page > 1 && (
-                <div className="flex items-center justify-between mt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4 sm:gap-0">
                   <div className="text-sm text-gray-500">
                     Showing {pagination.from} to {pagination.to} of {pagination.total} results
                   </div>
