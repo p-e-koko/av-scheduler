@@ -126,7 +126,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               pathname === '/dashboard/admin' 
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               pathname === '/dashboard/admin' ? 'border-primary/20' : 'border-transparent'
@@ -142,7 +142,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               pathname === '/dashboard/admin/account-recovery'
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               pathname === '/dashboard/admin/account-recovery' ? 'border-primary/20' : 'border-transparent'
@@ -158,7 +158,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               pathname === '/dashboard/admin/audit-logs'
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               pathname === '/dashboard/admin/audit-logs' ? 'border-primary/20' : 'border-transparent'

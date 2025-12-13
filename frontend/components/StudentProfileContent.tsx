@@ -110,7 +110,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
         color = "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
         title = "Unavailable"
       } else if (slot.status === 'class') {
-        color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
+        color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800"
         title = "Class"
       }
       
@@ -151,7 +151,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
       case 'available':
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
       case 'class':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
       case 'busy':
       case 'unavailable':
         return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
@@ -389,7 +389,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">Promised</p>
-                      <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{hoursData.promised}h</p>
+                      <p className="text-2xl font-bold text-blue-700 dark:text-white">{hoursData.promised}h</p>
                     </div>
                     <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">Worked</p>

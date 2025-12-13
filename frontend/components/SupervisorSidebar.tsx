@@ -126,13 +126,13 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               activeTab === "dashboard" 
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               activeTab === "dashboard" ? 'border-primary/20' : 'border-transparent'
             }`}
           >
-            <BarChart3 className={`w-5 h-5 ${activeTab === "dashboard" ? 'text-primary dark:text-blue-400' : ''}`} />
+            <BarChart3 className={`w-5 h-5 ${activeTab === "dashboard" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Dashboard</span>}
           </div>
 
@@ -143,13 +143,13 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               activeTab === "student-schedules" 
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               activeTab === "student-schedules" ? 'border-primary/20' : 'border-transparent'
             }`}
           >
-            <Users className={`w-5 h-5 ${activeTab === "student-schedules" ? 'text-primary dark:text-blue-400' : ''}`} />
+            <Users className={`w-5 h-5 ${activeTab === "student-schedules" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Student Schedules</span>}
           </div>
 
@@ -160,13 +160,13 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               activeTab === "assignment-schedules" 
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               activeTab === "assignment-schedules" ? 'border-primary/20' : 'border-transparent'
             }`}
           >
-            <Calendar className={`w-5 h-5 ${activeTab === "assignment-schedules" ? 'text-primary dark:text-blue-400' : ''}`} />
+            <Calendar className={`w-5 h-5 ${activeTab === "assignment-schedules" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Assignment Schedules</span>}
           </div>
         </nav>

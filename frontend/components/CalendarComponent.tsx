@@ -288,7 +288,7 @@ export function CalendarComponent({
                           }}
                           className={cn(
                             "absolute left-0.5 right-0.5 rounded px-2 py-1 text-xs cursor-pointer overflow-hidden border-l-4 shadow-sm hover:brightness-95 transition-all z-0",
-                            event.color || "bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-500"
+                            event.color || "bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:text-white dark:border-blue-500"
                           )}
                           style={{
                             top: `${top}px`,

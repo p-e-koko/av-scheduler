@@ -135,6 +135,11 @@ class UserController extends Controller
 
         $user->update($userData);
 
+        // Recalculate remaining hours if promised hours changed
+        if (isset($userData['promised_hours_per_week'])) {
+            $this->recalculateRemainingHours($user);
+        }
+
         AuditLogger::log('User Updated', ['user_id' => $user->id, 'email' => $user->email]);
 
         if (isset($userData['role']) && $userData['role'] !== $oldRole) {
@@ -172,6 +177,11 @@ class UserController extends Controller
         }
 
         $user->update($userData);
+
+        // Recalculate remaining hours if promised hours changed
+        if (isset($userData['promised_hours_per_week'])) {
+            $this->recalculateRemainingHours($user);
+        }
 
         AuditLogger::log('User Updated', ['user_id' => $user->id, 'email' => $user->email]);
 
@@ -244,5 +254,30 @@ class UserController extends Controller
         $users = User::onlyTrashed()->paginate($perPage);
 
         return response()->json(new UserCollection($users));
+    }
+
+    /**
+     * Recalculate remaining hours for a user based on accepted assignments.
+     */
+    private function recalculateRemainingHours(User $user): void
+    {
+        // Get start and end of current week
+        $startOfWeek = now()->startOfWeek();
+        $endOfWeek = now()->endOfWeek();
+
+        // Get accepted assignments for this week
+        $acceptedAssignments = $user->assignments()
+            ->wherePivot('status', 'accepted')
+            ->whereBetween('event_start_datetime', [$startOfWeek, $endOfWeek])
+            ->get();
+
+        $workedHours = 0;
+        foreach ($acceptedAssignments as $assignment) {
+            $duration = $assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60;
+            $workedHours += $duration;
+        }
+
+        $user->remaining_hours_this_week = max(0, $user->promised_hours_per_week - $workedHours);
+        $user->save();
     }
 }

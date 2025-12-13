@@ -127,7 +127,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               activeTab === "profile" 
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               activeTab === "profile" ? 'border-primary/20' : 'border-transparent'
@@ -143,7 +143,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               activeTab === "assignments"
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
@@ -159,7 +159,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               activeTab === "schedule"
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               activeTab === "schedule" ? 'border-primary/20' : 'border-transparent'

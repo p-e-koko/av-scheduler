@@ -211,18 +211,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getRemainingHoursAttribute()
     {
-        $startOfWeek = now()->startOfWeek();
-        $endOfWeek = now()->endOfWeek();
-
-        $assignedHours = $this->assignments()
-            ->wherePivot('status', '!=', 'rejected')
-            ->whereBetween('event_start_datetime', [$startOfWeek, $endOfWeek])
-            ->get()
-            ->sum(function ($assignment) {
-                return $assignment->getDurationInHours();
-            });
-
-        return max(0, ($this->promised_hours_per_week ?? 0) - $assignedHours);
+        return $this->remaining_hours_this_week;
     }
 
     /**

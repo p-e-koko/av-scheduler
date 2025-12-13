@@ -132,13 +132,13 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               activeTab === "assignments" 
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
             }`}
           >
-            <ClipboardList className={`w-5 h-5 ${activeTab === "assignments" ? 'text-primary dark:text-blue-400' : ''}`} />
+            <ClipboardList className={`w-5 h-5 ${activeTab === "assignments" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Assignments</span>}
           </div>
 
@@ -149,13 +149,13 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               activeTab === "students" 
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               activeTab === "students" ? 'border-primary/20' : 'border-transparent'
             }`}
           >
-            <Users className={`w-5 h-5 ${activeTab === "students" ? 'text-primary dark:text-blue-400' : ''}`} />
+            <Users className={`w-5 h-5 ${activeTab === "students" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Students</span>}
           </div>
 
@@ -166,13 +166,13 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               activeTab === "schedules" 
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               activeTab === "schedules" ? 'border-primary/20' : 'border-transparent'
             }`}
           >
-            <Calendar className={`w-5 h-5 ${activeTab === "schedules" ? 'text-primary dark:text-blue-400' : ''}`} />
+            <Calendar className={`w-5 h-5 ${activeTab === "schedules" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Schedules</span>}
           </div>
 
@@ -183,13 +183,13 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
               activeTab === "positions" 
-                ? 'text-primary dark:text-blue-400 bg-primary/10 border-primary/20' 
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
                 : 'text-muted-foreground hover:bg-accent'
             } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
               activeTab === "positions" ? 'border-primary/20' : 'border-transparent'
             }`}
           >
-            <Grid3X3 className={`w-5 h-5 ${activeTab === "positions" ? 'text-primary dark:text-blue-400' : ''}`} />
+            <Grid3X3 className={`w-5 h-5 ${activeTab === "positions" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Positions</span>}
           </div>
         </nav>

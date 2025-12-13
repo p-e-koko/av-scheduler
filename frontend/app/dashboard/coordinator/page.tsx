@@ -521,7 +521,7 @@ function CoordinatorDashboard() {
                               variant="secondary" 
                               className={`text-xs px-2 py-0.5 border-none ${
                                 assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                                assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white' :
                                 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                               }`}
                             >
@@ -545,7 +545,7 @@ function CoordinatorDashboard() {
                                 e.stopPropagation();
                                 handleEditAssignment(assignment);
                               }} 
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-white dark:hover:bg-blue-900/20"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -712,7 +712,7 @@ function CoordinatorDashboard() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex flex-col gap-1">
-                                    <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
+                                    <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800">
                                       {student.promised_hours_per_week || '0'}h Promised
                                     </Badge>
                                     <Badge variant="outline" className={`text-xs w-fit ${

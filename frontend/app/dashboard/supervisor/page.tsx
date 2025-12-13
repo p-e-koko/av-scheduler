@@ -219,7 +219,7 @@ function SupervisorDashboard() {
     if (assignment.status === 'confirmed') {
       colorClass = "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-500";
     } else if (assignment.status === 'pending') {
-      colorClass = "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-500";
+      colorClass = "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white border-blue-500";
     } else if (assignment.status === 'complete') {
       colorClass = "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-500";
     }
@@ -496,7 +496,7 @@ function SupervisorDashboard() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <Badge className={`text-xs px-2 py-1 ${
-                            assignment.status === "pending" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" :
+                            assignment.status === "pending" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white" :
                             assignment.status === "confirmed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
                             "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
                           }`}>

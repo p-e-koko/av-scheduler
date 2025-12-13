@@ -302,7 +302,7 @@ function StudentDashboard() {
         color = "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
         title = "Unavailable"
       } else if (slot.status === 'class') {
-        color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800"
+        color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800"
         title = "Class"
       }
       
@@ -331,7 +331,7 @@ function StudentDashboard() {
       case 'busy':
         return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
       case 'class':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
       case 'tentative':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
       default:
@@ -511,7 +511,7 @@ function StudentDashboard() {
                       <div className="grid grid-cols-3 gap-4 text-center">
                         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                           <p className="text-sm text-muted-foreground mb-1">Promised</p>
-                          <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{hoursData.promised}h</p>
+                          <p className="text-2xl font-bold text-blue-700 dark:text-white">{hoursData.promised}h</p>
                         </div>
                         <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                           <p className="text-sm text-muted-foreground mb-1">Worked</p>
@@ -641,7 +641,7 @@ function StudentDashboard() {
                                 <Badge className={`${
                                   assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
                                   assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
                                 }`}>
                                   {assignment.status}
                                 </Badge>
@@ -651,7 +651,7 @@ function StudentDashboard() {
                             <div className={`${viewMode === "card" ? "" : "flex items-center space-x-3"}`}>
                               {viewMode === "list" && (
                                 <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                                  <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                  <MapPin className="w-5 h-5 text-blue-600 dark:text-white" />
                                 </div>
                               )}
                               <div>
@@ -665,7 +665,7 @@ function StudentDashboard() {
                                 <Badge className={`${
                                   assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
                                   assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
                                 }`}>
                                   {assignment.status}
                                 </Badge>
