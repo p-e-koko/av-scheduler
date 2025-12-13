@@ -128,8 +128,14 @@ export const initializeSanctum = async (): Promise<void> => {
 // Helper function to get CSRF token
 export const getCSRFToken = async (): Promise<string | null> => {
   try {
-    // Initialize Sanctum first
-    await initializeSanctum();
+    // Check if we already have a CSRF token in cookies
+    // Note: This only works if the cookie is not HttpOnly, which XSRF-TOKEN is not.
+    const hasXsrfToken = typeof document !== 'undefined' && document.cookie.split(';').some((item) => item.trim().startsWith('XSRF-TOKEN='));
+    
+    if (!hasXsrfToken) {
+      // Initialize Sanctum first only if we don't have a token
+      await initializeSanctum();
+    }
     
     const response = await fetch(`${API_BASE_URL}/csrf-token`, {
       credentials: 'include',
