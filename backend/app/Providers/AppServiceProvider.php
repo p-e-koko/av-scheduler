@@ -26,9 +26,11 @@ class AppServiceProvider extends ServiceProvider
         // Force HTTPS if in production or if behind a secure proxy (Railway)
         if($this->app->environment('production') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
             URL::forceScheme('https');
-            $this->app['request']->server->set('HTTPS', 'on');
+            
+            if (!$this->app->runningInConsole()) {
+                $this->app['request']->server->set('HTTPS', 'on');
+            }
         }
-    }
 
         VerifyEmail::createUrlUsing(function ($notifiable) {
             $frontendUrl = Config::get('app.frontend_url', 'http://localhost:3000');
