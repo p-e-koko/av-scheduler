@@ -911,20 +911,6 @@ export const assignmentAPI = {
       method: 'POST',
       body: JSON.stringify(body),
     });
-  },
-
-  // Accept assignment (student only)
-  async acceptAssignment(assignmentId: number): Promise<{ message: string; assignment: Assignment }> {
-    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${assignmentId}/accept`, {
-      method: 'POST',
-    });
-  },
-
-  // Reject assignment (student only)
-  async rejectAssignment(assignmentId: number): Promise<{ message: string; assignment: Assignment }> {
-    return apiCall<{ message: string; assignment: Assignment }>(`/assignments/${assignmentId}/reject`, {
-      method: 'POST',
-    });
   }
 };
 

@@ -386,18 +386,18 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Promised</p>
-                      <p className="text-2xl font-bold text-blue-700 dark:text-white">{hoursData.promised}h</p>
+                  <div className="grid grid-cols-3 gap-1 p-1 bg-muted/40 rounded-xl border border-border/50">
+                    <div className="flex flex-col items-center justify-center p-3 bg-background rounded-lg shadow-sm border border-border/50">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Promised</p>
+                      <p className="text-xl font-bold text-foreground">{hoursData.promised}h</p>
                     </div>
-                    <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Worked</p>
-                      <p className="text-2xl font-bold text-green-700 dark:text-green-300">{hoursData.worked.toFixed(1)}h</p>
+                    <div className="flex flex-col items-center justify-center p-3 bg-background rounded-lg shadow-sm border border-border/50">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Worked</p>
+                      <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{hoursData.worked.toFixed(1)}h</p>
                     </div>
-                    <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Remaining</p>
-                      <p className="text-2xl font-bold text-orange-700 dark:text-orange-300">{hoursData.remaining.toFixed(1)}h</p>
+                    <div className="flex flex-col items-center justify-center p-3 bg-background rounded-lg shadow-sm border border-border/50">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Remaining</p>
+                      <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{hoursData.remaining.toFixed(1)}h</p>
                     </div>
                   </div>
                   

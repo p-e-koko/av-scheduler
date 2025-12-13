@@ -142,11 +142,11 @@ function StudentDashboard() {
               
               setAssignments(allAssignmentsResponse.data)
               setAssignmentPagination({
-                current_page: allAssignmentsResponse.current_page,
-                last_page: allAssignmentsResponse.last_page,
-                total: allAssignmentsResponse.total,
-                from: allAssignmentsResponse.from,
-                to: allAssignmentsResponse.to
+                current_page: allAssignmentsResponse.meta.current_page,
+                last_page: allAssignmentsResponse.meta.last_page,
+                total: allAssignmentsResponse.meta.total,
+                from: allAssignmentsResponse.meta.from,
+                to: allAssignmentsResponse.meta.to
               })
               
               const stats = myAssignmentsResponse.data.reduce((acc, assignment) => {
@@ -179,11 +179,11 @@ function StudentDashboard() {
               
               setMyAssignments(myAssignmentsResponse.data)
               setAssignmentPagination({
-                current_page: myAssignmentsResponse.current_page,
-                last_page: myAssignmentsResponse.last_page,
-                total: myAssignmentsResponse.total,
-                from: myAssignmentsResponse.from,
-                to: myAssignmentsResponse.to
+                current_page: myAssignmentsResponse.meta.current_page,
+                last_page: myAssignmentsResponse.meta.last_page,
+                total: myAssignmentsResponse.meta.total,
+                from: myAssignmentsResponse.meta.from,
+                to: myAssignmentsResponse.meta.to
               })
               
               const stats = allMyAssignmentsResponse.data.reduce((acc, assignment) => {
@@ -579,46 +579,7 @@ function StudentDashboard() {
 
               {/* Right Column - Hours & Availability */}
               <div className="lg:col-span-2 space-y-6">
-                {/* Hours Summary Card */}
-                <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-foreground">
-                      <Clock className="w-5 h-5 mr-2 text-primary" />
-                      Hours Summary (This Week)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-3 gap-4 text-center">
-                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <p className="text-sm text-muted-foreground mb-1">Promised</p>
-                          <p className="text-2xl font-bold text-blue-700 dark:text-white">{hoursData.promised}h</p>
-                        </div>
-                        <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                          <p className="text-sm text-muted-foreground mb-1">Worked</p>
-                          <p className="text-2xl font-bold text-green-700 dark:text-green-400">{hoursData.worked.toFixed(1)}h</p>
-                        </div>
-                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                          <p className="text-sm text-muted-foreground mb-1">Remaining</p>
-                          <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">{hoursData.remaining.toFixed(1)}h</p>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm text-muted-foreground">
-                          <span>Progress</span>
-                          <span>{Math.round(hoursData.percentage)}%</span>
-                        </div>
-                        <div className="h-3 bg-secondary rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary transition-all duration-500 ease-out"
-                            style={{ width: `${hoursData.percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+
 
                 {/* Availability Schedule */}
                 <div className="bg-card/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden">
@@ -767,15 +728,14 @@ function StudentDashboard() {
                                       <>
                                         <Button 
                                           size="sm" 
-                                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                          className="flex-1 bg-emerald-900 hover:bg-emerald-950 text-white shadow-sm"
                                           onClick={() => handleAcceptAssignment(assignment.id)}
                                         >
                                           Accept
                                         </Button>
                                         <Button 
                                           size="sm" 
-                                          variant="destructive"
-                                          className="flex-1"
+                                          className="flex-1 bg-red-900 hover:bg-red-950 text-white shadow-sm"
                                           onClick={() => handleRejectAssignment(assignment.id)}
                                         >
                                           Reject
@@ -785,8 +745,7 @@ function StudentDashboard() {
                                     {assignment.pivot.status === 'accepted' && (
                                        <Button 
                                           size="sm" 
-                                          variant="destructive"
-                                          className="flex-1"
+                                          className="flex-1 bg-red-900 hover:bg-red-950 text-white shadow-sm"
                                           onClick={() => handleRejectAssignment(assignment.id)}
                                         >
                                           Reject
@@ -795,7 +754,7 @@ function StudentDashboard() {
                                      {assignment.pivot.status === 'rejected' && (
                                        <Button 
                                           size="sm" 
-                                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                          className="flex-1 bg-emerald-900 hover:bg-emerald-950 text-white shadow-sm"
                                           onClick={() => handleAcceptAssignment(assignment.id)}
                                         >
                                           Accept
@@ -804,9 +763,9 @@ function StudentDashboard() {
                                   </div>
                                   <div className="text-xs text-center text-muted-foreground">
                                     My Status: <span className={`font-medium capitalize ${
-                                      assignment.pivot.status === 'accepted' ? 'text-green-600 dark:text-green-400' :
-                                      assignment.pivot.status === 'rejected' ? 'text-red-600 dark:text-red-400' :
-                                      'text-orange-600 dark:text-orange-400'
+                                      assignment.pivot.status === 'accepted' ? 'text-emerald-600 dark:text-emerald-400' :
+                                      assignment.pivot.status === 'rejected' ? 'text-rose-600 dark:text-rose-400' :
+                                      'text-amber-600 dark:text-amber-400'
                                     }`}>{assignment.pivot.status}</span>
                                   </div>
                                 </div>

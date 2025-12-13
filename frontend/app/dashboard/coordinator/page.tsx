@@ -162,11 +162,11 @@ function CoordinatorDashboard() {
           ])
           setAssignments(assignmentsResponse.data)
           setAssignmentPagination({
-            current_page: assignmentsResponse.current_page,
-            last_page: assignmentsResponse.last_page,
-            total: assignmentsResponse.total,
-            from: assignmentsResponse.from,
-            to: assignmentsResponse.to
+            current_page: assignmentsResponse.meta.current_page,
+            last_page: assignmentsResponse.meta.last_page,
+            total: assignmentsResponse.meta.total,
+            from: assignmentsResponse.meta.from,
+            to: assignmentsResponse.meta.to
           })
           setPositions(positionsData.positions)
           setStudents(studentsResponse.data)
@@ -231,11 +231,11 @@ function CoordinatorDashboard() {
           })
           setTrashedAssignments(trashedResponse.data)
           setRecycleBinPagination({
-            current_page: trashedResponse.current_page,
-            last_page: trashedResponse.last_page,
-            total: trashedResponse.total,
-            from: trashedResponse.from,
-            to: trashedResponse.to
+            current_page: trashedResponse.meta.current_page,
+            last_page: trashedResponse.meta.last_page,
+            total: trashedResponse.meta.total,
+            from: trashedResponse.meta.from,
+            to: trashedResponse.meta.to
           })
           break
       }
