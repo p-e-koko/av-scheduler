@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AV Scheduler - Audio Visual Scheduling System",
   description: "Streamlined scheduling and management for audio visual resources and personnel",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://av-scheduler.up.railway.app'),
 };
 
 export default function RootLayout({

@@ -4,10 +4,28 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getCSRFToken } from '@/lib/api';
+import { getCSRFToken, APIError } from '@/lib/api';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-const WEB_BASE_URL = 'http://localhost:8000';
+// Use the same API_BASE_URL logic as api.ts (or import it if exported, but for now replicate logic to be safe)
+let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+let WEB_BASE_URL = 'http://localhost:8000';
+
+if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+  if (API_BASE_URL.startsWith('http:')) {
+    try {
+      const apiObj = new URL(API_BASE_URL);
+      if (apiObj.hostname === window.location.hostname) {
+        API_BASE_URL = '/api';
+        WEB_BASE_URL = ''; // Relative root
+      } else {
+        API_BASE_URL = API_BASE_URL.replace('http:', 'https:');
+        WEB_BASE_URL = API_BASE_URL.replace('/api', '');
+      }
+    } catch (e) {
+      console.error('Error parsing API URL:', e);
+    }
+  }
+}
 
 export default function GoogleCalendarConnect() {
   const [loading, setLoading] = useState(false);
