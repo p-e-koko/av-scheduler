@@ -361,7 +361,7 @@ function AdminDashboard() {
                                 <Button 
                                   variant="ghost" 
                                   size="sm" 
-                                  className="h-6 px-2 text-xs text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                  className="h-6 px-2 text-xs text-muted-foreground hover:text-white hover:bg-primary/10"
                                   onClick={() => handleEditUser(user)}
                                   disabled={processingUsers.has(user.id)}
                                 >

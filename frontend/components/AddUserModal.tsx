@@ -332,7 +332,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               accept="image/jpeg,image/png,image/jpg,image/gif"
               onChange={handleFileChange}
               disabled={loading}
-              className="bg-background/80 backdrop-blur-xl border-input focus:border-primary text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+              className="bg-background/80 backdrop-blur-xl border-input focus:border-primary text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary dark:file:text-white hover:file:bg-primary/20 h-16 pt-3"
             />
             <p className="text-xs text-muted-foreground">Maximum file size: 500MB. Supported formats: JPEG, PNG, JPG, GIF</p>
             {profilePreview && (
@@ -340,7 +340,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
                 <img
                   src={profilePreview}
                   alt="Profile preview"
-                  className="h-20 w-20 rounded-full object-cover border-2 border-border"
+                  className="h-32 w-32 rounded-full object-cover border-2 border-border"
                 />
               </div>
             )}
