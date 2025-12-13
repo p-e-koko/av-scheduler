@@ -273,7 +273,7 @@ class UserController extends Controller
 
         $workedHours = 0;
         foreach ($acceptedAssignments as $assignment) {
-            $duration = $assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60;
+            $duration = abs($assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60);
             $workedHours += $duration;
         }
 

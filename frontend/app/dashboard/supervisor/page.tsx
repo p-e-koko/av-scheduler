@@ -177,7 +177,7 @@ function SupervisorDashboard() {
     assignments.forEach(assignment => {
         const date = new Date(assignment.event_start_datetime);
         if (date.getFullYear() === currentYear && assignment.status === 'complete') {
-            const duration = (new Date(assignment.event_end_datetime).getTime() - date.getTime()) / (1000 * 60 * 60);
+            const duration = Math.abs(new Date(assignment.event_end_datetime).getTime() - date.getTime()) / (1000 * 60 * 60);
             data[date.getMonth()] += duration;
         }
     });

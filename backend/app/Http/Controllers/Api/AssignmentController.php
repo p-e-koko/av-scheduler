@@ -247,7 +247,7 @@ class AssignmentController extends Controller
         );
 
         if ($status === 'accepted') {
-            $duration = $assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60;
+            $duration = abs($assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60);
             $user->remaining_hours_this_week = max(0, $user->remaining_hours_this_week - $duration);
             $user->save();
         }
@@ -295,7 +295,7 @@ class AssignmentController extends Controller
 
         // If previously accepted, restore hours
         if ($currentStatus === 'accepted') {
-            $duration = $assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60;
+            $duration = abs($assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60);
             $user->remaining_hours_this_week = min($user->promised_hours_per_week, $user->remaining_hours_this_week + $duration);
             $user->save();
         }
@@ -446,7 +446,7 @@ class AssignmentController extends Controller
         $assignment->updateUserStatus($user, 'accepted');
 
         // Calculate duration in hours and update remaining hours
-        $duration = $assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60;
+        $duration = abs($assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60);
         $user->remaining_hours_this_week = max(0, $user->remaining_hours_this_week - $duration);
         $user->save();
 
@@ -497,7 +497,7 @@ class AssignmentController extends Controller
 
         // If previously accepted, restore hours
         if ($currentStatus === 'accepted') {
-            $duration = $assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60;
+            $duration = abs($assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60);
             $user->remaining_hours_this_week = min($user->promised_hours_per_week, $user->remaining_hours_this_week + $duration);
             $user->save();
         }

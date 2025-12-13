@@ -342,7 +342,7 @@ function StudentDashboard() {
       .reduce((acc, curr) => {
         const start = new Date(curr.event_start_datetime)
         const end = new Date(curr.event_end_datetime)
-        return acc + (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+        return acc + Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60)
       }, 0)
 
     // Calculate worked hours (only completed assignments)
@@ -354,7 +354,7 @@ function StudentDashboard() {
       .reduce((acc, curr) => {
         const start = new Date(curr.event_start_datetime)
         const end = new Date(curr.event_end_datetime)
-        return acc + (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+        return acc + Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60)
       }, 0)
 
     const remaining = Math.max(0, promised - assignedHours)
