@@ -31,21 +31,26 @@ interface CoordinatorSidebarProps {
   onTabChange: (tab: "assignments" | "students" | "schedules" | "positions") => void
   isOpen?: boolean
   onClose?: () => void
+  user?: UserType | null
 }
 
-export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose }: CoordinatorSidebarProps) {
+export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, user }: CoordinatorSidebarProps) {
   const router = useRouter()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [currentUser, setCurrentUser] = useState<UserType | null>(null)
+  const [localUser, setLocalUser] = useState<UserType | null>(null)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
+  const currentUser = user || localUser
+
   useEffect(() => {
-    const user = getStoredUser()
-    if (user) {
-      setCurrentUser(user)
+    if (!user) {
+      const storedUser = getStoredUser()
+      if (storedUser) {
+        setLocalUser(storedUser)
+      }
     }
-  }, [])
+  }, [user])
 
   const handleLogoutClick = () => {
     setShowLogoutDialog(true)
@@ -239,9 +244,9 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose }: 
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={`hidden md:flex ${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0`}>
+      <aside className={`hidden md:flex flex-col ${sidebarCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 flex-shrink-0 h-screen sticky top-0 z-30`}>
         <SidebarContent />
-      </div>
+      </aside>
 
       {/* Mobile Sidebar Overlay */}
       {isOpen && (

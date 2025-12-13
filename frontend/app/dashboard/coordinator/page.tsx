@@ -313,10 +313,11 @@ function CoordinatorDashboard() {
         onTabChange={setActiveTab} 
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        user={currentUser}
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
         {/* Header */}
         <header className="bg-card/70 backdrop-blur-xl border-b border-border px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
@@ -476,7 +477,12 @@ function CoordinatorDashboard() {
                   {loading ? (
                     <div className="text-center py-8 text-muted-foreground">Loading assignments...</div>
                   ) : error ? (
-                    <div className="text-center py-8 text-destructive">{error}</div>
+                    <div className="flex flex-col items-center justify-center py-8 text-destructive space-y-4">
+                      <p>{error}</p>
+                      {error.includes("Session expired") && (
+                        <Button onClick={() => router.push('/login')}>Log in again</Button>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {(assignments || [])
