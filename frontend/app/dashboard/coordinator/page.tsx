@@ -71,7 +71,7 @@ function CoordinatorDashboard() {
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null)
   const [isDeleteAssignmentConfirmationOpen, setIsDeleteAssignmentConfirmationOpen] = useState(false)
   const [assignmentToDelete, setAssignmentToDelete] = useState<number | null>(null)
-  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all')
+  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'pending' | 'confirmed' | 'complete'>('all')
   const [assignmentSearchQuery, setAssignmentSearchQuery] = useState("")
   const [positionFilter, setPositionFilter] = useState<string>('all')
   const [studentFilter, setStudentFilter] = useState<string>('all')
@@ -515,11 +515,11 @@ function CoordinatorDashboard() {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
-                            setAssignmentFilter('completed')
+                            setAssignmentFilter('complete')
                             setAssignmentCurrentPage(1)
                           }}
                           className={`transition-all duration-200 w-full sm:w-auto ${
-                            assignmentFilter === 'completed' 
+                            assignmentFilter === 'complete' 
                               ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                           }`}
@@ -584,7 +584,7 @@ function CoordinatorDashboard() {
                         .filter(assignment => {
                           // Filter by status
                           if (assignmentFilter !== 'all') {
-                            if (assignmentFilter === 'completed' && assignment.status !== 'complete') return false;
+                            if (assignmentFilter === 'complete' && assignment.status !== 'complete') return false;
                             if (assignmentFilter === 'confirmed' && assignment.status !== 'confirmed') return false;
                             if (assignmentFilter === 'pending' && assignment.status !== 'pending') return false;
                           }
