@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Helpers\AuditLogger;
 use Illuminate\Auth\Events\Registered;
 
+use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
+
 class AuthController extends Controller
 {
     /**
@@ -22,41 +25,60 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $userData = [
-            'student_id' => $request->student_id,
-            'username' => $request->username,
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
-            'role' => $request->role ?? 'student',
-            'promised_hours_per_week' => $request->promised_hours_per_week,
-            'remaining_hours_this_week' => $request->promised_hours_per_week ?? 0,
-        ];
+        try {
+            return DB::transaction(function () use ($request) {
+                $userData = [
+                    'student_id' => $request->student_id,
+                    'username' => $request->username,
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => $request->password,
+                    'role' => $request->role ?? 'student',
+                    'promised_hours_per_week' => $request->promised_hours_per_week,
+                    'remaining_hours_this_week' => $request->promised_hours_per_week ?? 0,
+                ];
 
-        // Handle profile picture upload
-        if ($request->hasFile('profile_picture')) {
-            $profilePicture = $request->file('profile_picture');
-            $fileName = time() . '_' . uniqid() . '.' . $profilePicture->getClientOriginalExtension();
-            $path = $profilePicture->storeAs('profile_pictures', $fileName, 'public');
-            $userData['profile_picture'] = $path;
+                // Handle profile picture upload
+                if ($request->hasFile('profile_picture')) {
+                    $profilePicture = $request->file('profile_picture');
+                    $fileName = time() . '_' . uniqid() . '.' . $profilePicture->getClientOriginalExtension();
+                    $path = $profilePicture->storeAs('profile_pictures', $fileName, 'public');
+                    $userData['profile_picture'] = $path;
+                }
+
+                $user = User::create($userData);
+
+                // Assign Spatie role to ensure permissions work
+                // Check if role exists first to avoid crashing
+                if (Role::where('name', $userData['role'])->exists()) {
+                    $user->assignRole($userData['role']);
+                } else {
+                    AuditLogger::log('Role Assignment Failed', ['email' => $user->email, 'role' => $userData['role'], 'reason' => 'Role does not exist']);
+                    // Optionally create the role or just log it. 
+                    // For now, we continue without assigning the Spatie role, but the 'role' column is set.
+                }
+
+                try {
+                    event(new Registered($user));
+                } catch (\Exception $e) {
+                    // Log mail error but don't fail registration
+                    AuditLogger::log('Registration Email Failed', ['email' => $user->email, 'error' => $e->getMessage()]);
+                }
+
+                AuditLogger::log('User Registered', ['email' => $user->email, 'role' => $user->role]);
+
+                return response()->json([
+                    'message' => 'User registered successfully. Please check your email for verification.',
+                    'user' => new UserResource($user),
+                ], 201);
+            });
+        } catch (\Exception $e) {
+            AuditLogger::log('Registration Failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'message' => 'Registration failed. Please try again.',
+                'error' => $e->getMessage() // Only for debugging, maybe remove in strict production
+            ], 500);
         }
-
-        $user = User::create($userData);
-
-        // Assign Spatie role to ensure permissions work
-        $user->assignRole($userData['role']);
-
-        event(new Registered($user));
-
-        // Do not login the user automatically
-        // Auth::login($user);
-
-        AuditLogger::log('User Registered', ['email' => $user->email, 'role' => $user->role]);
-
-        return response()->json([
-            'message' => 'User registered successfully. Please check your email for verification.',
-            'user' => new UserResource($user),
-        ], 201);
     }
 
     /**
