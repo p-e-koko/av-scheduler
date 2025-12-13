@@ -90,6 +90,7 @@ class AuthController extends Controller
 
         // Login the user with session
         Auth::login($user);
+        $request->session()->regenerate();
 
         AuditLogger::log('User Logged In', ['email' => $user->email]);
 

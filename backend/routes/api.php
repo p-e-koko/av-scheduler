@@ -119,6 +119,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
             $request->merge(['user_id' => $request->user()->id]);
             return app(AssignmentController::class)->checkOutUser($request, $assignment);
         });
+        Route::post('/assignments/{assignment}/add-to-calendar', [AssignmentController::class, 'addToCalendar']);
+        Route::post('/assignments/{assignment}/remove-from-calendar', [AssignmentController::class, 'removeFromCalendar']);
     });
 
     // Availability Management Routes - Role-Based Access Control

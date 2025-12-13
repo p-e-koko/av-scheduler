@@ -71,6 +71,7 @@ export interface Assignment {
     checked_in: number;
     position?: string;
     rejection_reason?: string;
+    google_event_id?: string;
   };
 }
 
@@ -795,6 +796,20 @@ export const assignmentAPI = {
     const endpoint = queryString ? `/my-assignments?${queryString}` : '/my-assignments';
     
     return apiCall<AssignmentsListResponse>(endpoint);
+  },
+
+  // Add to Google Calendar
+  async addToCalendar(id: number): Promise<{ message: string; google_event_id: string }> {
+    return apiCall<{ message: string; google_event_id: string }>(`/assignments/${id}/add-to-calendar`, {
+      method: 'POST',
+    });
+  },
+
+  // Remove from Google Calendar
+  async removeFromCalendar(id: number): Promise<{ message: string }> {
+    return apiCall<{ message: string }>(`/assignments/${id}/remove-from-calendar`, {
+      method: 'POST',
+    });
   },
 
   // Get specific assignment

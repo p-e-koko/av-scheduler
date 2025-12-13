@@ -34,7 +34,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { AddAvailabilityModal } from "@/components/AddAvailabilityModal"
 import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
-import GoogleCalendarConnect from "@/components/GoogleCalendarConnect"
 
 import { 
   authAPI,
@@ -51,6 +50,7 @@ import { StudentSidebar } from "@/components/StudentSidebar"
 import { RejectAssignmentModal } from "@/components/RejectAssignmentModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { LoadingDialog } from "@/components/LoadingDialog"
+import { StatusDialog } from "@/components/StatusDialog"
 
 function StudentDashboard() {
   const router = useRouter()
@@ -67,6 +67,20 @@ function StudentDashboard() {
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false)
   const [selectedAssignmentForAcceptance, setSelectedAssignmentForAcceptance] = useState<Assignment | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [loadingTitle, setLoadingTitle] = useState("Processing")
+  const [loadingDescription, setLoadingDescription] = useState("Please wait while we process your request...")
+  
+  const [statusDialog, setStatusDialog] = useState<{
+    isOpen: boolean
+    title: string
+    description: string
+    type: "success" | "error"
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    type: "success"
+  })
 
   // Pagination
   const [assignmentPagination, setAssignmentPagination] = useState<any>(null)
@@ -274,6 +288,8 @@ function StudentDashboard() {
     if (!selectedAssignmentForAcceptance) return
 
     try {
+      setLoadingTitle("Accepting Assignment")
+      setLoadingDescription("Please wait while we accept the assignment...")
       setIsProcessing(true)
       await assignmentAPI.acceptAssignment(selectedAssignmentForAcceptance.id)
       await refreshAssignments()
@@ -299,6 +315,8 @@ function StudentDashboard() {
     if (!selectedAssignmentForRejection) return
 
     try {
+      setLoadingTitle("Rejecting Assignment")
+      setLoadingDescription("Please wait while we reject the assignment...")
       setIsProcessing(true)
       await assignmentAPI.rejectAssignment(selectedAssignmentForRejection.id, reason)
       await refreshAssignments()
@@ -307,6 +325,67 @@ function StudentDashboard() {
     } catch (err) {
       console.error("Failed to reject assignment", err)
       setError(formatAPIError(err))
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleAddToCalendar = async (assignment: Assignment) => {
+    try {
+      setLoadingTitle("Adding to Calendar")
+      setLoadingDescription("Please wait while we add the assignment to your Google Calendar...")
+      setIsProcessing(true)
+      await assignmentAPI.addToCalendar(assignment.id)
+      await refreshAssignments()
+      setStatusDialog({
+        isOpen: true,
+        title: "Success",
+        description: "Added to Google Calendar successfully!",
+        type: "success"
+      })
+    } catch (err: any) {
+      console.error("Failed to add to calendar", err)
+      if (err.message === 'Google account not connected' || (err.status === 400 && err.message.includes('Google'))) {
+         // Redirect to connect
+         window.location.href = 'http://localhost:8000/google/login';
+      } else {
+         setStatusDialog({
+            isOpen: true,
+            title: "Error",
+            description: `Failed to add to calendar: ${err.message || 'Unknown error'}`,
+            type: "error"
+         })
+      }
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleRemoveFromCalendar = async (assignment: Assignment) => {
+    try {
+      setLoadingTitle("Removing from Calendar")
+      setLoadingDescription("Please wait while we remove the assignment from your Google Calendar...")
+      setIsProcessing(true)
+      await assignmentAPI.removeFromCalendar(assignment.id)
+      await refreshAssignments()
+      setStatusDialog({
+        isOpen: true,
+        title: "Success",
+        description: "Removed from Google Calendar successfully!",
+        type: "success"
+      })
+    } catch (err: any) {
+      console.error("Failed to remove from calendar", err)
+       if (err.message === 'Google account not connected' || (err.status === 400 && err.message.includes('Google'))) {
+         window.location.href = 'http://localhost:8000/google/login';
+      } else {
+         setStatusDialog({
+            isOpen: true,
+            title: "Error",
+            description: `Failed to remove from calendar: ${err.message || 'Unknown error'}`,
+            type: "error"
+         })
+      }
     } finally {
       setIsProcessing(false)
     }
@@ -576,9 +655,6 @@ function StudentDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Google Calendar Integration */}
-                <GoogleCalendarConnect />
               </div>
 
               {/* Right Column - Hours & Availability */}
@@ -747,13 +823,40 @@ function StudentDashboard() {
                                       </>
                                     )}
                                     {assignment.pivot.status === 'accepted' && (
-                                       <Button 
+                                      <div className="flex flex-col gap-2">
+                                        <Button 
                                           size="sm" 
-                                          className="flex-1 bg-red-900 hover:bg-red-950 text-white shadow-sm"
+                                          className="w-full bg-red-900 hover:bg-red-950 text-white shadow-sm"
                                           onClick={() => handleRejectAssignment(assignment.id)}
                                         >
                                           Reject
                                         </Button>
+                                        
+                                        {/* Google Calendar Button */}
+                                        {assignment.pivot.google_event_id ? (
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="w-full border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                                            onClick={() => handleRemoveFromCalendar(assignment)}
+                                            disabled={isProcessing}
+                                          >
+                                            <Calendar className="w-3 h-3 mr-2" />
+                                            Remove from Calendar
+                                          </Button>
+                                        ) : (
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="w-full border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                                            onClick={() => handleAddToCalendar(assignment)}
+                                            disabled={isProcessing}
+                                          >
+                                            <Calendar className="w-3 h-3 mr-2" />
+                                            Add to Calendar
+                                          </Button>
+                                        )}
+                                      </div>
                                     )}
                                      {assignment.pivot.status === 'rejected' && (
                                        <Button 
@@ -880,8 +983,15 @@ function StudentDashboard() {
       />
       <LoadingDialog
         isOpen={isProcessing}
-        title="Processing"
-        description="Please wait while we update the assignment status..."
+        title={loadingTitle}
+        description={loadingDescription}
+      />
+      <StatusDialog
+        isOpen={statusDialog.isOpen}
+        onClose={() => setStatusDialog(prev => ({ ...prev, isOpen: false }))}
+        title={statusDialog.title}
+        description={statusDialog.description}
+        type={statusDialog.type}
       />
     </div>
   )

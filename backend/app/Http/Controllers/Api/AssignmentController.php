@@ -14,6 +14,8 @@ use App\Helpers\AuditLogger;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AssignmentAssigned;
 use App\Mail\AssignmentStatusUpdated;
+use Google\Client as GoogleClient;
+use Google\Service\Calendar as GoogleCalendar;
 
 class AssignmentController extends Controller
 {
@@ -552,5 +554,114 @@ class AssignmentController extends Controller
         $assignments = $query->paginate($perPage);
 
         return response()->json(new AssignmentCollection($assignments));
+    }
+
+    public function addToCalendar(Request $request, Assignment $assignment)
+    {
+        $user = $request->user();
+
+        // Check if user is assigned to this assignment
+        $pivot = $assignment->users()->where('user_id', $user->id)->first();
+        if (!$pivot) {
+            return response()->json(['message' => 'You are not assigned to this assignment'], 403);
+        }
+
+        // Check if already added
+        if ($pivot->pivot->google_event_id) {
+             return response()->json(['message' => 'Already added to calendar'], 400);
+        }
+
+        // Check Google Tokens
+        if (!$user->google_access_token) {
+            return response()->json(['message' => 'Google account not connected', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+        }
+
+        $client = new GoogleClient();
+        $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+        $client->setAccessToken([
+            'access_token' => $user->google_access_token,
+            'refresh_token' => $user->google_refresh_token,
+        ]);
+
+        if ($client->isAccessTokenExpired()) {
+            if ($user->google_refresh_token) {
+                $client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
+                $user->google_access_token = $client->getAccessToken()['access_token'];
+                $user->save();
+            } else {
+                 return response()->json(['message' => 'Google session expired', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+            }
+        }
+
+        $service = new GoogleCalendar($client);
+
+        $startDateTime = \Carbon\Carbon::parse($assignment->event_start_datetime)->format('Y-m-d\TH:i:s');
+        $endDateTime = \Carbon\Carbon::parse($assignment->event_end_datetime)->format('Y-m-d\TH:i:s');
+
+        $event = new GoogleCalendar\Event([
+            'summary' => $assignment->assignment_name,
+            'description' => $assignment->description,
+            'location' => $assignment->event_location,
+            'start' => ['dateTime' => $startDateTime, 'timeZone' => 'Asia/Bangkok'],
+            'end' => ['dateTime' => $endDateTime, 'timeZone' => 'Asia/Bangkok'],
+        ]);
+
+        try {
+            $createdEvent = $service->events->insert('primary', $event);
+            $assignment->users()->updateExistingPivot($user->id, ['google_event_id' => $createdEvent->id]);
+            return response()->json(['message' => 'Added to calendar', 'google_event_id' => $createdEvent->id]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to add to calendar: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function removeFromCalendar(Request $request, Assignment $assignment)
+    {
+        $user = $request->user();
+
+        $pivot = $assignment->users()->where('user_id', $user->id)->first();
+        if (!$pivot || !$pivot->pivot->google_event_id) {
+            return response()->json(['message' => 'Event not found in calendar'], 404);
+        }
+
+        // Check Google Tokens
+        if (!$user->google_access_token) {
+             return response()->json(['message' => 'Google account not connected', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+        }
+
+        $client = new GoogleClient();
+        $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+        $client->setAccessToken([
+            'access_token' => $user->google_access_token,
+            'refresh_token' => $user->google_refresh_token,
+        ]);
+
+        if ($client->isAccessTokenExpired()) {
+             if ($user->google_refresh_token) {
+                $client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
+                $user->google_access_token = $client->getAccessToken()['access_token'];
+                $user->save();
+            } else {
+                 return response()->json(['message' => 'Google session expired', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+            }
+        }
+
+        $service = new GoogleCalendar($client);
+
+        try {
+            $service->events->delete('primary', $pivot->pivot->google_event_id);
+            $assignment->users()->updateExistingPivot($user->id, ['google_event_id' => null]);
+            return response()->json(['message' => 'Removed from calendar']);
+        } catch (\Exception $e) {
+             if ($e->getCode() == 404) {
+                $assignment->users()->updateExistingPivot($user->id, ['google_event_id' => null]);
+                return response()->json(['message' => 'Removed from calendar (was already deleted from Google)']);
+             }
+            return response()->json(['message' => 'Failed to remove from calendar: ' . $e->getMessage()], 500);
+        }
     }
 }

@@ -29,6 +29,12 @@ export default function LoginPage() {
       if (!isConnected) {
         setError("Cannot connect to backend server. Please check your connection.");
       }
+      // Clear any existing session/cookies on load to prevent conflicts
+      try {
+        await authAPI.logout();
+      } catch (e) {
+        // Ignore errors if already logged out
+      }
     };
     
     checkConnection();
