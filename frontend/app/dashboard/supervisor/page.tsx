@@ -83,6 +83,17 @@ function SupervisorDashboard() {
 
   // Search states
   const [studentSearchQuery, setStudentSearchQuery] = useState("")
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Check authentication and permissions
   useEffect(() => {
@@ -309,27 +320,27 @@ function SupervisorDashboard() {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-4 md:p-6">
           {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <div className="space-y-6">
               {/* Key Metrics - Compact View */}
-              <div className="flex flex-wrap gap-3">
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
-                  <Users className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">{stats.totalStudents} Students</span>
+              <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2 sm:gap-3">
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-full border border-border shadow-sm justify-center sm:justify-start">
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                  <span className="text-xs sm:text-sm font-medium">{stats.totalStudents} Students</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
-                  <Clock className="w-4 h-4 text-green-600 dark:text-green-400" />
-                  <span className="text-sm font-medium">{Math.round(stats.monthlyHours)}h This Month</span>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-full border border-border shadow-sm justify-center sm:justify-start">
+                  <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-xs sm:text-sm font-medium">{Math.round(stats.monthlyHours)}h This Month</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
-                  <TrendingUp className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                  <span className="text-sm font-medium">{stats.averageHours.toFixed(1)}h Avg/Week</span>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-full border border-border shadow-sm justify-center sm:justify-start">
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600 dark:text-orange-400" />
+                  <span className="text-xs sm:text-sm font-medium">{stats.averageHours.toFixed(1)}h Avg/Week</span>
                 </div>
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
-                  <CheckCircle className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">{Math.round(stats.completionRate)}% Completion</span>
+                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-full border border-border shadow-sm justify-center sm:justify-start">
+                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                  <span className="text-xs sm:text-sm font-medium">{Math.round(stats.completionRate)}% Completion</span>
                 </div>
               </div>
 
@@ -342,8 +353,8 @@ function SupervisorDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80">
-                    <div className="flex items-end justify-between h-64 space-x-2">
+                  <div className="h-80 overflow-x-auto pb-4">
+                    <div className="flex items-end justify-between h-64 space-x-2 min-w-[600px]">
                       {monthlyData.map((data, index) => (
                         <div key={index} className="flex flex-col items-center space-y-2 flex-1">
                           <div 
@@ -381,11 +392,11 @@ function SupervisorDashboard() {
                         .map((student, index) => (
                           <div 
                             key={student.id} 
-                            className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted cursor-pointer transition-colors gap-4 sm:gap-0"
                             onClick={() => router.push(`/student/${student.id}`)}
                           >
                             <div className="flex items-center space-x-4">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
                                 index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-muted-foreground' : index === 2 ? 'bg-orange-500' : 'bg-muted-foreground/70'
                               }`}>
                                 {index + 1}
@@ -395,7 +406,7 @@ function SupervisorDashboard() {
                                 <p className="text-sm text-muted-foreground">{student.hours_worked_this_week || 0} hours completed</p>
                               </div>
                             </div>
-                            <div className="text-right">
+                            <div className="text-left sm:text-right pl-12 sm:pl-0">
                               <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                                 {student.hours_completion_percentage || 0}% completion
                               </Badge>
@@ -416,9 +427,9 @@ function SupervisorDashboard() {
           {activeTab === "student-schedules" && (
             <div className="space-y-6">
               <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 gap-4 sm:gap-0">
                   <CardTitle className="text-foreground font-bold">Daily Availability View</CardTitle>
-                  <div className="flex items-center bg-card rounded-lg border border-border shadow-sm p-1">
+                  <div className="flex items-center bg-card rounded-lg border border-border shadow-sm p-1 w-full sm:w-auto justify-between sm:justify-start">
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -432,7 +443,7 @@ function SupervisorDashboard() {
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
 
-                    <div className="flex items-center px-2">
+                    <div className="flex items-center px-2 flex-1 sm:flex-none justify-center">
                       <Label htmlFor="date-picker" className="sr-only">Select Date</Label>
                       <Input 
                         id="date-picker"
@@ -481,8 +492,8 @@ function SupervisorDashboard() {
                           const uniqueStudents = Array.from(new Map(availableStudents.map(item => [item.student_id, item.user])).values()).filter(Boolean);
 
                           return (
-                            <div key={hour} className="flex border-b border-border py-3 last:border-0">
-                              <div className="w-20 flex-shrink-0 font-medium text-muted-foreground pt-2">
+                            <div key={hour} className="flex flex-col sm:flex-row border-b border-border py-3 last:border-0 gap-2 sm:gap-0">
+                              <div className="w-full sm:w-20 flex-shrink-0 font-medium text-muted-foreground pt-0 sm:pt-2 text-sm sm:text-base">
                                 {timeString}
                               </div>
                               <div className="flex-1">
@@ -533,7 +544,7 @@ function SupervisorDashboard() {
                                     })}
                                   </div>
                                 ) : (
-                                  <div className="text-sm text-muted-foreground italic pt-2">No students available</div>
+                                  <div className="text-sm text-muted-foreground italic pt-0 sm:pt-2">No students available</div>
                                 )}
                               </div>
                             </div>
@@ -562,14 +573,14 @@ function SupervisorDashboard() {
                         .sort((a, b) => new Date(a.event_start_datetime).getTime() - new Date(b.event_start_datetime).getTime())
                         .slice(0, 5)
                         .map((assignment, index) => (
-                      <div key={assignment.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border-l-4 border-purple-500 dark:border-purple-400">
+                      <div key={assignment.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg border-l-4 border-purple-500 dark:border-purple-400 gap-4 sm:gap-0">
                         <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                          <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
                             <ClipboardList className="w-6 h-6 text-primary" />
                           </div>
                           <div>
                             <h4 className="font-semibold text-foreground">{assignment.assignment_name}</h4>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">
                                 {assignment.users && assignment.users.length > 0 
                                     ? `Assigned to: ${assignment.users.map(u => u.name).join(', ')}`
                                     : 'Unassigned'}
@@ -579,7 +590,7 @@ function SupervisorDashboard() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 self-start sm:self-center pl-16 sm:pl-0">
                           <Badge className={`text-xs px-2 py-1 ${
                             assignment.status === "pending" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white" :
                             assignment.status === "confirmed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
@@ -598,12 +609,13 @@ function SupervisorDashboard() {
               </Card>
 
               {/* Calendar View */}
-              <div className="h-[700px]">
+              <div className="h-[500px] sm:h-[700px]">
                 <CalendarComponent 
                   events={calendarEvents}
                   view={calendarView}
                   onViewChange={setCalendarView}
                   onEventClick={handleEventClick}
+                  isMobile={isMobile}
                 />
               </div>
             </div>
