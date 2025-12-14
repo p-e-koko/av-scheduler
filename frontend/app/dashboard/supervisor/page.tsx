@@ -259,9 +259,9 @@ function SupervisorDashboard() {
           assignment.users.forEach(user => {
             // Only count hours if obtaining "real data" implies the user effectively completed it.
             // We check user.pivot.status. 
-            // If status is 'completed', they surely worked.
-            // If distinct status implementation is used, we must rely on it.
-            if (user.pivot?.status === 'completed') {
+            // If status is 'completed' or 'accepted', they count as having done the work.
+            // (Backend updates assignment to 'complete' but user status might remain 'accepted')
+            if (user.pivot?.status === 'completed' || user.pivot?.status === 'accepted') {
               const monthIndex = date.getMonth();
               const key = `user_${user.id}`;
               if (typeof data[monthIndex][key] !== 'number') data[monthIndex][key] = 0;
