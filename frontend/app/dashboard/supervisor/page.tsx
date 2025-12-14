@@ -48,7 +48,7 @@ import {
   type Availability
 } from "@/lib/api"
 import { ModeToggle } from "@/components/mode-toggle"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function SupervisorDashboard() {
   const router = useRouter()
@@ -215,47 +215,20 @@ function SupervisorDashboard() {
       .slice(0, 2)
   }
 
-  // Calculate Monthly Data from Assignments
+  // Calculate Monthly Data from Assignments (Total Hours)
   const calculateMonthlyData = () => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const currentYear = new Date().getFullYear();
-    const data = new Array(12).fill(0);
 
-    assignments.forEach(assignment => {
-      const date = new Date(assignment.event_start_datetime);
-      if (date.getFullYear() === currentYear && assignment.status === 'complete') {
-        const duration = Math.abs(new Date(assignment.event_end_datetime).getTime() - date.getTime()) / (1000 * 60 * 60);
-        data[date.getMonth()] += duration;
-      }
-    });
-
-    return months.map((month, index) => ({
-      month,
-      hours: Math.round(data[index])
-    }));
-  };
-
-  // Calculate Monthly Data for Line Chart (Per Student)
-  const calculateStudentMonthlyData = () => {
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const currentYear = new Date().getFullYear();
-
-    // Initialize data structure with months
-    const data = months.map(month => {
-      const entry: any = { name: month };
-      // Initialize all students to 0
-      students.forEach(s => {
-        entry[`user_${s.id}`] = 0;
-      });
-      return entry;
-    });
+    // Initialize data structure
+    const data = months.map(month => ({ name: month, hours: 0 }));
 
     assignments.forEach(assignment => {
       const date = new Date(assignment.event_start_datetime);
       const endDate = new Date(assignment.event_end_datetime);
       const now = new Date();
 
-      // Consider 'complete' assignments OR 'confirmed' assignments that are in the past (which essentially means they are done but maybe not auto-updated yet)
+      // Consider 'complete' assignments OR 'confirmed' assignments that are in the past
       const isCompleteOrPastConfirmed =
         (assignment.status === 'complete') ||
         (assignment.status === 'confirmed' && endDate < now);
@@ -265,34 +238,24 @@ function SupervisorDashboard() {
 
         if (assignment.users && assignment.users.length > 0) {
           assignment.users.forEach(user => {
-            // Only count hours if obtaining "real data" implies the user effectively completed it.
-            // We check user.pivot.status. 
-            // If status is 'completed' or 'accepted', they count as having done the work.
-            // (Backend updates assignment to 'complete' but user status might remain 'accepted')
+            // Check user status
             if (user.pivot?.status === 'completed' || user.pivot?.status === 'accepted') {
               const monthIndex = date.getMonth();
-              const key = `user_${user.id}`;
-              if (typeof data[monthIndex][key] !== 'number') data[monthIndex][key] = 0;
-              data[monthIndex][key] += duration;
+              data[monthIndex].hours += duration;
             }
           });
         }
       }
     });
 
-    // Clean up: Round numbers
-    return data.map(entry => {
-      const newEntry = { ...entry };
-      Object.keys(newEntry).forEach(key => {
-        if (key.startsWith('user_') && typeof newEntry[key] === 'number') {
-          newEntry[key] = Math.round(newEntry[key] * 10) / 10;
-        }
-      });
-      return newEntry;
-    });
+    // Round numbers
+    return data.map(entry => ({
+      ...entry,
+      hours: Math.round(entry.hours * 10) / 10
+    }));
   };
 
-  const studentMonthlyData = calculateStudentMonthlyData();
+  const monthlyData = calculateMonthlyData();
 
   // Filter students
   const filteredStudents = students.filter(student =>
@@ -414,74 +377,7 @@ function SupervisorDashboard() {
               </div>
 
               {/* Monthly Hours Chart */}
-              {/* Monthly Hours Chart - Replaced with Line Chart */}
-              <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <BarChart3 className="w-5 h-5" />
-                    <span>Completed Assignment Hours - {new Date().getFullYear()} Overview</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px] sm:h-[400px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={studentMonthlyData}
-                        margin={{
-                          top: 10,
-                          right: 10,
-                          left: -20, // Negative margin to pull y-axis closer on small screens
-                          bottom: 0,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.1} vertical={false} />
-                        <XAxis
-                          dataKey="name"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: 'currentColor', opacity: 0.5, fontSize: 12 }}
-                          dy={10}
-                          tickFormatter={(value) => isMobile ? value.slice(0, 1) : value} // Show only first letter on mobile
-                        />
-                        <YAxis
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{ fill: 'currentColor', opacity: 0.5, fontSize: 12 }}
-                        // label={{ value: 'Hours', angle: -90, position: 'insideLeft', style: { fill: 'currentColor', opacity: 0.5 } }} // Removed for cleaner mobile view or adjusting
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            borderColor: 'hsl(var(--border))',
-                            borderRadius: '8px',
-                            color: 'hsl(var(--foreground))'
-                          }}
-                        />
-                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                        {students.map((student, index) => {
-                          const colors = ["#2563eb", "#db2777", "#ea580c", "#16a34a", "#8b5cf6", "#0891b2", "#d97706", "#dc2626"];
-                          return (
-                            <Line
-                              key={student.id}
-                              type="monotone"
-                              dataKey={`user_${student.id}`}
-                              name={student.name}
-                              stroke={colors[index % colors.length]}
-                              strokeWidth={2}
-                              dot={{ r: 4, strokeWidth: 2, fill: 'hsl(var(--card))' }}
-                              activeDot={{ r: 6, strokeWidth: 2 }}
-                              connectNulls
-                            />
-                          );
-                        })}
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Showing completed assignment hours per month for each student</span>
-                  </div>
-                </CardContent>
-              </Card>
+
 
               {/* Top Performers */}
               <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
