@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Google\Client as GoogleClient;
 use Google\Service\Calendar as GoogleCalendar;
 
@@ -177,6 +179,26 @@ Route::get('/health', function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Step 1: Get Google Auth URL
+    Route::get('/google/auth-url', function (Request $request) {
+        $client = new GoogleClient();
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+        $client->setRedirectUri(config('services.google.redirect'));
+        $client->addScope(GoogleCalendar::CALENDAR);
+        $client->setAccessType('offline');
+        $client->setPrompt('consent');
+
+        // Generate state
+        $state = Str::random(40);
+        // Store state -> user_id in cache for 5 minutes
+        Cache::put('google_auth_state_' . $state, $request->user()->id, 300);
+
+        $client->setState($state);
+
+        return response()->json(['url' => $client->createAuthUrl()]);
+    });
 
     // Step 3: Create Google Calendar Event
     Route::post('/booking/google', function (Request $request) {

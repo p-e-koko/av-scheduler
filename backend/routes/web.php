@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Google\Client as GoogleClient;
 use Google\Service\Calendar as GoogleCalendar;
 
@@ -9,9 +10,58 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware('auth')->group(function () {
+// Named login route to prevent 500 error if auth fails
+Route::get('/login', function () {
+    return response()->json(['message' => 'Unauthenticated. Please login via API.'], 401);
+})->name('login');
 
-    // Step 1: Redirect to Google OAuth
+// Step 2: Google OAuth Callback (No auth middleware needed, we use state)
+Route::get('/google/callback', function (Request $request) {
+    $state = $request->input('state');
+
+    if (!$state) {
+        return redirect('http://localhost:3000/dashboard?error=missing_state');
+    }
+
+    $userId = Cache::pull('google_auth_state_' . $state);
+
+    if (!$userId) {
+        return redirect('http://localhost:3000/dashboard?error=invalid_state_or_timeout');
+    }
+
+    $user = \App\Models\User::find($userId);
+    if (!$user) {
+        return redirect('http://localhost:3000/dashboard?error=user_not_found');
+    }
+
+    $client = new GoogleClient();
+    $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
+    $client->setClientId(config('services.google.client_id'));
+    $client->setClientSecret(config('services.google.client_secret'));
+    $client->setRedirectUri(config('services.google.redirect'));
+
+    try {
+        $token = $client->fetchAccessTokenWithAuthCode($request->code);
+
+        if (isset($token['error'])) {
+             return redirect('http://localhost:3000/dashboard?error=' . $token['error']);
+        }
+
+        $user->google_access_token = $token['access_token'];
+        if (isset($token['refresh_token'])) {
+            $user->google_refresh_token = $token['refresh_token'];
+        }
+        $user->google_token_expires_at = now()->addSeconds($token['expires_in']);
+        $user->save();
+
+        return redirect('http://localhost:3000/dashboard?success=google_connected');
+    } catch (\Exception $e) {
+        return redirect('http://localhost:3000/dashboard?error=' . urlencode($e->getMessage()));
+    }
+});
+
+Route::middleware('auth')->group(function () {
+    // Legacy route - kept just in case, but not used by new flow
     Route::get('/google/login', function () {
         $client = new GoogleClient();
         $client->setClientId(config('services.google.client_id'));
@@ -23,25 +73,5 @@ Route::middleware('auth')->group(function () {
 
         return redirect($client->createAuthUrl());
     });
-
-    // Step 2: Google OAuth Callback
-    Route::get('/google/callback', function (Request $request) {
-        $client = new GoogleClient();
-        $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
-        $client->setClientId(config('services.google.client_id'));
-        $client->setClientSecret(config('services.google.client_secret'));
-        $client->setRedirectUri(config('services.google.redirect'));
-
-        $token = $client->fetchAccessTokenWithAuthCode($request->code);
-
-        $user = $request->user();
-        $user->google_access_token = $token['access_token'];
-        $user->google_refresh_token = $token['refresh_token'] ?? $user->google_refresh_token;
-        $user->google_token_expires_at = now()->addSeconds($token['expires_in']);
-        $user->save();
-
-        return redirect('http://localhost:3000/dashboard');
-    });
-
 });
 

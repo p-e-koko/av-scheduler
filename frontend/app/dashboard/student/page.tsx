@@ -346,8 +346,19 @@ function StudentDashboard() {
     } catch (err: any) {
       console.error("Failed to add to calendar", err)
       if (err.message === 'Google account not connected' || (err.status === 400 && err.message.includes('Google'))) {
-         // Redirect to connect
-         window.location.href = 'http://localhost:8000/google/login';
+         // Fetch Google Auth URL from API and redirect
+         try {
+           const { url } = await assignmentAPI.getGoogleAuthUrl();
+           window.location.href = url;
+         } catch (authErr) {
+           console.error("Failed to get Google Auth URL", authErr);
+           setStatusDialog({
+              isOpen: true,
+              title: "Error",
+              description: "Failed to initiate Google connection. Please try again.",
+              type: "error"
+           });
+         }
       } else {
          setStatusDialog({
             isOpen: true,

@@ -890,6 +890,13 @@ export const assignmentAPI = {
     });
   },
 
+  // Get Google Auth URL
+  async getGoogleAuthUrl(): Promise<{ url: string }> {
+    return apiCall<{ url: string }>('/google/auth-url', {
+      method: 'GET',
+    });
+  },
+
   // Remove from Google Calendar
   async removeFromCalendar(id: number): Promise<{ message: string }> {
     return apiCall<{ message: string }>(`/assignments/${id}/remove-from-calendar`, {
