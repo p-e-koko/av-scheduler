@@ -255,7 +255,7 @@ class AssignmentController extends Controller
         }
 
         $assignedUser = $user;
-        Mail::to($assignedUser->email)->send(new AssignmentAssigned($assignment, $assignedUser));
+        $assignedUser->notify(new \App\Notifications\AssignmentAssignedNotification($assignment));
 
         AuditLogger::log('User Assigned to Assignment', [
             'assignment_id' => $assignment->id,
@@ -460,7 +460,7 @@ class AssignmentController extends Controller
 
         // Notify coordinator
         if ($assignment->creator) {
-            Mail::to($assignment->creator->email)->send(new AssignmentStatusUpdated($assignment, $user, 'accepted'));
+            $assignment->creator->notify(new \App\Notifications\AssignmentAcceptedNotification($assignment, $user));
         }
 
         AuditLogger::log('Assignment Accepted', [
@@ -506,7 +506,7 @@ class AssignmentController extends Controller
 
         // Notify coordinator
         if ($assignment->creator) {
-            Mail::to($assignment->creator->email)->send(new AssignmentStatusUpdated($assignment, $user, 'rejected', $request->reason));
+            $assignment->creator->notify(new \App\Notifications\AssignmentRejectedNotification($assignment, $user));
         }
 
         AuditLogger::log('Assignment Rejected', [

@@ -167,6 +167,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         $user->update($request->only(['name', 'email', 'student_id', 'username']));
         return response()->json(['user' => new \App\Http\Resources\UserResource($user)]);
     });
+
+    // Notification Routes
+    Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
 });
 
 // Health Check Route

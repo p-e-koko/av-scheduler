@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { 
   Users, 
   Search, 
@@ -59,11 +59,20 @@ import {
   type UsersQueryParams
 } from "@/lib/api"
 import { ModeToggle } from "@/components/mode-toggle"
+import { NotificationDropdown } from "@/components/NotificationDropdown"
 
 function CoordinatorDashboard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [activeTab, setActiveTab] = useState<"assignments" | "students" | "schedules" | "positions" | "recycle-bin">("assignments")
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab && ['assignments', 'students', 'schedules', 'positions', 'recycle-bin'].includes(tab)) {
+      setActiveTab(tab as any)
+    }
+  }, [searchParams])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -441,6 +450,7 @@ function CoordinatorDashboard() {
               </p>
             </div>
             </div>
+            <NotificationDropdown />
           </div>
         </header>
 

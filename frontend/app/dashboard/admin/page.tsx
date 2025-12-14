@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { 
   Users, 
   Search, 
@@ -36,6 +36,7 @@ import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import AddUserModal from "@/components/AddUserModal"
 import EditUserModal from "@/components/EditUserModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
+import { NotificationDropdown } from "@/components/NotificationDropdown"
 
 import { 
   userAPI, 
@@ -50,6 +51,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 
 function AdminDashboard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [viewMode, setViewMode] = useState<"card" | "list">("card")
   const [searchQuery, setSearchQuery] = useState("")
   const [users, setUsers] = useState<User[]>([])
@@ -231,7 +233,8 @@ function AdminDashboard() {
             <p className="text-sm text-muted-foreground mt-1">Manage users, roles, and permissions</p>
           </div>
           {hasAnyRole(['admin']) && (
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 items-center">
+              <NotificationDropdown />
               <Button 
                 className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary-medium text-primary-foreground hover:shadow-lg transition-all"
                 onClick={handleAddUser}

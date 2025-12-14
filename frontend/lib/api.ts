@@ -1193,3 +1193,56 @@ export const auditLogAPI = {
   },
 };
 
+export interface Notification {
+  id: string;
+  type: string;
+  notifiable_type: string;
+  notifiable_id: string;
+  data: {
+    message: string;
+    assignment_id?: number;
+    student_id?: string;
+    type: string;
+    url?: string;
+  };
+  read_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationResponse {
+  current_page: number;
+  data: Notification[];
+  first_page_url: string;
+  from: number;
+  last_page: number;
+  last_page_url: string;
+  links: {
+    url: string | null;
+    label: string;
+    active: boolean;
+  }[];
+  next_page_url: string | null;
+  path: string;
+  per_page: number;
+  prev_page_url: string | null;
+  to: number;
+  total: number;
+}
+
+export const notificationAPI = {
+  getNotifications: async (page = 1): Promise<NotificationResponse> => {
+    return apiCall<NotificationResponse>(`/notifications?page=${page}`);
+  },
+  markAsRead: async (id: string): Promise<{ message: string }> => {
+    return apiCall<{ message: string }>(`/notifications/${id}/read`, {
+      method: 'POST',
+    });
+  },
+  markAllAsRead: async (): Promise<{ message: string }> => {
+    return apiCall<{ message: string }>('/notifications/read-all', {
+      method: 'POST',
+    });
+  },
+};
+

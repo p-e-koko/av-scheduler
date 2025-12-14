@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { 
   Users, 
   Calendar,
@@ -31,6 +31,7 @@ import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { SupervisorSidebar } from "@/components/SupervisorSidebar"
 import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
 import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
+import { NotificationDropdown } from "@/components/NotificationDropdown"
 
 import { 
   authAPI,
@@ -48,8 +49,16 @@ import { ModeToggle } from "@/components/mode-toggle"
 
 function SupervisorDashboard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [activeTab, setActiveTab] = useState<"dashboard" | "student-schedules" | "assignment-schedules">("dashboard")
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab && ['dashboard', 'student-schedules', 'assignment-schedules'].includes(tab)) {
+      setActiveTab(tab as any)
+    }
+  }, [searchParams])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -316,6 +325,7 @@ function SupervisorDashboard() {
               </p>
             </div>
             </div>
+            <NotificationDropdown />
           </div>
         </header>
 

@@ -5,12 +5,15 @@ namespace App\Helpers;
 use App\Models\AuditLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\Log;
 
 class AuditLogger
 {
     public static function log($action, $details = null)
     {
         $user = Auth::user();
+
+        Log::info("AuditLog: {$action}", ['user_id' => $user ? $user->id : null, 'details' => $details]);
 
         AuditLog::create([
             'user_id' => $user ? $user->id : null,

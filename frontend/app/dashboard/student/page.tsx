@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { 
   User, 
   Search,
@@ -51,11 +51,20 @@ import { RejectAssignmentModal } from "@/components/RejectAssignmentModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { LoadingDialog } from "@/components/LoadingDialog"
 import { StatusDialog } from "@/components/StatusDialog"
+import { NotificationDropdown } from "@/components/NotificationDropdown"
 
 function StudentDashboard() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [currentUser, setCurrentUser] = useState<UserType | null>(null)
   const [activeTab, setActiveTab] = useState<"profile" | "assignments" | "schedule">("profile")
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab && ['profile', 'assignments', 'schedule'].includes(tab)) {
+      setActiveTab(tab as any)
+    }
+  }, [searchParams])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -573,34 +582,37 @@ function StudentDashboard() {
               </p>
             </div>
             </div>
-            {activeTab === "assignments" && (
-              <div className="flex items-center space-x-2 w-full md:w-auto">
-                <div className="flex items-center bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border w-full md:w-auto">
-                  <Button
-                    variant={assignmentFilter === "all" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => {
-                      setAssignmentFilter("all")
-                      setAssignmentCurrentPage(1)
-                    }}
-                    className={`flex-1 md:flex-none ${assignmentFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    All
-                  </Button>
-                  <Button
-                    variant={assignmentFilter === "me" ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => {
-                      setAssignmentFilter("me")
-                      setAssignmentCurrentPage(1)
-                    }}
-                    className={`flex-1 md:flex-none ${assignmentFilter === "me" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    Mine
-                  </Button>
+            <div className="flex items-center gap-2">
+              <NotificationDropdown />
+              {activeTab === "assignments" && (
+                <div className="flex items-center space-x-2 w-full md:w-auto">
+                  <div className="flex items-center bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border w-full md:w-auto">
+                    <Button
+                      variant={assignmentFilter === "all" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => {
+                        setAssignmentFilter("all")
+                        setAssignmentCurrentPage(1)
+                      }}
+                      className={`flex-1 md:flex-none ${assignmentFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      variant={assignmentFilter === "me" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => {
+                        setAssignmentFilter("me")
+                        setAssignmentCurrentPage(1)
+                      }}
+                      className={`flex-1 md:flex-none ${assignmentFilter === "me" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      Mine
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </header>
 
