@@ -254,7 +254,9 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sendEmailVerificationNotification()
     {
+        \Illuminate\Support\Facades\Log::info('Triggering email verification for user: ' . $this->email);
         $this->notify(new VerifyEmailQueued);
+        \Illuminate\Support\Facades\Log::info('Email verification notification dispatched.');
     }
 
     /**
