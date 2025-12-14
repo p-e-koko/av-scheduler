@@ -527,7 +527,7 @@ class AssignmentController extends Controller
     public function myAssignments(Request $request): JsonResponse
     {
         $user = auth()->user();
-        $query = $user->assignments()->with(['creator']);
+        $query = $user->assignments()->with(['creator', 'users']);
 
         // Add filtering by status
         if ($request->has('status')) {
