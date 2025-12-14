@@ -559,6 +559,7 @@ class AssignmentController extends Controller
     public function addToCalendar(Request $request, Assignment $assignment)
     {
         $user = $request->user();
+        file_put_contents(storage_path('logs/debug_google.log'), date('Y-m-d H:i:s') . " AddToCalendar: User " . $user->id . " Token: " . ($user->google_access_token ? 'Present' : 'Missing') . " Refresh: " . ($user->google_refresh_token ? 'Present' : 'Missing') . "\n", FILE_APPEND);
         \Illuminate\Support\Facades\Log::info('AddToCalendar: User ' . $user->id . ' Token: ' . ($user->google_access_token ? 'Present' : 'Missing'));
 
         // Check if user is assigned to this assignment
@@ -581,14 +582,14 @@ class AssignmentController extends Controller
         $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
         $client->setClientId(config('services.google.client_id'));
         $client->setClientSecret(config('services.google.client_secret'));
-        
+
         $accessToken = [
             'access_token' => $user->google_access_token,
             'refresh_token' => $user->google_refresh_token,
             'created' => $user->updated_at->timestamp, // Approximate
             'expires_in' => $user->google_token_expires_at ? $user->google_token_expires_at->diffInSeconds(now()) : 3600,
         ];
-        
+
         $client->setAccessToken($accessToken);
 
         if ($client->isAccessTokenExpired()) {
