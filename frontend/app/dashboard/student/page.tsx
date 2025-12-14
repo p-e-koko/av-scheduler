@@ -49,6 +49,7 @@ import {
 } from "@/lib/api"
 import { StudentSidebar } from "@/components/StudentSidebar"
 import { RejectAssignmentModal } from "@/components/RejectAssignmentModal"
+import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { LoadingDialog } from "@/components/LoadingDialog"
 import { StatusDialog } from "@/components/StatusDialog"
@@ -75,7 +76,10 @@ function StudentDashboard() {
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [selectedAssignmentForRejection, setSelectedAssignmentForRejection] = useState<Assignment | null>(null)
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false)
+
   const [selectedAssignmentForAcceptance, setSelectedAssignmentForAcceptance] = useState<Assignment | null>(null)
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [loadingTitle, setLoadingTitle] = useState("Processing")
   const [loadingDescription, setLoadingDescription] = useState("Please wait while we process your request...")
@@ -284,6 +288,11 @@ function StudentDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleViewAssignment = (assignment: Assignment) => {
+    setSelectedAssignment(assignment)
+    setIsDetailModalOpen(true)
   }
 
   const handleAcceptAssignment = (id: number) => {
@@ -784,15 +793,15 @@ function StudentDashboard() {
                       {/* Display assignments based on filter */}
                       {(assignmentFilter === "all" ? assignments : myAssignments).map((assignment) => (
                         <div key={assignment.id} className={`${viewMode === "card"
-                            ? "p-4 bg-muted/50 rounded-lg border border-border"
-                            : "flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4 sm:gap-0"
+                          ? "p-4 bg-muted/50 rounded-lg border border-border"
+                          : "flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4 sm:gap-0"
                           }`}>
                           <div className={`${viewMode === "card" ? "space-y-3" : "flex items-center space-x-4 w-full sm:w-auto"}`}>
                             {viewMode === "card" && (
                               <div className="flex items-center justify-between">
                                 <Badge className={`${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                                    assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                                      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
+                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
                                   }`}>
                                   {assignment.status}
                                 </Badge>
@@ -814,8 +823,8 @@ function StudentDashboard() {
                             {viewMode === "list" && (
                               <div className="flex items-center space-x-2 sm:hidden pl-14">
                                 <Badge className={`${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                                    assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                                      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
+                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
                                   }`}>
                                   {assignment.status}
                                 </Badge>
@@ -824,7 +833,11 @@ function StudentDashboard() {
                           </div>
                           {viewMode === "card" && (
                             <div className="space-y-2 mt-4">
-                              <Button size="sm" className="w-full bg-primary hover:bg-primary-dark text-primary-foreground">
+                              <Button
+                                size="sm"
+                                className="w-full bg-primary hover:bg-primary-dark text-primary-foreground"
+                                onClick={() => handleViewAssignment(assignment)}
+                              >
                                 View Details
                               </Button>
 
@@ -898,8 +911,8 @@ function StudentDashboard() {
                                   </div>
                                   <div className="text-xs text-center text-muted-foreground">
                                     My Status: <span className={`font-medium capitalize ${assignment.pivot.status === 'accepted' ? 'text-emerald-600 dark:text-emerald-400' :
-                                        assignment.pivot.status === 'rejected' ? 'text-rose-600 dark:text-rose-400' :
-                                          'text-amber-600 dark:text-amber-400'
+                                      assignment.pivot.status === 'rejected' ? 'text-rose-600 dark:text-rose-400' :
+                                        'text-amber-600 dark:text-amber-400'
                                       }`}>{assignment.pivot.status}</span>
                                   </div>
                                 </div>
@@ -909,8 +922,8 @@ function StudentDashboard() {
                           {viewMode === "list" && (
                             <div className="hidden sm:flex items-center space-x-2">
                               <Badge className={`${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
+                                assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
                                 }`}>
                                 {assignment.status}
                               </Badge>
@@ -990,6 +1003,11 @@ function StudentDashboard() {
         isOpen={isAddAvailabilityModalOpen}
         onClose={() => setIsAddAvailabilityModalOpen(false)}
         onSuccess={handleAvailabilityAdded}
+      />
+      <AssignmentDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        assignment={selectedAssignment}
       />
       {selectedAssignmentForRejection && (
         <RejectAssignmentModal
