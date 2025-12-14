@@ -21,9 +21,9 @@ return [
 
     'allowed_origins' => [
         'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        env('FRONTEND_URL', '*'), // Allow configured frontend URL
-        'https://' . env('RAILWAY_PUBLIC_DOMAIN', 'localhost'), // Allow Railway domain
+        'https://pann.khazifire.com', // Explicit production domain
+        env('FRONTEND_URL', '*'),
+        'https://' . env('RAILWAY_PUBLIC_DOMAIN', 'localhost'),
     ],
 
     'allowed_origins_patterns' => [],

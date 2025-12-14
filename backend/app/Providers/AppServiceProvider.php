@@ -33,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         VerifyEmail::createUrlUsing(function ($notifiable) {
-            $frontendUrl = Config::get('app.frontend_url', 'http://localhost:3000');
+            $frontendUrl = Config::get('app.frontend_url', 'https://pann.khazifire.com');
 
             $verifyUrl = URL::temporarySignedRoute(
                 'verification.verify',

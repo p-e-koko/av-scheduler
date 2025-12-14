@@ -1,5 +1,5 @@
 // API configuration and utilities
-export let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+export let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pann.khazifire.com/api';
 
 // Handle Mixed Content issues automatically
 if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
@@ -154,12 +154,12 @@ export const getCSRFToken = async (): Promise<string | null> => {
     // Check if we already have a CSRF token in cookies
     // Note: This only works if the cookie is not HttpOnly, which XSRF-TOKEN is not.
     const hasXsrfToken = typeof document !== 'undefined' && document.cookie.split(';').some((item) => item.trim().startsWith('XSRF-TOKEN='));
-    
+
     if (!hasXsrfToken) {
       // Initialize Sanctum first only if we don't have a token
       await initializeSanctum();
     }
-    
+
     const response = await fetch(`${API_BASE_URL}/csrf-token`, {
       credentials: 'include',
     });
@@ -241,9 +241,9 @@ async function apiCall<T>(
 
   try {
     const response = await fetch(url, config);
-    
+
     console.log('Response status:', response.status);
-    
+
     // Handle rate limiting
     if (response.status === 429) {
       const retryAfter = response.headers.get('retry-after');
@@ -261,12 +261,12 @@ async function apiCall<T>(
     // Handle unauthorized
     if (response.status === 401) {
       removeAuthToken(); // Clean up any stored tokens
-      
+
       // Customize error message based on endpoint
       if (url.includes('/auth/login')) {
         throw new APIError('Invalid credentials. Please check your email and password.', 401);
       }
-      
+
       throw new APIError('Session expired or unauthenticated. Please log in again.', 401);
     }
 
@@ -299,16 +299,16 @@ async function apiCall<T>(
     if (!(error instanceof APIError)) {
       console.error('API call error:', error);
     }
-    
+
     if (error instanceof APIError) {
       throw error;
     }
-    
+
     // Check if it's a network error
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new APIError(`Cannot connect to server at ${API_BASE_URL}. Please check your connection.`, 0);
     }
-    
+
     throw new APIError('Network error. Please check your connection and ensure the backend server is running.', 0);
   }
 }
@@ -351,7 +351,7 @@ export const authAPI = {
   // Register user
   async register(userData: RegisterData | FormData): Promise<ApiResponse> {
     const isFormData = userData instanceof FormData;
-    
+
     const config: RequestInit = {
       method: 'POST',
     };
@@ -382,11 +382,11 @@ export const authAPI = {
         const contentType = response.headers.get('content-type');
         let errorData: any = {};
         if (contentType && contentType.includes('application/json')) {
-            errorData = await response.json();
+          errorData = await response.json();
         } else {
-            const text = await response.text();
-            console.error('Register error non-JSON:', text);
-            errorData = { message: `Server error: ${response.status}` };
+          const text = await response.text();
+          console.error('Register error non-JSON:', text);
+          errorData = { message: `Server error: ${response.status}` };
         }
         throw new APIError(
           errorData.message || 'An error occurred',
@@ -397,10 +397,10 @@ export const authAPI = {
 
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-          return await response.json();
+        return await response.json();
       } else {
-          console.warn('Register success but non-JSON response');
-          return { message: 'Registration successful' };
+        console.warn('Register success but non-JSON response');
+        return { message: 'Registration successful' };
       }
     } else {
       // For regular JSON data
@@ -484,11 +484,11 @@ export const authAPI = {
     const contentType = response.headers.get('content-type');
     let data;
     if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
+      data = await response.json();
     } else {
-        const text = await response.text();
-        console.error('Verify email non-JSON:', text);
-        data = { message: `Server returned ${response.status}` };
+      const text = await response.text();
+      console.error('Verify email non-JSON:', text);
+      data = { message: `Server returned ${response.status}` };
     }
 
     if (!response.ok) {
@@ -674,10 +674,10 @@ export const userAPI = {
     if (params.per_page) queryParams.append('per_page', params.per_page.toString());
     if (params.role) queryParams.append('role', params.role);
     if (params.search) queryParams.append('search', params.search);
-    
+
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/users?${queryString}` : '/users';
-    
+
     return apiCall<UsersListResponse>(endpoint);
   },
 
@@ -689,7 +689,7 @@ export const userAPI = {
   // Create new user
   async createUser(userData: Partial<User> & { password: string } | FormData): Promise<{ message: string; user: User }> {
     const isFormData = userData instanceof FormData;
-    
+
     const config: RequestInit = {
       method: 'POST',
     };
@@ -720,11 +720,11 @@ export const userAPI = {
         const contentType = response.headers.get('content-type');
         let errorData: any = {};
         if (contentType && contentType.includes('application/json')) {
-             errorData = await response.json();
+          errorData = await response.json();
         } else {
-             const text = await response.text();
-             console.error('Create user error non-JSON:', text);
-             errorData = { message: `Server error: ${response.status}` };
+          const text = await response.text();
+          console.error('Create user error non-JSON:', text);
+          errorData = { message: `Server error: ${response.status}` };
         }
         throw new APIError(
           errorData.message || 'An error occurred',
@@ -735,10 +735,10 @@ export const userAPI = {
 
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-          return await response.json();
+        return await response.json();
       } else {
-          console.warn('Create user success but non-JSON response');
-          return { message: 'User created successfully', user: {} as User };
+        console.warn('Create user success but non-JSON response');
+        return { message: 'User created successfully', user: {} as User };
       }
     } else {
       // For regular JSON data, use standard endpoint
@@ -752,7 +752,7 @@ export const userAPI = {
   // Update user
   async updateUser(id: string, userData: Partial<User> | FormData): Promise<{ message: string; user: User }> {
     const isFormData = userData instanceof FormData;
-    
+
     if (isFormData) {
       // For FormData with file uploads, use the special file upload endpoint
       const config: RequestInit = {
@@ -782,11 +782,11 @@ export const userAPI = {
         const contentType = response.headers.get('content-type');
         let errorData: any = {};
         if (contentType && contentType.includes('application/json')) {
-             errorData = await response.json();
+          errorData = await response.json();
         } else {
-             const text = await response.text();
-             console.error('Update user error non-JSON:', text);
-             errorData = { message: `Server error: ${response.status}` };
+          const text = await response.text();
+          console.error('Update user error non-JSON:', text);
+          errorData = { message: `Server error: ${response.status}` };
         }
         throw new APIError(
           errorData.message || 'An error occurred',
@@ -797,10 +797,10 @@ export const userAPI = {
 
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
-          return await response.json();
+        return await response.json();
       } else {
-          console.warn('Update user success but non-JSON response');
-          return { message: 'User updated successfully', user: {} as User };
+        console.warn('Update user success but non-JSON response');
+        return { message: 'User updated successfully', user: {} as User };
       }
     } else {
       // For regular JSON data, use standard PUT method
@@ -838,10 +838,10 @@ export const userAPI = {
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.per_page) queryParams.append('per_page', params.per_page.toString());
     if (params.search) queryParams.append('search', params.search);
-    
+
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/users/trashed?${queryString}` : '/users/trashed';
-    
+
     return apiCall<UsersListResponse>(endpoint);
   }
 };
@@ -862,10 +862,10 @@ export const assignmentAPI = {
     if (params.search) queryParams.append('search', params.search);
     if (params.sort_by) queryParams.append('sort_by', params.sort_by);
     if (params.sort_order) queryParams.append('sort_order', params.sort_order);
-    
+
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/assignments?${queryString}` : '/assignments';
-    
+
     return apiCall<AssignmentsListResponse>(endpoint);
   },
 
@@ -876,10 +876,10 @@ export const assignmentAPI = {
     if (params.per_page) queryParams.append('per_page', params.per_page.toString());
     if (params.status) queryParams.append('status', params.status);
     if (params.search) queryParams.append('search', params.search);
-    
+
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/my-assignments?${queryString}` : '/my-assignments';
-    
+
     return apiCall<AssignmentsListResponse>(endpoint);
   },
 
@@ -967,10 +967,10 @@ export const assignmentAPI = {
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.per_page) queryParams.append('per_page', params.per_page.toString());
     if (params.search) queryParams.append('search', params.search);
-    
+
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/assignments/trashed?${queryString}` : '/assignments/trashed';
-    
+
     return apiCall<AssignmentsListResponse>(endpoint);
   },
 
@@ -1000,12 +1000,12 @@ export const assignmentAPI = {
 
   // Check in user (students can check themselves in)
   async checkInUser(assignmentId: number, userId?: number): Promise<{ message: string }> {
-    const endpoint = userId 
+    const endpoint = userId
       ? `/assignments/${assignmentId}/check-in-user`
       : `/assignments/${assignmentId}/check-in`;
-    
+
     const body = userId ? { user_id: userId } : {};
-    
+
     return apiCall<{ message: string }>(endpoint, {
       method: 'POST',
       body: JSON.stringify(body),
@@ -1014,12 +1014,12 @@ export const assignmentAPI = {
 
   // Check out user (students can check themselves out)
   async checkOutUser(assignmentId: number, userId?: number): Promise<{ message: string }> {
-    const endpoint = userId 
+    const endpoint = userId
       ? `/assignments/${assignmentId}/check-out-user`
       : `/assignments/${assignmentId}/check-out`;
-    
+
     const body = userId ? { user_id: userId } : {};
-    
+
     return apiCall<{ message: string }>(endpoint, {
       method: 'POST',
       body: JSON.stringify(body),
@@ -1039,10 +1039,10 @@ export const availabilityAPI = {
     if (params.date_to) queryParams.append('date_to', params.date_to);
     if (params.status) queryParams.append('status', params.status);
     if (params.date) queryParams.append('date', params.date);
-    
+
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/availability?${queryString}` : '/availability';
-    
+
     return apiCall<AvailabilityListResponse>(endpoint);
   },
 
@@ -1055,10 +1055,10 @@ export const availabilityAPI = {
     if (params.date_to) queryParams.append('date_to', params.date_to);
     if (params.status) queryParams.append('status', params.status);
     if (params.date) queryParams.append('date', params.date);
-    
+
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/my-availability?${queryString}` : '/my-availability';
-    
+
     return apiCall<AvailabilityListResponse>(endpoint);
   },
 
