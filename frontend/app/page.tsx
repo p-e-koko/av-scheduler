@@ -67,10 +67,10 @@ export default function Home() {
             </div>
           ) : (
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Welcome to AV Scheduler
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-300">
                 Please sign in to access your dashboard
               </p>
             </div>
@@ -81,13 +81,13 @@ export default function Home() {
         <div className="flex flex-col space-y-3 w-full">
           {user ? (
             <>
-              <Button 
+              <Button
                 onClick={handleNavigateToDashboard}
                 className="w-full bg-gradient-to-r from-primary to-primary-medium text-white hover:shadow-lg transition-all"
               >
                 Go to My Dashboard
               </Button>
-              
+
               <Link href="/dashboard">
                 <Button variant="outline" className="w-full bg-white/80 backdrop-blur-xl border-gray-300/30">
                   Quick Access
@@ -101,9 +101,9 @@ export default function Home() {
                   Sign In
                 </Button>
               </Link>
-              
+
               <Link href="/register">
-                <Button variant="outline" className="w-full bg-white/80 backdrop-blur-xl border-gray-300/30">
+                <Button variant="outline" className="w-full bg-white/80 backdrop-blur-xl border-gray-300/30 dark:bg-transparent dark:text-white dark:border-white dark:hover:bg-white/10">
                   Create Account
                 </Button>
               </Link>

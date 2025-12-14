@@ -418,8 +418,12 @@ export const authAPI = {
         method: 'POST',
       });
     } catch (error) {
-      console.error('Logout error:', error);
-      // Don't throw error - we still want to clean up local storage
+      // If error is 401, it means we're already logged out, so we can ignore it
+      if (error instanceof APIError && error.status === 401) {
+        // Already logged out
+      } else {
+        console.error('Logout error:', error);
+      }
     } finally {
       removeAuthToken(); // Clean up both token and user data
     }
