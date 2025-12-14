@@ -3,9 +3,9 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { 
-  ClipboardList, 
-  Users, 
+import {
+  ClipboardList,
+  Users,
   Calendar,
   Grid3X3,
   ChevronLeft,
@@ -100,20 +100,20 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               <Calendar className="w-5 h-5" />
             </div>
           )}
-          
+
           {isMobile ? (
-             <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onClose}
               className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
             >
               <X className="w-4 h-4" />
             </Button>
           ) : (
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
             >
@@ -126,86 +126,76 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
       {/* Sidebar Navigation */}
       <div className="flex-1 p-2">
         <nav className="space-y-1">
-          <div 
+          <div
             onClick={() => {
-                onTabChange("assignments")
-                if (isMobile && onClose) onClose()
+              onTabChange("assignments")
+              if (isMobile && onClose) onClose()
             }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
-              activeTab === "assignments" 
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "assignments"
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
                 : 'text-muted-foreground hover:bg-accent'
-            } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
-              activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
-            }`}
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
+              }`}
           >
             <ClipboardList className={`w-5 h-5 ${activeTab === "assignments" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Assignments</span>}
           </div>
 
-          <div 
+          <div
             onClick={() => {
-                onTabChange("students")
-                if (isMobile && onClose) onClose()
+              onTabChange("students")
+              if (isMobile && onClose) onClose()
             }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
-              activeTab === "students" 
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "students"
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
                 : 'text-muted-foreground hover:bg-accent'
-            } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
-              activeTab === "students" ? 'border-primary/20' : 'border-transparent'
-            }`}
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "students" ? 'border-primary/20' : 'border-transparent'
+              }`}
           >
             <Users className={`w-5 h-5 ${activeTab === "students" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Students</span>}
           </div>
 
-          <div 
+          <div
             onClick={() => {
-                onTabChange("schedules")
-                if (isMobile && onClose) onClose()
+              onTabChange("schedules")
+              if (isMobile && onClose) onClose()
             }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
-              activeTab === "schedules" 
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "schedules"
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
                 : 'text-muted-foreground hover:bg-accent'
-            } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
-              activeTab === "schedules" ? 'border-primary/20' : 'border-transparent'
-            }`}
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "schedules" ? 'border-primary/20' : 'border-transparent'
+              }`}
           >
             <Calendar className={`w-5 h-5 ${activeTab === "schedules" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Schedules</span>}
           </div>
 
-          <div 
+          <div
             onClick={() => {
-                onTabChange("positions")
-                if (isMobile && onClose) onClose()
+              onTabChange("positions")
+              if (isMobile && onClose) onClose()
             }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
-              activeTab === "positions" 
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "positions"
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
                 : 'text-muted-foreground hover:bg-accent'
-            } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
-              activeTab === "positions" ? 'border-primary/20' : 'border-transparent'
-            }`}
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "positions" ? 'border-primary/20' : 'border-transparent'
+              }`}
           >
             <Grid3X3 className={`w-5 h-5 ${activeTab === "positions" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Positions</span>}
           </div>
 
-          <div 
+          <div
             onClick={() => {
-                onTabChange("recycle-bin")
-                if (isMobile && onClose) onClose()
+              onTabChange("recycle-bin")
+              if (isMobile && onClose) onClose()
             }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
-              activeTab === "recycle-bin" 
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "recycle-bin"
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
                 : 'text-muted-foreground hover:bg-accent'
-            } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
-              activeTab === "recycle-bin" ? 'border-primary/20' : 'border-transparent'
-            }`}
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "recycle-bin" ? 'border-primary/20' : 'border-transparent'
+              }`}
           >
             <Trash2 className={`w-5 h-5 ${activeTab === "recycle-bin" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Recycle Bin</span>}
@@ -217,7 +207,7 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
       <div className="p-4 border-t border-border bg-card/50">
         <div className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'}`}>
           <Avatar className="h-9 w-9 border-2 border-primary/20">
-            <AvatarImage src={currentUser.profile_picture_url || undefined} />
+            <AvatarImage src={currentUser.profile_picture || currentUser.profile_picture_url || undefined} />
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
               {getInitials(currentUser.name)}
             </AvatarFallback>
@@ -231,9 +221,9 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
           {(!sidebarCollapsed || isMobile) && (
             <div className="flex items-center space-x-1">
               <ModeToggle />
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleLogoutClick}
                 className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               >
@@ -245,9 +235,9 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
         {sidebarCollapsed && !isMobile && (
           <div className="mt-4 flex flex-col items-center space-y-2">
             <ModeToggle />
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleLogoutClick}
               className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             >
@@ -269,9 +259,9 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
       {/* Mobile Sidebar Overlay */}
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden" onClick={onClose}>
-           <div className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border shadow-lg animate-in slide-in-from-left" onClick={e => e.stopPropagation()}>
-              <SidebarContent isMobile={true} />
-           </div>
+          <div className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border shadow-lg animate-in slide-in-from-left" onClick={e => e.stopPropagation()}>
+            <SidebarContent isMobile={true} />
+          </div>
         </div>
       )}
 
@@ -286,7 +276,7 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
         variant="destructive"
       />
 
-      <Dialog open={isLoggingOut} onOpenChange={() => {}}>
+      <Dialog open={isLoggingOut} onOpenChange={() => { }}>
         <DialogContent className="sm:max-w-[425px] flex flex-col items-center justify-center py-10">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
           <DialogTitle className="text-lg font-medium">Logging out...</DialogTitle>

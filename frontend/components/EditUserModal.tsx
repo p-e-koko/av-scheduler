@@ -57,7 +57,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
         profile_picture: null
       })
       // Set existing profile picture preview
-      setProfilePreview(user.profile_picture_url || null)
+      setProfilePreview(user.profile_picture || user.profile_picture_url || null)
     }
   }, [user, isOpen])
 

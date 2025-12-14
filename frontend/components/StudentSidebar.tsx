@@ -3,8 +3,8 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { 
-  User, 
+import {
+  User,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -94,20 +94,20 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
               <Calendar className="w-5 h-5" />
             </div>
           )}
-          
+
           {isMobile ? (
-             <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onClose}
               className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
             >
               <X className="w-4 h-4" />
             </Button>
           ) : (
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
               className="h-8 w-8 text-white hover:bg-white/20 flex-shrink-0"
             >
@@ -120,50 +120,44 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
       {/* Sidebar Navigation */}
       <div className="flex-1 p-2">
         <nav className="space-y-1">
-          <div 
+          <div
             onClick={() => {
-                onTabChange("profile")
-                if (isMobile && onClose) onClose()
+              onTabChange("profile")
+              if (isMobile && onClose) onClose()
             }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
-              activeTab === "profile" 
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "profile"
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
                 : 'text-muted-foreground hover:bg-accent'
-            } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
-              activeTab === "profile" ? 'border-primary/20' : 'border-transparent'
-            }`}
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "profile" ? 'border-primary/20' : 'border-transparent'
+              }`}
           >
             <User className="w-5 h-5 flex-shrink-0" />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Profile</span>}
           </div>
-          <div 
+          <div
             onClick={() => {
-                onTabChange("assignments")
-                if (isMobile && onClose) onClose()
+              onTabChange("assignments")
+              if (isMobile && onClose) onClose()
             }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
-              activeTab === "assignments"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "assignments"
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
                 : 'text-muted-foreground hover:bg-accent'
-            } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
-              activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
-            }`}
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
+              }`}
           >
             <CheckCircle className="w-5 h-5 flex-shrink-0" />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Assignments</span>}
           </div>
-          <div 
+          <div
             onClick={() => {
-                onTabChange("schedule")
-                if (isMobile && onClose) onClose()
+              onTabChange("schedule")
+              if (isMobile && onClose) onClose()
             }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${
-              activeTab === "schedule"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20' 
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "schedule"
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
                 : 'text-muted-foreground hover:bg-accent'
-            } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${
-              activeTab === "schedule" ? 'border-primary/20' : 'border-transparent'
-            }`}
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "schedule" ? 'border-primary/20' : 'border-transparent'
+              }`}
           >
             <Clock className="w-5 h-5 flex-shrink-0" />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">My Schedule</span>}
@@ -175,7 +169,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
       <div className="p-4 border-t border-border">
         <div className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'}`}>
           <Avatar className="h-10 w-10 flex-shrink-0">
-            <AvatarImage src={currentUser.profile_picture_url || ""} />
+            <AvatarImage src={currentUser.profile_picture || currentUser.profile_picture_url || ""} />
             <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
               {getInitials(currentUser.name)}
             </AvatarFallback>
@@ -192,9 +186,9 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
               </div>
               <div className="flex items-center gap-1">
                 <ModeToggle />
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-8 w-8 flex-shrink-0"
                   onClick={handleLogoutClick}
                 >
@@ -207,9 +201,9 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
         {sidebarCollapsed && !isMobile && (
           <div className="mt-2 flex flex-col items-center gap-2">
             <ModeToggle />
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8"
               onClick={handleLogoutClick}
               title="Logout"
@@ -232,9 +226,9 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
       {/* Mobile Sidebar Overlay */}
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden" onClick={onClose}>
-           <div className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border shadow-lg animate-in slide-in-from-left" onClick={e => e.stopPropagation()}>
-              <SidebarContent isMobile={true} />
-           </div>
+          <div className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border shadow-lg animate-in slide-in-from-left" onClick={e => e.stopPropagation()}>
+            <SidebarContent isMobile={true} />
+          </div>
         </div>
       )}
 
@@ -249,7 +243,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
         variant="destructive"
       />
 
-      <Dialog open={isLoggingOut} onOpenChange={() => {}}>
+      <Dialog open={isLoggingOut} onOpenChange={() => { }}>
         <DialogContent className="sm:max-w-[425px] flex flex-col items-center justify-center py-10">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
           <DialogTitle className="text-lg font-medium">Logging out...</DialogTitle>
