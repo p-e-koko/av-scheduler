@@ -252,8 +252,16 @@ function SupervisorDashboard() {
 
     assignments.forEach(assignment => {
       const date = new Date(assignment.event_start_datetime);
-      if (date.getFullYear() === currentYear && assignment.status === 'complete') {
-        const duration = Math.abs(new Date(assignment.event_end_datetime).getTime() - date.getTime()) / (1000 * 60 * 60);
+      const endDate = new Date(assignment.event_end_datetime);
+      const now = new Date();
+
+      // Consider 'complete' assignments OR 'confirmed' assignments that are in the past (which essentially means they are done but maybe not auto-updated yet)
+      const isCompleteOrPastConfirmed =
+        (assignment.status === 'complete') ||
+        (assignment.status === 'confirmed' && endDate < now);
+
+      if (date.getFullYear() === currentYear && isCompleteOrPastConfirmed) {
+        const duration = Math.abs(endDate.getTime() - date.getTime()) / (1000 * 60 * 60);
 
         if (assignment.users && assignment.users.length > 0) {
           assignment.users.forEach(user => {
@@ -415,14 +423,14 @@ function SupervisorDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[400px] w-full">
+                  <div className="h-[300px] sm:h-[400px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
                         data={studentMonthlyData}
                         margin={{
                           top: 10,
                           right: 10,
-                          left: 0,
+                          left: -20, // Negative margin to pull y-axis closer on small screens
                           bottom: 0,
                         }}
                       >
@@ -433,13 +441,13 @@ function SupervisorDashboard() {
                           tickLine={false}
                           tick={{ fill: 'currentColor', opacity: 0.5, fontSize: 12 }}
                           dy={10}
+                          tickFormatter={(value) => isMobile ? value.slice(0, 1) : value} // Show only first letter on mobile
                         />
                         <YAxis
                           axisLine={false}
                           tickLine={false}
                           tick={{ fill: 'currentColor', opacity: 0.5, fontSize: 12 }}
-                          dx={-10}
-                          label={{ value: 'Hours', angle: -90, position: 'insideLeft', style: { fill: 'currentColor', opacity: 0.5 } }}
+                        // label={{ value: 'Hours', angle: -90, position: 'insideLeft', style: { fill: 'currentColor', opacity: 0.5 } }} // Removed for cleaner mobile view or adjusting
                         />
                         <Tooltip
                           contentStyle={{
