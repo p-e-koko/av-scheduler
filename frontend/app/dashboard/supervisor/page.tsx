@@ -18,7 +18,9 @@ import {
   Eye,
   Search,
   Filter,
-  Menu
+  Menu,
+  MoreHorizontal,
+  ChevronDown
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -46,6 +48,7 @@ import {
   type Availability
 } from "@/lib/api"
 import { ModeToggle } from "@/components/mode-toggle"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function SupervisorDashboard() {
   const router = useRouter()
@@ -232,8 +235,54 @@ function SupervisorDashboard() {
     }));
   };
 
-  const monthlyData = calculateMonthlyData();
-  const maxHours = Math.max(...monthlyData.map(d => d.hours), 10); // Default to 10 to avoid div by zero
+  // Calculate Monthly Data for Line Chart (Per Student)
+  const calculateStudentMonthlyData = () => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentYear = new Date().getFullYear();
+
+    // Initialize data structure with months
+    const data = months.map(month => {
+      const entry: any = { name: month };
+      // Initialize all students to 0 to ensure lines are continuous (or use connectNulls)
+      students.forEach(s => {
+        entry[`user_${s.id}`] = 0;
+      });
+      return entry;
+    });
+
+    assignments.forEach(assignment => {
+      const date = new Date(assignment.event_start_datetime);
+      if (date.getFullYear() === currentYear && assignment.status === 'complete') {
+        const duration = Math.abs(new Date(assignment.event_end_datetime).getTime() - date.getTime()) / (1000 * 60 * 60);
+
+        if (assignment.users && assignment.users.length > 0) {
+          // We'll credit the full duration to each assignee for now (or split it if that's the business rule. Assuming full credit based on typical usage).
+          // Actually, "Completed Assignment Hours" usually means hours worked by the student. 
+          // If 3 students work on a 1 hour assignment, they each log 1 hour.
+          assignment.users.forEach(user => {
+            const monthIndex = date.getMonth();
+            const key = `user_${user.id}`;
+            // Safely add
+            if (typeof data[monthIndex][key] !== 'number') data[monthIndex][key] = 0;
+            data[monthIndex][key] += duration;
+          });
+        }
+      }
+    });
+
+    // Clean up: Maybe round numbers
+    return data.map(entry => {
+      const newEntry = { ...entry };
+      Object.keys(newEntry).forEach(key => {
+        if (key.startsWith('user_') && typeof newEntry[key] === 'number') {
+          newEntry[key] = Math.round(newEntry[key] * 10) / 10;
+        }
+      });
+      return newEntry;
+    });
+  };
+
+  const studentMonthlyData = calculateStudentMonthlyData();
 
   // Filter students
   const filteredStudents = students.filter(student =>
@@ -355,7 +404,8 @@ function SupervisorDashboard() {
               </div>
 
               {/* Monthly Hours Chart */}
-              <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
+              {/* Monthly Hours Chart - Replaced with Line Chart */}
+              <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <BarChart3 className="w-5 h-5" />
@@ -363,23 +413,62 @@ function SupervisorDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80 overflow-x-auto pb-4">
-                    <div className="flex items-end justify-between h-64 space-x-2 min-w-[600px]">
-                      {monthlyData.map((data, index) => (
-                        <div key={index} className="flex flex-col items-center space-y-2 flex-1">
-                          <div
-                            className="w-full bg-gradient-to-t from-primary to-primary-light rounded-t-md min-h-[4px] flex items-end justify-center text-white text-xs font-semibold transition-all duration-500"
-                            style={{ height: `${(data.hours / maxHours) * 100}%` }}
-                          >
-                            {data.hours > 0 && <span className="pb-2">{data.hours}h</span>}
-                          </div>
-                          <div className="text-xs font-medium text-muted-foreground">{data.month}</div>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="h-[400px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={studentMonthlyData}
+                        margin={{
+                          top: 10,
+                          right: 10,
+                          left: 0,
+                          bottom: 0,
+                        }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.1} vertical={false} />
+                        <XAxis
+                          dataKey="name"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: 'currentColor', opacity: 0.5, fontSize: 12 }}
+                          dy={10}
+                        />
+                        <YAxis
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fill: 'currentColor', opacity: 0.5, fontSize: 12 }}
+                          dx={-10}
+                          label={{ value: 'Hours', angle: -90, position: 'insideLeft', style: { fill: 'currentColor', opacity: 0.5 } }}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            borderColor: 'hsl(var(--border))',
+                            borderRadius: '8px',
+                            color: 'hsl(var(--foreground))'
+                          }}
+                        />
+                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        {students.map((student, index) => {
+                          const colors = ["#2563eb", "#db2777", "#ea580c", "#16a34a", "#8b5cf6", "#0891b2", "#d97706", "#dc2626"];
+                          return (
+                            <Line
+                              key={student.id}
+                              type="monotone"
+                              dataKey={`user_${student.id}`}
+                              name={student.name}
+                              stroke={colors[index % colors.length]}
+                              strokeWidth={2}
+                              dot={{ r: 4, strokeWidth: 2, fill: 'hsl(var(--card))' }}
+                              activeDot={{ r: 6, strokeWidth: 2 }}
+                              connectNulls
+                            />
+                          );
+                        })}
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                   <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Showing completed assignment hours per month</span>
+                    <span>Showing completed assignment hours per month for each student</span>
                   </div>
                 </CardContent>
               </Card>
@@ -601,8 +690,8 @@ function SupervisorDashboard() {
                           </div>
                           <div className="flex items-center space-x-2 self-start sm:self-center pl-16 sm:pl-0">
                             <Badge className={`text-xs px-2 py-1 ${assignment.status === "pending" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white" :
-                                assignment.status === "confirmed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
-                                  "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+                              assignment.status === "confirmed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
+                                "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
                               }`}>
                               {assignment.status}
                             </Badge>
