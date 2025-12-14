@@ -49,10 +49,9 @@ export function DashboardNavigation({
 
   return (
     <div className={cn(
-      `${
-        isMobile 
-          ? collapsed ? 'h-16' : 'h-64' 
-          : collapsed ? 'w-16' : 'w-64'
+      `${isMobile
+        ? collapsed ? 'h-16' : 'h-64'
+        : collapsed ? 'w-16' : 'w-64'
       } transition-all duration-300 flex-shrink-0`,
       className
     )}>
@@ -75,9 +74,9 @@ export function DashboardNavigation({
                 <Calendar className="w-5 h-5" />
               </div>
             )}
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onToggleCollapse}
               className="h-8 w-8 text-primary-foreground hover:bg-primary-foreground/20 flex-shrink-0"
             >
@@ -96,13 +95,13 @@ export function DashboardNavigation({
             <div className="flex-1 p-2">
               <nav className="space-y-1">
                 {items.map((item) => (
-                  <div 
+                  <div
                     key={item.id}
                     onClick={item.onClick}
                     className={cn(
                       `flex items-center ${isMobile ? 'justify-start' : 'space-x-3'} cursor-pointer transition-colors rounded-lg p-3`,
-                      item.active 
-                        ? 'text-primary bg-primary/10 border border-primary/20' 
+                      item.active
+                        ? 'text-primary bg-primary/10 border border-primary/20'
                         : 'text-muted-foreground hover:bg-muted'
                     )}
                   >
@@ -119,7 +118,7 @@ export function DashboardNavigation({
             <div className="p-4 border-t border-border">
               <div className="flex items-center space-x-3">
                 <Avatar className="h-10 w-10 flex-shrink-0">
-                  <AvatarImage src={user.profile_picture_url || ""} />
+                  <AvatarImage src={user.profile_picture || user.profile_picture_url || ""} />
                   <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                     {getInitials(user.name)}
                   </AvatarFallback>
@@ -132,9 +131,9 @@ export function DashboardNavigation({
                     {user.email}
                   </p>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-8 w-8 flex-shrink-0"
                   onClick={onLogout}
                 >
@@ -150,14 +149,14 @@ export function DashboardNavigation({
           <div className="p-4 border-t border-border">
             <div className="flex flex-col items-center space-y-2">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={user.profile_picture_url || ""} />
+                <AvatarImage src={user.profile_picture || user.profile_picture_url || ""} />
                 <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
                   {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8"
                 onClick={onLogout}
                 title="Logout"
@@ -166,9 +165,10 @@ export function DashboardNavigation({
               </Button>
             </div>
           </div>
-        )}
-      </div>
-    </div>
+        )
+        }
+      </div >
+    </div >
   )
 }
 
@@ -193,8 +193,8 @@ export function MobileBottomNavigation({
             onClick={item.onClick}
             className={cn(
               "flex flex-col items-center space-y-1 p-2 rounded-lg transition-colors",
-              item.active 
-                ? "text-primary bg-primary/10" 
+              item.active
+                ? "text-primary bg-primary/10"
                 : "text-muted-foreground hover:text-primary"
             )}
           >

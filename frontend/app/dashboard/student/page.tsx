@@ -3,8 +3,8 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { 
-  User, 
+import {
+  User,
   Search,
   Calendar,
   ChevronLeft,
@@ -35,7 +35,7 @@ import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { AddAvailabilityModal } from "@/components/AddAvailabilityModal"
 import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
 
-import { 
+import {
   authAPI,
   getStoredUser,
   formatAPIError,
@@ -79,7 +79,7 @@ function StudentDashboard() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [loadingTitle, setLoadingTitle] = useState("Processing")
   const [loadingDescription, setLoadingDescription] = useState("Please wait while we process your request...")
-  
+
   const [statusDialog, setStatusDialog] = useState<{
     isOpen: boolean
     title: string
@@ -125,12 +125,12 @@ function StudentDashboard() {
       router.push('/login')
       return
     }
-    
+
     if (!hasAnyRole(['student', 'admin'])) {
       router.push('/login')
       return
     }
-    
+
     setCurrentUser(user)
     setLoading(false)
   }, [])
@@ -158,13 +158,13 @@ function StudentDashboard() {
           case 'assignments':
             if (assignmentFilter === 'all') {
               const [allAssignmentsResponse, myAssignmentsResponse] = await Promise.all([
-                assignmentAPI.getAssignments({ 
-                  per_page: 10, 
-                  page: assignmentCurrentPage 
+                assignmentAPI.getAssignments({
+                  per_page: 10,
+                  page: assignmentCurrentPage
                 }),
                 assignmentAPI.getMyAssignments({ per_page: 100 })
               ])
-              
+
               setAssignments(allAssignmentsResponse.data)
               setAssignmentPagination({
                 current_page: allAssignmentsResponse.meta.current_page,
@@ -173,7 +173,7 @@ function StudentDashboard() {
                 from: allAssignmentsResponse.meta.from,
                 to: allAssignmentsResponse.meta.to
               })
-              
+
               const stats = myAssignmentsResponse.data.reduce((acc, assignment) => {
                 acc.total++
                 switch (assignment.status) {
@@ -191,17 +191,17 @@ function StudentDashboard() {
                 }
                 return acc
               }, { total: 0, completed: 0, inProgress: 0, pending: 0 })
-              
+
               setAssignmentStats(stats)
             } else {
               const [myAssignmentsResponse, allMyAssignmentsResponse] = await Promise.all([
-                assignmentAPI.getMyAssignments({ 
-                  per_page: 10, 
-                  page: assignmentCurrentPage 
+                assignmentAPI.getMyAssignments({
+                  per_page: 10,
+                  page: assignmentCurrentPage
                 }),
                 assignmentAPI.getMyAssignments({ per_page: 100 })
               ])
-              
+
               setMyAssignments(myAssignmentsResponse.data)
               setAssignmentPagination({
                 current_page: myAssignmentsResponse.meta.current_page,
@@ -210,7 +210,7 @@ function StudentDashboard() {
                 from: myAssignmentsResponse.meta.from,
                 to: myAssignmentsResponse.meta.to
               })
-              
+
               const stats = allMyAssignmentsResponse.data.reduce((acc, assignment) => {
                 acc.total++
                 switch (assignment.status) {
@@ -228,7 +228,7 @@ function StudentDashboard() {
                 }
                 return acc
               }, { total: 0, completed: 0, inProgress: 0, pending: 0 })
-              
+
               setAssignmentStats(stats)
             }
             break
@@ -255,10 +255,10 @@ function StudentDashboard() {
         assignmentAPI.getAssignments({ per_page: 50 }),
         assignmentAPI.getMyAssignments({ per_page: 50 })
       ])
-      
+
       setAssignments(allAssignmentsResponse.data)
       setMyAssignments(myAssignmentsResponse.data)
-      
+
       // Recalculate stats
       const stats = myAssignmentsResponse.data.reduce((acc, assignment) => {
         acc.total++
@@ -277,7 +277,7 @@ function StudentDashboard() {
         }
         return acc
       }, { total: 0, completed: 0, inProgress: 0, pending: 0 })
-      
+
       setAssignmentStats(stats)
     } catch (err) {
       console.error("Failed to refresh assignments", err)
@@ -356,26 +356,26 @@ function StudentDashboard() {
     } catch (err: any) {
       console.error("Failed to add to calendar", err)
       if (err.message === 'Google account not connected' || (err.status === 400 && err.message.includes('Google'))) {
-         // Fetch Google Auth URL from API and redirect
-         try {
-           const { url } = await assignmentAPI.getGoogleAuthUrl();
-           window.location.href = url;
-         } catch (authErr) {
-           console.error("Failed to get Google Auth URL", authErr);
-           setStatusDialog({
-              isOpen: true,
-              title: "Error",
-              description: "Failed to initiate Google connection. Please try again.",
-              type: "error"
-           });
-         }
-      } else {
-         setStatusDialog({
+        // Fetch Google Auth URL from API and redirect
+        try {
+          const { url } = await assignmentAPI.getGoogleAuthUrl();
+          window.location.href = url;
+        } catch (authErr) {
+          console.error("Failed to get Google Auth URL", authErr);
+          setStatusDialog({
             isOpen: true,
             title: "Error",
-            description: `Failed to add to calendar: ${err.message || 'Unknown error'}`,
+            description: "Failed to initiate Google connection. Please try again.",
             type: "error"
-         })
+          });
+        }
+      } else {
+        setStatusDialog({
+          isOpen: true,
+          title: "Error",
+          description: `Failed to add to calendar: ${err.message || 'Unknown error'}`,
+          type: "error"
+        })
       }
     } finally {
       setIsProcessing(false)
@@ -397,22 +397,22 @@ function StudentDashboard() {
       })
     } catch (err: any) {
       console.error("Failed to remove from calendar", err)
-       if (err.message === 'Google account not connected' || (err.status === 400 && err.message.includes('Google'))) {
-         // Use API_BASE_URL to construct the login URL. 
-         // If API_BASE_URL is relative (e.g. /api), we need to prepend window.origin or just use it relative.
-         // But window.location.href handles relative paths relative to current page, which is wrong if we want /google/login relative to root.
-         // Actually, API_BASE_URL usually ends with /api. We want /google/login.
-         // So we should strip /api and append /google/login.
-         
-         const baseUrl = API_BASE_URL.replace(/\/api$/, '');
-         window.location.href = `${baseUrl}/google/login`;
+      if (err.message === 'Google account not connected' || (err.status === 400 && err.message.includes('Google'))) {
+        // Use API_BASE_URL to construct the login URL. 
+        // If API_BASE_URL is relative (e.g. /api), we need to prepend window.origin or just use it relative.
+        // But window.location.href handles relative paths relative to current page, which is wrong if we want /google/login relative to root.
+        // Actually, API_BASE_URL usually ends with /api. We want /google/login.
+        // So we should strip /api and append /google/login.
+
+        const baseUrl = API_BASE_URL.replace(/\/api$/, '');
+        window.location.href = `${baseUrl}/google/login`;
       } else {
-         setStatusDialog({
-            isOpen: true,
-            title: "Error",
-            description: `Failed to remove from calendar: ${err.message || 'Unknown error'}`,
-            type: "error"
-         })
+        setStatusDialog({
+          isOpen: true,
+          title: "Error",
+          description: `Failed to remove from calendar: ${err.message || 'Unknown error'}`,
+          type: "error"
+        })
       }
     } finally {
       setIsProcessing(false)
@@ -422,16 +422,16 @@ function StudentDashboard() {
   // Calculate hours data
   const hoursData = React.useMemo(() => {
     if (!currentUser) return { promised: 0, worked: 0, remaining: 0, percentage: 0 }
-    
+
     const promised = parseFloat(currentUser.promised_hours_per_week || '0')
-    
+
     // Get start and end of current week
     const now = new Date()
     const startOfWeek = new Date(now)
     const day = now.getDay() || 7 // Get current day number, converting Sun (0) to 7
     if (day !== 1) startOfWeek.setHours(-24 * (day - 1)) // Set to Monday
     else startOfWeek.setHours(0, 0, 0, 0)
-    
+
     const endOfWeek = new Date(startOfWeek)
     endOfWeek.setDate(startOfWeek.getDate() + 6)
     endOfWeek.setHours(23, 59, 59, 999)
@@ -443,7 +443,7 @@ function StudentDashboard() {
         // Check pivot status if available, otherwise assume pending/assigned
         const myStatus = a.pivot?.status || 'pending';
         const isRejected = myStatus === 'rejected';
-        
+
         // Include all assignments that are not rejected
         return !isRejected && eventDate >= startOfWeek && eventDate <= endOfWeek
       })
@@ -477,10 +477,10 @@ function StudentDashboard() {
       const dateStr = slot.date.split('T')[0] // Ensure we have YYYY-MM-DD
       const startDateTime = new Date(`${dateStr}T${slot.start_time}`)
       const endDateTime = new Date(`${dateStr}T${slot.end_time}`)
-      
+
       let color = "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800"
       let title = "Available"
-      
+
       if (slot.status === 'unavailable') {
         color = "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
         title = "Unavailable"
@@ -488,7 +488,7 @@ function StudentDashboard() {
         color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800"
         title = "Class"
       }
-      
+
       return {
         id: slot.id.toString(),
         title: title,
@@ -556,9 +556,9 @@ function StudentDashboard() {
 
   return (
     <div className="flex h-screen bg-background">
-      <StudentSidebar 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab} 
+      <StudentSidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
@@ -579,16 +579,16 @@ function StudentDashboard() {
               </Button>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
-                {activeTab === "profile" && "My Profile"}
-                {activeTab === "assignments" && "My Assignments"}
-                {activeTab === "schedule" && "My Schedule"}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {activeTab === "profile" && "Manage your profile and skills"}
-                {activeTab === "assignments" && "View and track your assignments"}
-                {activeTab === "schedule" && "Manage your availability"}
-              </p>
-            </div>
+                  {activeTab === "profile" && "My Profile"}
+                  {activeTab === "assignments" && "My Assignments"}
+                  {activeTab === "schedule" && "My Schedule"}
+                </h1>
+                <p className="text-muted-foreground mt-1">
+                  {activeTab === "profile" && "Manage your profile and skills"}
+                  {activeTab === "assignments" && "View and track your assignments"}
+                  {activeTab === "schedule" && "Manage your availability"}
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <NotificationDropdown />
@@ -637,7 +637,7 @@ function StudentDashboard() {
                     <div className="text-center mb-6">
                       <div className="relative inline-block">
                         <Avatar className="h-24 w-24 mx-auto">
-                          <AvatarImage src={currentUser.profile_picture_url || ""} />
+                          <AvatarImage src={currentUser.profile_picture || currentUser.profile_picture_url || ""} />
                           <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
                             {getInitials(currentUser.name)}
                           </AvatarFallback>
@@ -649,7 +649,7 @@ function StudentDashboard() {
                           <Camera className="h-4 w-4" />
                         </Button>
                       </div>
-                      
+
                       <h3 className="text-xl font-semibold text-foreground mt-4">{currentUser.name}</h3>
                       <p className="text-muted-foreground">{currentUser.email}</p>
                       {currentUser.student_id && (
@@ -662,12 +662,12 @@ function StudentDashboard() {
                         <span className="text-sm text-muted-foreground">Status</span>
                         <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active Student</Badge>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Role</span>
                         <Badge variant="secondary">Student</Badge>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Promised Hours/Week</span>
                         <span className="font-medium text-foreground">{currentUser.promised_hours_per_week || '0'}h</span>
@@ -777,25 +777,23 @@ function StudentDashboard() {
                   ) : error ? (
                     <div className="text-center py-8 text-destructive">{error}</div>
                   ) : (
-                    <div className={viewMode === "card" 
-                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" 
+                    <div className={viewMode === "card"
+                      ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
                       : "space-y-4"
                     }>
                       {/* Display assignments based on filter */}
                       {(assignmentFilter === "all" ? assignments : myAssignments).map((assignment) => (
-                        <div key={assignment.id} className={`${
-                          viewMode === "card" 
-                            ? "p-4 bg-muted/50 rounded-lg border border-border" 
+                        <div key={assignment.id} className={`${viewMode === "card"
+                            ? "p-4 bg-muted/50 rounded-lg border border-border"
                             : "flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4 sm:gap-0"
-                        }`}>
+                          }`}>
                           <div className={`${viewMode === "card" ? "space-y-3" : "flex items-center space-x-4 w-full sm:w-auto"}`}>
                             {viewMode === "card" && (
                               <div className="flex items-center justify-between">
-                                <Badge className={`${
-                                  assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
-                                }`}>
+                                <Badge className={`${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                    assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                                      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
+                                  }`}>
                                   {assignment.status}
                                 </Badge>
                                 <Clock className="w-4 h-4 text-muted-foreground" />
@@ -815,11 +813,10 @@ function StudentDashboard() {
                             </div>
                             {viewMode === "list" && (
                               <div className="flex items-center space-x-2 sm:hidden pl-14">
-                                <Badge className={`${
-                                  assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
-                                }`}>
+                                <Badge className={`${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                    assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                                      'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
+                                  }`}>
                                   {assignment.status}
                                 </Badge>
                               </div>
@@ -830,22 +827,22 @@ function StudentDashboard() {
                               <Button size="sm" className="w-full bg-primary hover:bg-primary-dark text-primary-foreground">
                                 View Details
                               </Button>
-                              
+
                               {/* Accept/Reject Buttons for My Assignments */}
                               {assignment.pivot && assignment.status !== 'complete' && (
                                 <div className="space-y-2">
                                   <div className="flex gap-2">
                                     {assignment.pivot.status !== 'accepted' && assignment.pivot.status !== 'rejected' && (
                                       <>
-                                        <Button 
-                                          size="sm" 
+                                        <Button
+                                          size="sm"
                                           className="flex-1 bg-emerald-900 hover:bg-emerald-950 text-white shadow-sm"
                                           onClick={() => handleAcceptAssignment(assignment.id)}
                                         >
                                           Accept
                                         </Button>
-                                        <Button 
-                                          size="sm" 
+                                        <Button
+                                          size="sm"
                                           className="flex-1 bg-red-900 hover:bg-red-950 text-white shadow-sm"
                                           onClick={() => handleRejectAssignment(assignment.id)}
                                         >
@@ -855,14 +852,14 @@ function StudentDashboard() {
                                     )}
                                     {assignment.pivot.status === 'accepted' && (
                                       <div className="flex flex-col gap-2">
-                                        <Button 
-                                          size="sm" 
+                                        <Button
+                                          size="sm"
                                           className="w-full bg-red-900 hover:bg-red-950 text-white shadow-sm"
                                           onClick={() => handleRejectAssignment(assignment.id)}
                                         >
                                           Reject
                                         </Button>
-                                        
+
                                         {/* Google Calendar Button */}
                                         {assignment.pivot.google_event_id ? (
                                           <Button
@@ -889,38 +886,36 @@ function StudentDashboard() {
                                         )}
                                       </div>
                                     )}
-                                     {assignment.pivot.status === 'rejected' && (
-                                       <Button 
-                                          size="sm" 
-                                          className="flex-1 bg-emerald-900 hover:bg-emerald-950 text-white shadow-sm"
-                                          onClick={() => handleAcceptAssignment(assignment.id)}
-                                        >
-                                          Accept
-                                        </Button>
+                                    {assignment.pivot.status === 'rejected' && (
+                                      <Button
+                                        size="sm"
+                                        className="flex-1 bg-emerald-900 hover:bg-emerald-950 text-white shadow-sm"
+                                        onClick={() => handleAcceptAssignment(assignment.id)}
+                                      >
+                                        Accept
+                                      </Button>
                                     )}
                                   </div>
                                   <div className="text-xs text-center text-muted-foreground">
-                                    My Status: <span className={`font-medium capitalize ${
-                                      assignment.pivot.status === 'accepted' ? 'text-emerald-600 dark:text-emerald-400' :
-                                      assignment.pivot.status === 'rejected' ? 'text-rose-600 dark:text-rose-400' :
-                                      'text-amber-600 dark:text-amber-400'
-                                    }`}>{assignment.pivot.status}</span>
+                                    My Status: <span className={`font-medium capitalize ${assignment.pivot.status === 'accepted' ? 'text-emerald-600 dark:text-emerald-400' :
+                                        assignment.pivot.status === 'rejected' ? 'text-rose-600 dark:text-rose-400' :
+                                          'text-amber-600 dark:text-amber-400'
+                                      }`}>{assignment.pivot.status}</span>
                                   </div>
                                 </div>
                               )}
                             </div>
                           )}
                           {viewMode === "list" && (
-                              <div className="hidden sm:flex items-center space-x-2">
-                                <Badge className={`${
-                                  assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                            <div className="hidden sm:flex items-center space-x-2">
+                              <Badge className={`${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
                                   assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
+                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
                                 }`}>
-                                  {assignment.status}
-                                </Badge>
-                              </div>
-                            )}
+                                {assignment.status}
+                              </Badge>
+                            </div>
+                          )}
                         </div>
                       ))}
                       {(assignmentFilter === "all" ? assignments : myAssignments).length === 0 && (
@@ -970,9 +965,9 @@ function StudentDashboard() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-foreground">My Schedule</h2>
-                <Button 
-                  size="sm" 
-                  className="bg-primary hover:bg-primary-dark text-primary-foreground" 
+                <Button
+                  size="sm"
+                  className="bg-primary hover:bg-primary-dark text-primary-foreground"
                   onClick={() => setIsAddAvailabilityModalOpen(true)}
                 >
                   <Plus className="w-4 h-4 mr-1" />
@@ -991,9 +986,9 @@ function StudentDashboard() {
           )}
         </main>
       </div>
-      <AddAvailabilityModal 
-        isOpen={isAddAvailabilityModalOpen} 
-        onClose={() => setIsAddAvailabilityModalOpen(false)} 
+      <AddAvailabilityModal
+        isOpen={isAddAvailabilityModalOpen}
+        onClose={() => setIsAddAvailabilityModalOpen(false)}
         onSuccess={handleAvailabilityAdded}
       />
       {selectedAssignmentForRejection && (

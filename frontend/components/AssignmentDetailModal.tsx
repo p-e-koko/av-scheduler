@@ -125,27 +125,27 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment }: Assignmen
               </h4>
               {assignment.users && assignment.users.length > 0 && (
                 <div className="flex gap-2">
-                    {assignment.users.every(u => (u as any).pivot?.status === 'accepted') && (
-                      <Badge variant="outline" className="text-xs text-green-600 bg-green-50 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" /> All Accepted
-                      </Badge>
-                    )}
-                    {assignment.users.some(u => (u as any).pivot?.status === 'rejected') && (
-                      <Badge variant="outline" className="text-xs text-red-600 bg-red-50 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> Rejected
-                      </Badge>
-                    )}
+                  {assignment.users.every(u => (u as any).pivot?.status === 'accepted') && (
+                    <Badge variant="outline" className="text-xs text-green-600 bg-green-50 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> All Accepted
+                    </Badge>
+                  )}
+                  {assignment.users.some(u => (u as any).pivot?.status === 'rejected') && (
+                    <Badge variant="outline" className="text-xs text-red-600 bg-red-50 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Rejected
+                    </Badge>
+                  )}
                 </div>
               )}
             </div>
-            
+
             {assignment.users && assignment.users.length > 0 ? (
               <div className="grid grid-cols-1 gap-3">
                 {assignment.users.map((user) => (
                   <div key={user.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border">
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.profile_picture_url} />
+                        <AvatarImage src={user.profile_picture || user.profile_picture_url} />
                         <AvatarFallback className="bg-primary text-primary-foreground text-xs">
                           {user.name.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
@@ -162,11 +162,10 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment }: Assignmen
                         </Badge>
                       )}
                       {(user as any).pivot?.status && (
-                        <Badge className={`text-[10px] px-1.5 py-0 border-none capitalize ${
-                          (user as any).pivot.status === 'accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400' :
-                          (user as any).pivot.status === 'rejected' ? 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400' :
-                          'bg-orange-100 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400'
-                        }`}>
+                        <Badge className={`text-[10px] px-1.5 py-0 border-none capitalize ${(user as any).pivot.status === 'accepted' ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400' :
+                            (user as any).pivot.status === 'rejected' ? 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400' :
+                              'bg-orange-100 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-400'
+                          }`}>
                           {(user as any).pivot.status}
                         </Badge>
                       )}

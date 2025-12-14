@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { 
+import {
   ArrowLeft,
   Calendar,
   Clock,
@@ -22,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
 
-import { 
+import {
   userAPI,
   assignmentAPI,
   availabilityAPI,
@@ -68,17 +68,17 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
           assignmentAPI.getAssignments({ per_page: 50 }),
           availabilityAPI.getAvailability({ student_id: studentId, per_page: 50 })
         ])
-        
+
         if (studentResponse.user.role !== 'student') {
           setError('User is not a student')
           return
         }
-        
+
         setStudent(studentResponse.user)
         setEditData(studentResponse.user)
-        
+
         // Filter assignments for this specific student
-        const studentAssignments = assignmentsResponse.data.filter(assignment => 
+        const studentAssignments = assignmentsResponse.data.filter(assignment =>
           assignment.users?.some(user => user.id === studentId)
         )
         setAssignments(studentAssignments)
@@ -110,10 +110,10 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
       const dateStr = slot.date.split('T')[0]
       const startDateTime = new Date(`${dateStr}T${slot.start_time}`)
       const endDateTime = new Date(`${dateStr}T${slot.end_time}`)
-      
+
       let color = "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800"
       let title = "Available"
-      
+
       if (slot.status === 'unavailable') {
         color = "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
         title = "Unavailable"
@@ -121,7 +121,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
         color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800"
         title = "Class"
       }
-      
+
       return {
         id: slot.id.toString(),
         title: title,
@@ -173,16 +173,16 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
   // Calculate hours data
   const hoursData = React.useMemo(() => {
     if (!student) return { promised: 0, worked: 0, remaining: 0, percentage: 0 }
-    
+
     const promised = parseFloat(student.promised_hours_per_week || '0')
-    
+
     // Get start and end of current week
     const now = new Date()
     const startOfWeek = new Date(now)
     const day = now.getDay() || 7 // Get current day number, converting Sun (0) to 7
     if (day !== 1) startOfWeek.setHours(-24 * (day - 1)) // Set to Monday
     else startOfWeek.setHours(0, 0, 0, 0)
-    
+
     const endOfWeek = new Date(startOfWeek)
     endOfWeek.setDate(startOfWeek.getDate() + 6)
     endOfWeek.setHours(23, 59, 59, 999)
@@ -253,8 +253,8 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 md:gap-0">
           <div className="flex items-center space-x-4">
-            <Button 
-              onClick={() => router.back()} 
+            <Button
+              onClick={() => router.back()}
               variant="ghost"
               className="bg-card/80 backdrop-blur-xl hover:bg-muted text-foreground hover:text-foreground"
             >
@@ -266,9 +266,9 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
               <p className="text-muted-foreground">Detailed view and management</p>
             </div>
           </div>
-          
+
           {!isEditing ? (
-            <Button 
+            <Button
               onClick={() => setIsEditing(true)}
               className="bg-primary hover:bg-primary/90 w-full md:w-auto"
             >
@@ -277,14 +277,14 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
             </Button>
           ) : (
             <div className="flex space-x-2 w-full md:w-auto">
-              <Button 
+              <Button
                 onClick={handleSaveEdit}
                 className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 flex-1 md:flex-none"
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save
               </Button>
-              <Button 
+              <Button
                 onClick={cancelEdit}
                 variant="outline"
                 className="flex-1 md:flex-none"
@@ -305,13 +305,13 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                 <div className="text-center mb-6">
                   <div className="relative inline-block">
                     <Avatar className="h-24 w-24 mx-auto">
-                      <AvatarImage src={student.profile_picture_url || ""} />
+                      <AvatarImage src={student.profile_picture || student.profile_picture_url || ""} />
                       <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
                         {getInitials(student.name)}
                       </AvatarFallback>
                     </Avatar>
                   </div>
-                  
+
                   {!isEditing ? (
                     <>
                       <h3 className="text-xl font-semibold text-foreground mt-4">{student.name}</h3>
@@ -327,7 +327,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                         <Input
                           id="name"
                           value={editData.name || ''}
-                          onChange={(e) => setEditData({...editData, name: e.target.value})}
+                          onChange={(e) => setEditData({ ...editData, name: e.target.value })}
                         />
                       </div>
                       <div>
@@ -336,7 +336,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                           id="email"
                           type="email"
                           value={editData.email || ''}
-                          onChange={(e) => setEditData({...editData, email: e.target.value})}
+                          onChange={(e) => setEditData({ ...editData, email: e.target.value })}
                         />
                       </div>
                       <div>
@@ -344,7 +344,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                         <Input
                           id="student_id"
                           value={editData.student_id || ''}
-                          onChange={(e) => setEditData({...editData, student_id: e.target.value})}
+                          onChange={(e) => setEditData({ ...editData, student_id: e.target.value })}
                         />
                       </div>
                     </div>
@@ -356,12 +356,12 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                     <span className="text-sm text-muted-foreground">Status</span>
                     <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active Student</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Role</span>
                     <Badge variant="secondary">Student</Badge>
                   </div>
-                  
+
                   {!isEditing ? (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-muted-foreground">Promised Hours/Week</span>
@@ -374,7 +374,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                         id="hours"
                         type="number"
                         value={editData.promised_hours_per_week || ''}
-                        onChange={(e) => setEditData({...editData, promised_hours_per_week: e.target.value})}
+                        onChange={(e) => setEditData({ ...editData, promised_hours_per_week: e.target.value })}
                       />
                     </div>
                   )}

@@ -3,12 +3,12 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  Grid3X3, 
-  List, 
+import {
+  Users,
+  Search,
+  Filter,
+  Grid3X3,
+  List,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -42,7 +42,7 @@ import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { CoordinatorSidebar } from "@/components/CoordinatorSidebar"
 
-import { 
+import {
   authAPI,
   getStoredUser,
   formatAPIError,
@@ -139,12 +139,12 @@ function CoordinatorDashboard() {
       router.push('/login')
       return
     }
-    
+
     if (!hasAnyRole(['coordinator', 'admin'])) {
       router.push('/login')
       return
     }
-    
+
     setCurrentUser(user)
     setLoading(false)
   }, [])
@@ -160,7 +160,7 @@ function CoordinatorDashboard() {
       switch (activeTab) {
         case 'assignments': {
           const [assignmentsResponse, positionsData, studentsResponse] = await Promise.all([
-            assignmentAPI.getAssignments({ 
+            assignmentAPI.getAssignments({
               per_page: 10,
               page: assignmentCurrentPage,
               search: assignmentSearchQuery || undefined,
@@ -179,7 +179,7 @@ function CoordinatorDashboard() {
           })
           setPositions(positionsData.positions)
           setStudents(studentsResponse.data)
-          
+
           // Calculate stats
           const stats = assignmentsResponse.data.reduce((acc, assignment) => {
             switch (assignment.status) {
@@ -195,23 +195,23 @@ function CoordinatorDashboard() {
               default:
                 break
             }
-            
+
             // Check if overdue (past end time and not complete)
             const endDate = new Date(assignment.event_end_datetime)
             if (endDate < new Date() && assignment.status !== 'complete') {
               acc.overdue++
             }
-            
+
             return acc
           }, { active: 0, completed: 0, pending: 0, overdue: 0 })
-          
+
           setAssignmentStats(stats)
           break
         }
 
         case 'students':
-          const studentsResponse = await userAPI.getUsers({ 
-            role: 'student', 
+          const studentsResponse = await userAPI.getUsers({
+            role: 'student',
             per_page: 10,
             page: studentCurrentPage,
             search: studentSearchQuery || undefined
@@ -221,7 +221,7 @@ function CoordinatorDashboard() {
           break
 
         case 'schedules':
-          const availabilityResponse = await availabilityAPI.getAvailability({ 
+          const availabilityResponse = await availabilityAPI.getAvailability({
             per_page: 100,
             date: selectedDate
           })
@@ -234,7 +234,7 @@ function CoordinatorDashboard() {
           break
 
         case 'recycle-bin':
-          const trashedResponse = await assignmentAPI.getTrashedAssignments({ 
+          const trashedResponse = await assignmentAPI.getTrashedAssignments({
             per_page: 10,
             page: recycleBinCurrentPage
           })
@@ -413,9 +413,9 @@ function CoordinatorDashboard() {
 
   return (
     <div className="flex h-screen bg-background">
-      <CoordinatorSidebar 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab} 
+      <CoordinatorSidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         user={currentUser}
@@ -437,18 +437,18 @@ function CoordinatorDashboard() {
               </Button>
               <div>
                 <h1 className="text-2xl font-semibold text-foreground">
-                {activeTab === "assignments" && "Assignment Management"}
-                {activeTab === "students" && "View Students"}
-                {activeTab === "schedules" && "Student Availability"}
-                {activeTab === "positions" && "Position Management"}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {activeTab === "assignments" && "Create and manage assignments for students"}
-                {activeTab === "students" && "View and manage student information"}
-                {activeTab === "schedules" && "Check who is available at specific times"}
-                {activeTab === "positions" && "Manage available positions and roles"}
-              </p>
-            </div>
+                  {activeTab === "assignments" && "Assignment Management"}
+                  {activeTab === "students" && "View Students"}
+                  {activeTab === "schedules" && "Student Availability"}
+                  {activeTab === "positions" && "Position Management"}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {activeTab === "assignments" && "Create and manage assignments for students"}
+                  {activeTab === "students" && "View and manage student information"}
+                  {activeTab === "schedules" && "Check who is available at specific times"}
+                  {activeTab === "positions" && "Manage available positions and roles"}
+                </p>
+              </div>
             </div>
             <NotificationDropdown />
           </div>
@@ -464,7 +464,7 @@ function CoordinatorDashboard() {
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
                       <h3 className="text-lg font-semibold text-foreground">Assignments</h3>
-                      <Button 
+                      <Button
                         onClick={handleCreateAssignment}
                         className="bg-primary text-primary-foreground hover:bg-primary/90"
                         size="sm"
@@ -472,7 +472,7 @@ function CoordinatorDashboard() {
                         <Plus className="w-4 h-4 mr-2" /> Add Assignment
                       </Button>
                     </div>
-                    
+
                     <div className="flex flex-col md:flex-row gap-4">
                       {/* Filter Buttons */}
                       <div className="grid grid-cols-2 sm:flex items-center bg-muted p-1 rounded-lg gap-1">
@@ -483,11 +483,10 @@ function CoordinatorDashboard() {
                             setAssignmentFilter('all')
                             setAssignmentCurrentPage(1)
                           }}
-                          className={`transition-all duration-200 w-full sm:w-auto ${
-                            assignmentFilter === 'all' 
-                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
+                          className={`transition-all duration-200 w-full sm:w-auto ${assignmentFilter === 'all'
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                          }`}
+                            }`}
                         >
                           All
                         </Button>
@@ -498,11 +497,10 @@ function CoordinatorDashboard() {
                             setAssignmentFilter('pending')
                             setAssignmentCurrentPage(1)
                           }}
-                          className={`transition-all duration-200 w-full sm:w-auto ${
-                            assignmentFilter === 'pending' 
-                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
+                          className={`transition-all duration-200 w-full sm:w-auto ${assignmentFilter === 'pending'
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                          }`}
+                            }`}
                         >
                           Pending
                         </Button>
@@ -513,11 +511,10 @@ function CoordinatorDashboard() {
                             setAssignmentFilter('confirmed')
                             setAssignmentCurrentPage(1)
                           }}
-                          className={`transition-all duration-200 w-full sm:w-auto ${
-                            assignmentFilter === 'confirmed' 
-                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
+                          className={`transition-all duration-200 w-full sm:w-auto ${assignmentFilter === 'confirmed'
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                          }`}
+                            }`}
                         >
                           Confirmed
                         </Button>
@@ -528,11 +525,10 @@ function CoordinatorDashboard() {
                             setAssignmentFilter('complete')
                             setAssignmentCurrentPage(1)
                           }}
-                          className={`transition-all duration-200 w-full sm:w-auto ${
-                            assignmentFilter === 'complete' 
-                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium' 
+                          className={`transition-all duration-200 w-full sm:w-auto ${assignmentFilter === 'complete'
+                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
                               : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                          }`}
+                            }`}
                         >
                           Completed
                         </Button>
@@ -610,7 +606,7 @@ function CoordinatorDashboard() {
                             const hasStudent = assignment.users?.some(u => u.id.toString() === studentFilter);
                             if (!hasStudent) return false;
                           }
-                          
+
                           // Filter by search query
                           if (assignmentSearchQuery) {
                             const query = assignmentSearchQuery.toLowerCase();
@@ -620,67 +616,66 @@ function CoordinatorDashboard() {
                               assignment.event_location.toLowerCase().includes(query)
                             );
                           }
-                          
+
                           return true;
                         })
                         .map((assignment, index) => (
-                        <div key={`${assignment.id}-${index}`} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4">
-                          <div className="flex items-center space-x-4 w-full md:w-auto">
-                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                              <ClipboardList className="w-5 h-5 text-primary dark:text-white" />
+                          <div key={`${assignment.id}-${index}`} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4">
+                            <div className="flex items-center space-x-4 w-full md:w-auto">
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <ClipboardList className="w-5 h-5 text-primary dark:text-white" />
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="font-medium text-foreground truncate">{assignment.assignment_name}</h4>
+                                <p className="text-sm text-muted-foreground truncate">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString('en-US')}</p>
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <h4 className="font-medium text-foreground truncate">{assignment.assignment_name}</h4>
-                              <p className="text-sm text-muted-foreground truncate">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString('en-US')}</p>
+                            <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
+                              <Badge
+                                variant="secondary"
+                                className={`text-xs px-2 py-0.5 border-none ${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                                    assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white' :
+                                      'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                                  }`}
+                              >
+                                {assignment.status}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewAssignment(assignment);
+                                }}
+                                className="text-muted-foreground hover:text-foreground hover:bg-muted"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditAssignment(assignment);
+                                }}
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-white dark:hover:bg-blue-900/20"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteAssignment(assignment.id);
+                                }}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
-                            <Badge 
-                              variant="secondary" 
-                              className={`text-xs px-2 py-0.5 border-none ${
-                                assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white' :
-                                'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-                              }`}
-                            >
-                              {assignment.status}
-                            </Badge>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewAssignment(assignment);
-                              }} 
-                              className="text-muted-foreground hover:text-foreground hover:bg-muted"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditAssignment(assignment);
-                              }} 
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-white dark:hover:bg-blue-900/20"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteAssignment(assignment.id);
-                              }} 
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
+                        ))}
                       {assignments.length === 0 && (
                         <div className="text-center py-8 text-muted-foreground">No assignments found</div>
                       )}
@@ -773,15 +768,15 @@ function CoordinatorDashboard() {
                   {viewMode === "card" ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {(students || []).map((student) => (
-                        <Card 
-                          key={student.id} 
+                        <Card
+                          key={student.id}
                           className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10 transition-all cursor-pointer h-32"
                           onClick={() => router.push(`/student/${student.id}`)}
                         >
                           <CardContent className="p-4 h-full">
                             <div className="flex items-center space-x-4 h-full">
                               <Avatar className="h-16 w-16 flex-shrink-0">
-                                <AvatarImage src={student.profile_picture_url || ""} />
+                                <AvatarImage src={student.profile_picture || student.profile_picture_url || ""} />
                                 <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
                                   {getInitials(student.name)}
                                 </AvatarFallback>
@@ -834,8 +829,8 @@ function CoordinatorDashboard() {
                           </thead>
                           <tbody className="divide-y divide-border">
                             {(students || []).map((student) => (
-                              <tr 
-                                key={student.id} 
+                              <tr
+                                key={student.id}
                                 className="hover:bg-muted/30 transition-colors cursor-pointer"
                                 onClick={() => router.push(`/student/${student.id}`)}
                               >
@@ -863,11 +858,10 @@ function CoordinatorDashboard() {
                                     <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800">
                                       {student.promised_hours_per_week || '0'}h Promised
                                     </Badge>
-                                    <Badge variant="outline" className={`text-xs w-fit ${
-                                      (Number(student.remaining_hours_this_week) || 0) > 0 
-                                        ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800' 
+                                    <Badge variant="outline" className={`text-xs w-fit ${(Number(student.remaining_hours_this_week) || 0) > 0
+                                        ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800'
                                         : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
-                                    }`}>
+                                      }`}>
                                       {student.remaining_hours_this_week ? Number(student.remaining_hours_this_week).toFixed(1) : '0'}h Remaining
                                     </Badge>
                                   </div>
@@ -883,9 +877,9 @@ function CoordinatorDashboard() {
                                   </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right">
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation()
                                       router.push(`/student/${student.id}`)
@@ -948,9 +942,9 @@ function CoordinatorDashboard() {
                 <CardHeader className="flex flex-col md:flex-row items-center justify-between pb-2 gap-4">
                   <CardTitle className="text-foreground font-bold">Daily Availability View</CardTitle>
                   <div className="flex items-center bg-card rounded-lg border border-border shadow-sm p-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
                       onClick={() => {
                         const date = new Date(selectedDate)
@@ -963,18 +957,18 @@ function CoordinatorDashboard() {
 
                     <div className="flex items-center px-2">
                       <Label htmlFor="date-picker" className="sr-only">Select Date</Label>
-                      <Input 
+                      <Input
                         id="date-picker"
-                        type="date" 
+                        type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
                         className="w-auto border-0 focus-visible:ring-0 h-8 font-medium text-foreground bg-transparent p-0"
                       />
                     </div>
 
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
                       onClick={() => {
                         const date = new Date(selectedDate)
@@ -994,15 +988,15 @@ function CoordinatorDashboard() {
                       <div className="space-y-2">
                         {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => { // 7 AM to 9 PM
                           const timeString = `${hour.toString().padStart(2, '0')}:00`;
-                          
+
                           // Filter students available at this hour
                           const availableStudents = availability.filter(a => {
                             if (a.date !== selectedDate) return false;
                             if (a.status !== 'available') return false;
-                            
+
                             const startHour = parseInt(a.start_time.split(':')[0]);
                             const endHour = parseInt(a.end_time.split(':')[0]);
-                            
+
                             return hour >= startHour && hour < endHour;
                           });
 
@@ -1033,8 +1027,8 @@ function CoordinatorDashboard() {
                                       const style = colors[colorIndex];
 
                                       return (
-                                        <div 
-                                          key={student.id} 
+                                        <div
+                                          key={student.id}
                                           className={`
                                             flex items-center space-x-2 
                                             bg-card border-l-[3px] ${style.border}
@@ -1092,48 +1086,48 @@ function CoordinatorDashboard() {
                   </div>
                   <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-muted/50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Description</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {(positions || []).map((position) => (
-                          <tr key={position.id} className="hover:bg-muted/30 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <MapPin className="w-4 h-4 text-primary dark:text-white" />
-                                </div>
-                                <span className="font-medium text-foreground">{position.name}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <p className="text-sm text-muted-foreground line-clamp-1">{position.description || 'No description'}</p>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <Badge variant={position.is_active ? "secondary" : "outline"}>
-                                {position.is_active ? "Active" : "Inactive"}
-                              </Badge>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              <div className="flex justify-end space-x-2">
-                                <Button variant="ghost" size="sm" onClick={() => handleEditPosition(position)} className="h-8 w-8 p-0">
-                                  <Edit className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleDeletePosition(position.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </td>
+                      <table className="w-full">
+                        <thead className="bg-muted/50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Description</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {(positions || []).map((position) => (
+                            <tr key={position.id} className="hover:bg-muted/30 transition-colors">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <MapPin className="w-4 h-4 text-primary dark:text-white" />
+                                  </div>
+                                  <span className="font-medium text-foreground">{position.name}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <p className="text-sm text-muted-foreground line-clamp-1">{position.description || 'No description'}</p>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <Badge variant={position.is_active ? "secondary" : "outline"}>
+                                  {position.is_active ? "Active" : "Inactive"}
+                                </Badge>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right">
+                                <div className="flex justify-end space-x-2">
+                                  <Button variant="ghost" size="sm" onClick={() => handleEditPosition(position)} className="h-8 w-8 p-0">
+                                    <Edit className="h-4 w-4 text-muted-foreground" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" onClick={() => handleDeletePosition(position.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                     {(positions || []).length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">No positions found</div>
@@ -1158,111 +1152,111 @@ function CoordinatorDashboard() {
               ) : (
                 <>
                   <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
-                  <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Assignment</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Event</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Deleted At</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {(trashedAssignments || []).map((assignment) => (
-                        <tr key={assignment.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </div>
-                              <span className="font-medium text-foreground">{assignment.assignment_name}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium">{assignment.event_name}</span>
-                              <span className="text-xs text-muted-foreground">{new Date(assignment.event_start_datetime).toLocaleDateString()}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-muted-foreground">
-                              {assignment.deleted_at ? new Date(assignment.deleted_at).toLocaleDateString() : 'N/A'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <div className="flex justify-end space-x-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => {
-                                  setAssignmentToRestore(assignment.id)
-                                  setIsRestoreConfirmationOpen(true)
-                                }}
-                                className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
-                              >
-                                Restore
-                              </Button>
-                              <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                onClick={() => {
-                                  setAssignmentToForceDelete(assignment.id)
-                                  setIsForceDeleteConfirmationOpen(true)
-                                }}
-                              >
-                                Delete Forever
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-muted/50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Assignment</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Event</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Deleted At</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {(trashedAssignments || []).map((assignment) => (
+                            <tr key={assignment.id} className="hover:bg-muted/30 transition-colors">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                  </div>
+                                  <span className="font-medium text-foreground">{assignment.assignment_name}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium">{assignment.event_name}</span>
+                                  <span className="text-xs text-muted-foreground">{new Date(assignment.event_start_datetime).toLocaleDateString()}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className="text-sm text-muted-foreground">
+                                  {assignment.deleted_at ? new Date(assignment.deleted_at).toLocaleDateString() : 'N/A'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right">
+                                <div className="flex justify-end space-x-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setAssignmentToRestore(assignment.id)
+                                      setIsRestoreConfirmationOpen(true)
+                                    }}
+                                    className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                                  >
+                                    Restore
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => {
+                                      setAssignmentToForceDelete(assignment.id)
+                                      setIsForceDeleteConfirmationOpen(true)
+                                    }}
+                                  >
+                                    Delete Forever
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {(trashedAssignments || []).length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">No trashed assignments found</div>
+                    )}
                   </div>
-                  {(trashedAssignments || []).length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">No trashed assignments found</div>
-                  )}
-                </div>
 
-                {/* Recycle Bin Pagination */}
-                {recycleBinPagination && recycleBinPagination.last_page > 1 && (
-                  <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
-                    <div className="text-sm text-gray-500">
-                      Showing {recycleBinPagination.from} to {recycleBinPagination.to} of {recycleBinPagination.total} results
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setRecycleBinCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={recycleBinCurrentPage === 1}
-                      >
-                        Previous
-                      </Button>
-                      <div className="text-sm font-medium">
-                        Page {recycleBinCurrentPage} of {recycleBinPagination.last_page}
+                  {/* Recycle Bin Pagination */}
+                  {recycleBinPagination && recycleBinPagination.last_page > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+                      <div className="text-sm text-gray-500">
+                        Showing {recycleBinPagination.from} to {recycleBinPagination.to} of {recycleBinPagination.total} results
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setRecycleBinCurrentPage(p => Math.min(recycleBinPagination.last_page, p + 1))}
-                        disabled={recycleBinCurrentPage === recycleBinPagination.last_page}
-                      >
-                        Next
-                      </Button>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setRecycleBinCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={recycleBinCurrentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="text-sm font-medium">
+                          Page {recycleBinCurrentPage} of {recycleBinPagination.last_page}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setRecycleBinCurrentPage(p => Math.min(recycleBinPagination.last_page, p + 1))}
+                          disabled={recycleBinCurrentPage === recycleBinPagination.last_page}
+                        >
+                          Next
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
                 </>
               )}
             </div>
           )}
         </main>
       </div>
-      <CreateAssignmentModal 
-        isOpen={isCreateAssignmentModalOpen} 
-        onClose={() => setIsCreateAssignmentModalOpen(false)} 
+      <CreateAssignmentModal
+        isOpen={isCreateAssignmentModalOpen}
+        onClose={() => setIsCreateAssignmentModalOpen(false)}
         onAssignmentCreated={fetchData}
         assignmentToEdit={editingAssignment}
       />

@@ -3,8 +3,8 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { 
-  Users, 
+import {
+  Users,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -33,7 +33,7 @@ import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComp
 import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 
-import { 
+import {
   authAPI,
   getStoredUser,
   formatAPIError,
@@ -78,7 +78,7 @@ function SupervisorDashboard() {
     completedToday: 0,
     upcoming: 0
   })
-  
+
   // Calendar state
   const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month")
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
@@ -98,7 +98,7 @@ function SupervisorDashboard() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -111,12 +111,12 @@ function SupervisorDashboard() {
       router.push('/login')
       return
     }
-    
+
     if (!hasAnyRole(['supervisor', 'admin'])) {
       router.push('/login')
       return
     }
-    
+
     setCurrentUser(user)
     setLoading(false)
   }, [])
@@ -132,49 +132,49 @@ function SupervisorDashboard() {
 
         // Always fetch students and assignments as they are used across tabs or for stats
         const [studentsResponse, assignmentsResponse] = await Promise.all([
-            userAPI.getUsers({ role: 'student', per_page: 100 }),
-            assignmentAPI.getAssignments({ per_page: 100 })
+          userAPI.getUsers({ role: 'student', per_page: 100 }),
+          assignmentAPI.getAssignments({ per_page: 100 })
         ]);
 
         setStudents(studentsResponse.data)
         setAssignments(assignmentsResponse.data)
 
         // Calculate Dashboard Stats
-        const totalHours = studentsResponse.data.reduce((acc, student) => 
-            acc + (student.hours_worked_this_week || 0), 0)
-        const avgHours = studentsResponse.data.length > 0 ? 
-            totalHours / studentsResponse.data.length : 0
-        const completionSum = studentsResponse.data.reduce((acc, student) => 
-            acc + (student.hours_completion_percentage || 0), 0)
+        const totalHours = studentsResponse.data.reduce((acc, student) =>
+          acc + (student.hours_worked_this_week || 0), 0)
+        const avgHours = studentsResponse.data.length > 0 ?
+          totalHours / studentsResponse.data.length : 0
+        const completionSum = studentsResponse.data.reduce((acc, student) =>
+          acc + (student.hours_completion_percentage || 0), 0)
         const avgCompletion = studentsResponse.data.length > 0 ?
-            completionSum / studentsResponse.data.length : 0
-        
+          completionSum / studentsResponse.data.length : 0
+
         setStats({
-            totalStudents: studentsResponse.data.length,
-            monthlyHours: totalHours * 4, // Approximate monthly hours
-            averageHours: avgHours,
-            completionRate: avgCompletion
+          totalStudents: studentsResponse.data.length,
+          monthlyHours: totalHours * 4, // Approximate monthly hours
+          averageHours: avgHours,
+          completionRate: avgCompletion
         })
 
         // Calculate Assignment Stats
         const today = new Date()
         today.setHours(0, 0, 0, 0)
-        
+
         const assignmentStatsCalc = assignmentsResponse.data.reduce((acc, assignment) => {
-            const startDate = new Date(assignment.event_start_datetime)
-            
-            if (assignment.status === 'confirmed' || assignment.status === 'pending') acc.active++
-            
-            if (assignment.status === 'complete' && 
-                startDate >= today && startDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)) {
+          const startDate = new Date(assignment.event_start_datetime)
+
+          if (assignment.status === 'confirmed' || assignment.status === 'pending') acc.active++
+
+          if (assignment.status === 'complete' &&
+            startDate >= today && startDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)) {
             acc.completedToday++
-            }
-            
-            if (startDate > new Date()) acc.upcoming++
-            
-            return acc
+          }
+
+          if (startDate > new Date()) acc.upcoming++
+
+          return acc
         }, { active: 0, completedToday: 0, upcoming: 0 })
-        
+
         setAssignmentStats(assignmentStatsCalc)
 
       } catch (err) {
@@ -190,7 +190,7 @@ function SupervisorDashboard() {
   // Fetch availability when date changes
   useEffect(() => {
     if (!currentUser) return
-    
+
     const fetchAvailability = async () => {
       try {
         const response = await availabilityAPI.getAvailability({ per_page: 100, date: selectedDate })
@@ -219,16 +219,16 @@ function SupervisorDashboard() {
     const data = new Array(12).fill(0);
 
     assignments.forEach(assignment => {
-        const date = new Date(assignment.event_start_datetime);
-        if (date.getFullYear() === currentYear && assignment.status === 'complete') {
-            const duration = Math.abs(new Date(assignment.event_end_datetime).getTime() - date.getTime()) / (1000 * 60 * 60);
-            data[date.getMonth()] += duration;
-        }
+      const date = new Date(assignment.event_start_datetime);
+      if (date.getFullYear() === currentYear && assignment.status === 'complete') {
+        const duration = Math.abs(new Date(assignment.event_end_datetime).getTime() - date.getTime()) / (1000 * 60 * 60);
+        data[date.getMonth()] += duration;
+      }
     });
 
     return months.map((month, index) => ({
-        month,
-        hours: Math.round(data[index])
+      month,
+      hours: Math.round(data[index])
     }));
   };
 
@@ -236,22 +236,22 @@ function SupervisorDashboard() {
   const maxHours = Math.max(...monthlyData.map(d => d.hours), 10); // Default to 10 to avoid div by zero
 
   // Filter students
-  const filteredStudents = students.filter(student => 
+  const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
     student.email.toLowerCase().includes(studentSearchQuery.toLowerCase())
   );
 
   // Helper to get student assignments count
   const getStudentAssignmentCount = (studentId: string) => {
-      return assignments.filter(a => a.users?.some(u => u.id === studentId) && a.status !== 'complete').length;
+    return assignments.filter(a => a.users?.some(u => u.id === studentId) && a.status !== 'complete').length;
   };
 
   // Helper to get student availability string
   const getStudentAvailability = (studentId: string) => {
-      const studentAvail = availability.filter(a => a.student_id === studentId);
-      if (studentAvail.length === 0) return "No availability set";
-      // Just show count or first available day for brevity
-      return `${studentAvail.length} slots available`;
+    const studentAvail = availability.filter(a => a.student_id === studentId);
+    if (studentAvail.length === 0) return "No availability set";
+    // Just show count or first available day for brevity
+    return `${studentAvail.length} slots available`;
   };
 
   const handleEventClick = (event: CalendarEvent) => {
@@ -265,7 +265,7 @@ function SupervisorDashboard() {
   // Prepare calendar events
   const calendarEvents: CalendarEvent[] = assignments.map(assignment => {
     let colorClass = "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-500";
-    
+
     if (assignment.status === 'confirmed') {
       colorClass = "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-500";
     } else if (assignment.status === 'pending') {
@@ -291,9 +291,9 @@ function SupervisorDashboard() {
 
   return (
     <div className="flex h-screen bg-background">
-      <SupervisorSidebar 
-        activeTab={activeTab} 
-        onTabChange={setActiveTab} 
+      <SupervisorSidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
@@ -313,17 +313,17 @@ function SupervisorDashboard() {
                 <Menu className="h-6 w-6" />
               </Button>
               <div>
-              <h1 className="text-2xl font-semibold text-foreground">
-                {activeTab === "dashboard" && "Supervisor Dashboard"}
-                {activeTab === "student-schedules" && "Student Schedule"}
-                {activeTab === "assignment-schedules" && "Assignment Schedule"}
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                {activeTab === "dashboard" && "Overview of student assignment hours and performance"}
-                {activeTab === "student-schedules" && "View student availability and schedules"}
-                {activeTab === "assignment-schedules" && "View assignment timelines and schedules"}
-              </p>
-            </div>
+                <h1 className="text-2xl font-semibold text-foreground">
+                  {activeTab === "dashboard" && "Supervisor Dashboard"}
+                  {activeTab === "student-schedules" && "Student Schedule"}
+                  {activeTab === "assignment-schedules" && "Assignment Schedule"}
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {activeTab === "dashboard" && "Overview of student assignment hours and performance"}
+                  {activeTab === "student-schedules" && "View student availability and schedules"}
+                  {activeTab === "assignment-schedules" && "View assignment timelines and schedules"}
+                </p>
+              </div>
             </div>
             <NotificationDropdown />
           </div>
@@ -367,7 +367,7 @@ function SupervisorDashboard() {
                     <div className="flex items-end justify-between h-64 space-x-2 min-w-[600px]">
                       {monthlyData.map((data, index) => (
                         <div key={index} className="flex flex-col items-center space-y-2 flex-1">
-                          <div 
+                          <div
                             className="w-full bg-gradient-to-t from-primary to-primary-light rounded-t-md min-h-[4px] flex items-end justify-center text-white text-xs font-semibold transition-all duration-500"
                             style={{ height: `${(data.hours / maxHours) * 100}%` }}
                           >
@@ -400,15 +400,14 @@ function SupervisorDashboard() {
                         .sort((a, b) => (b.hours_completion_percentage || 0) - (a.hours_completion_percentage || 0))
                         .slice(0, 4)
                         .map((student, index) => (
-                          <div 
-                            key={student.id} 
+                          <div
+                            key={student.id}
                             className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted cursor-pointer transition-colors gap-4 sm:gap-0"
                             onClick={() => router.push(`/student/${student.id}`)}
                           >
                             <div className="flex items-center space-x-4">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${
-                                index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-muted-foreground' : index === 2 ? 'bg-orange-500' : 'bg-muted-foreground/70'
-                              }`}>
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-muted-foreground' : index === 2 ? 'bg-orange-500' : 'bg-muted-foreground/70'
+                                }`}>
                                 {index + 1}
                               </div>
                               <div>
@@ -440,9 +439,9 @@ function SupervisorDashboard() {
                 <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 gap-4 sm:gap-0">
                   <CardTitle className="text-foreground font-bold">Daily Availability View</CardTitle>
                   <div className="flex items-center bg-card rounded-lg border border-border shadow-sm p-1 w-full sm:w-auto justify-between sm:justify-start">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
                       onClick={() => {
                         const date = new Date(selectedDate)
@@ -455,18 +454,18 @@ function SupervisorDashboard() {
 
                     <div className="flex items-center px-2 flex-1 sm:flex-none justify-center">
                       <Label htmlFor="date-picker" className="sr-only">Select Date</Label>
-                      <Input 
+                      <Input
                         id="date-picker"
-                        type="date" 
+                        type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
                         className="w-auto border-0 focus-visible:ring-0 h-8 font-medium text-foreground bg-transparent p-0"
                       />
                     </div>
 
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
                       onClick={() => {
                         const date = new Date(selectedDate)
@@ -486,15 +485,15 @@ function SupervisorDashboard() {
                       <div className="space-y-2">
                         {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => { // 7 AM to 9 PM
                           const timeString = `${hour.toString().padStart(2, '0')}:00`;
-                          
+
                           // Filter students available at this hour
                           const availableStudents = availability.filter(a => {
                             if (a.date !== selectedDate) return false;
                             if (a.status !== 'available') return false;
-                            
+
                             const startHour = parseInt(a.start_time.split(':')[0]);
                             const endHour = parseInt(a.end_time.split(':')[0]);
-                            
+
                             return hour >= startHour && hour < endHour;
                           });
 
@@ -525,8 +524,8 @@ function SupervisorDashboard() {
                                       const style = colors[colorIndex];
 
                                       return (
-                                        <div 
-                                          key={student.id} 
+                                        <div
+                                          key={student.id}
                                           className={`
                                             flex items-center space-x-2 
                                             bg-card border-l-[3px] ${style.border}
@@ -541,7 +540,7 @@ function SupervisorDashboard() {
                                           onClick={() => router.push(`/student/${student.id}`)}
                                         >
                                           <Avatar className={`h-6 w-6 border ${style.border}`}>
-                                            <AvatarImage src={student.profile_picture_url || ""} />
+                                            <AvatarImage src={student.profile_picture || student.profile_picture_url || ""} />
                                             <AvatarFallback className={`text-[9px] ${style.bg} text-white font-bold`}>
                                               {getInitials(student.name)}
                                             </AvatarFallback>
@@ -579,40 +578,39 @@ function SupervisorDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     {assignments
-                        .filter(a => new Date(a.event_start_datetime) >= new Date())
-                        .sort((a, b) => new Date(a.event_start_datetime).getTime() - new Date(b.event_start_datetime).getTime())
-                        .slice(0, 5)
-                        .map((assignment, index) => (
-                      <div key={assignment.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg border-l-4 border-purple-500 dark:border-purple-400 gap-4 sm:gap-0">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                            <ClipboardList className="w-6 h-6 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-foreground">{assignment.assignment_name}</h4>
-                            <p className="text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">
-                                {assignment.users && assignment.users.length > 0 
-                                    ? `Assigned to: ${assignment.users.map(u => u.name).join(', ')}`
-                                    : 'Unassigned'}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
+                      .filter(a => new Date(a.event_start_datetime) >= new Date())
+                      .sort((a, b) => new Date(a.event_start_datetime).getTime() - new Date(b.event_start_datetime).getTime())
+                      .slice(0, 5)
+                      .map((assignment, index) => (
+                        <div key={assignment.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg border-l-4 border-purple-500 dark:border-purple-400 gap-4 sm:gap-0">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                              <ClipboardList className="w-6 h-6 text-primary" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-foreground">{assignment.assignment_name}</h4>
+                              <p className="text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">
+                                {assignment.users && assignment.users.length > 0
+                                  ? `Assigned to: ${assignment.users.map(u => u.name).join(', ')}`
+                                  : 'Unassigned'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
                                 {new Date(assignment.event_start_datetime).toLocaleString()}
-                            </p>
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 self-start sm:self-center pl-16 sm:pl-0">
+                            <Badge className={`text-xs px-2 py-1 ${assignment.status === "pending" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white" :
+                                assignment.status === "confirmed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
+                                  "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+                              }`}>
+                              {assignment.status}
+                            </Badge>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2 self-start sm:self-center pl-16 sm:pl-0">
-                          <Badge className={`text-xs px-2 py-1 ${
-                            assignment.status === "pending" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white" :
-                            assignment.status === "confirmed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
-                            "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
-                          }`}>
-                            {assignment.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                     {assignments.filter(a => new Date(a.event_start_datetime) >= new Date()).length === 0 && (
-                        <div className="text-center py-4 text-muted-foreground">No upcoming assignments found.</div>
+                      <div className="text-center py-4 text-muted-foreground">No upcoming assignments found.</div>
                     )}
                   </div>
                 </CardContent>
@@ -620,7 +618,7 @@ function SupervisorDashboard() {
 
               {/* Calendar View */}
               <div className="h-[500px] sm:h-[700px]">
-                <CalendarComponent 
+                <CalendarComponent
                   events={calendarEvents}
                   view={calendarView}
                   onViewChange={setCalendarView}
