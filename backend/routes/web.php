@@ -20,7 +20,7 @@ Route::get('/google/callback', function (Request $request) {
     $state = $request->input('state');
 
     if (!$state) {
-        return redirect('http://localhost:3000/dashboard?error=missing_state');
+        return redirect(env('FRONTEND_URL', 'http://localhost:3000') . '/dashboard?error=missing_state');
     }
 
     $userId = Cache::get('google_auth_state_' . $state);
@@ -29,7 +29,7 @@ Route::get('/google/callback', function (Request $request) {
 
     if (!$userId) {
         file_put_contents(storage_path('logs/debug_google.log'), date('Y-m-d H:i:s') . " Error: Invalid state or timeout\n", FILE_APPEND);
-        return redirect('http://localhost:3000/dashboard?error=invalid_state_or_timeout');
+        return redirect(env('FRONTEND_URL', 'http://localhost:3000') . '/dashboard?error=invalid_state_or_timeout');
     }
 
     // Remove from cache only after we confirm we found the user, or let it expire. 
@@ -42,7 +42,7 @@ Route::get('/google/callback', function (Request $request) {
     if (!$user) {
         file_put_contents(storage_path('logs/debug_google.log'), date('Y-m-d H:i:s') . " Error: User not found\n", FILE_APPEND);
         \Illuminate\Support\Facades\Log::error('Google Callback: User not found for ID: ' . $userId);
-        return redirect('http://localhost:3000/dashboard?error=user_not_found');
+        return redirect(env('FRONTEND_URL', 'http://localhost:3000') . '/dashboard?error=user_not_found');
     }
 
     $client = new GoogleClient();
@@ -58,7 +58,7 @@ Route::get('/google/callback', function (Request $request) {
 
         if (isset($token['error'])) {
              file_put_contents(storage_path('logs/debug_google.log'), date('Y-m-d H:i:s') . " Token Error: " . $token['error'] . "\n", FILE_APPEND);
-             return redirect('http://localhost:3000/dashboard?error=' . $token['error']);
+             return redirect(env('FRONTEND_URL', 'http://localhost:3000') . '/dashboard?error=' . $token['error']);
         }
 
         $updateData = [
@@ -75,11 +75,11 @@ Route::get('/google/callback', function (Request $request) {
 
         \Illuminate\Support\Facades\Log::info('Google Callback: User saved. Token set for user: ' . $user->id);
 
-        return redirect('http://localhost:3000/dashboard?success=google_connected');
+        return redirect(env('FRONTEND_URL', 'http://localhost:3000') . '/dashboard?success=google_connected');
     } catch (\Exception $e) {
         file_put_contents(storage_path('logs/debug_google.log'), date('Y-m-d H:i:s') . " Exception: " . $e->getMessage() . "\n", FILE_APPEND);
         \Illuminate\Support\Facades\Log::error('Google Callback Error: ' . $e->getMessage());
-        return redirect('http://localhost:3000/dashboard?error=' . urlencode($e->getMessage()));
+        return redirect(env('FRONTEND_URL', 'http://localhost:3000') . '/dashboard?error=' . urlencode($e->getMessage()));
     }
 });
 

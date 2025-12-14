@@ -21,9 +21,31 @@ export default function GoogleCalendarConnect() {
     end: ''
   });
 
-  const connectGoogle = () => {
-    // Redirect to backend Web Route for Google OAuth
-    window.location.href = `${WEB_BASE_URL}/google/login`;
+  const connectGoogle = async () => {
+    setLoading(true);
+    try {
+      const token = await getCSRFToken();
+      // Call API to get Google Auth URL (this generates and caches state)
+      const response = await fetch(`${API_BASE_URL}/google/auth-url`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          ...(token ? { 'X-CSRF-TOKEN': token } : {})
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) throw new Error('Failed to get auth URL');
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error connecting to Google:', error);
+      alert('Failed to initiate Google connection');
+      setLoading(false);
+    }
   };
 
   const createGoogleBooking = async (e: React.FormEvent) => {
@@ -32,7 +54,7 @@ export default function GoogleCalendarConnect() {
 
     try {
       const csrfToken = await getCSRFToken();
-      
+
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -60,10 +82,10 @@ export default function GoogleCalendarConnect() {
         const contentType = response.headers.get('content-type');
         let message = 'Unknown error';
         if (contentType && contentType.includes('application/json')) {
-             const data = await response.json();
-             message = data.message || message;
+          const data = await response.json();
+          message = data.message || message;
         } else {
-             message = `Server error: ${response.status}`;
+          message = `Server error: ${response.status}`;
         }
         alert(`Failed to create event: ${message}`);
       }

@@ -1,33 +1,34 @@
 # Railway Environment Configuration
 
-To fix the `419 CSRF token mismatch` error and ensure your app works correctly on your custom domain `pann.khazifire.com`, you need to configure the following environment variables in your **Railway Project Settings** for the **Backend** service.
+To fix the `419 CSRF token mismatch` error, your Frontend and Backend **MUST share the same top-level domain** (e.g., `pann.khazifire.com`).
 
-## Required Variables
+## 🚨 Critical Domain Setup
+You cannot use `pann.khazifire.com` for the frontend and `av-scheduler.up.railway.app` for the backend. **Cookies will be blocked.**
 
-| Variable | Value | Description |
-| :--- | :--- | :--- |
-| `APP_URL` | `https://pann.khazifire.com` | The full URL of your backend. |
-| `FRONTEND_URL` | `https://pann.khazifire.com` | The full URL of your frontend. |
-| `SANCTUM_STATEFUL_DOMAINS` | `pann.khazifire.com` | The domain of your frontend (without `https://`). |
-| `SESSION_DOMAIN` | `.pann.khazifire.com` | The domain for cookies (leading dot allows subdomains). |
-| `SESSION_SECURE_COOKIE` | `true` | Must be true for HTTPS. |
-| `SESSION_SAME_SITE` | `lax` | Recommended for same-site requests. |
+1.  **Frontend Domain:** `pann.khazifire.com` (Already set up)
+2.  **Backend Domain:** You **MUST** set up a subdomain for your backend, e.g., `api.pann.khazifire.com`.
+    *   Go to Railway -> Backend Service -> Settings -> Domains.
+    *   Add `api.pann.khazifire.com` (or similar).
+    *   Update your DNS records as instructed by Railway.
 
-## Frontend Configuration
-
-Ensure your **Frontend** service on Railway also has the correct environment variable:
+## Backend Variables (Railway)
+Once you have `api.pann.khazifire.com` set up:
 
 | Variable | Value |
 | :--- | :--- |
-| `NEXT_PUBLIC_API_URL` | `https://pann.khazifire.com/api` | Points to your backend API. |
+| `APP_URL` | `https://api.pann.khazifire.com` |
+| `FRONTEND_URL` | `https://pann.khazifire.com` |
+| `SANCTUM_STATEFUL_DOMAINS` | `pann.khazifire.com` |
+| `SESSION_DOMAIN` | `.pann.khazifire.com` |
+| `SESSION_SECURE_COOKIE` | `true` |
 
-*Note: If your backend is hosted on a different domain (e.g., `api.pann.khazifire.com` or the default Railway URL), update `APP_URL` and `NEXT_PUBLIC_API_URL` accordingly. However, for cookie-based authentication to work, the frontend and backend MUST share the same top-level domain (e.g., `pann.khazifire.com`).*
+## Frontend Variables (Railway)
+Update your **Frontend** service variables:
 
-## How to Apply
+| Variable | Value |
+| :--- | :--- |
+| `NEXT_PUBLIC_API_URL` | `https://api.pann.khazifire.com/api` |
 
-1.  Go to your [Railway Dashboard](https://railway.app/).
-2.  Select your project.
-3.  Click on the **Backend** service -> **Variables**.
-4.  Add/Update the variables listed above.
-5.  **Redeploy** the backend service.
+## Why?
+Browsers block cookies between different domains (like `khazifire.com` and `railway.app`) for security. By using `api.pann.khazifire.com`, both your frontend and backend share the `khazifire.com` root domain, allowing them to share the login session securely.
 
