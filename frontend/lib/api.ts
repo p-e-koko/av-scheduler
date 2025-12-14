@@ -1,5 +1,5 @@
 // API configuration and utilities
-let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+export let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 // Handle Mixed Content issues automatically
 if (typeof window !== 'undefined' && window.location.protocol === 'https:') {

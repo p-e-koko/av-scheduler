@@ -44,7 +44,8 @@ import {
   assignmentAPI,
   availabilityAPI,
   type Assignment,
-  type Availability
+  type Availability,
+  API_BASE_URL
 } from "@/lib/api"
 import { StudentSidebar } from "@/components/StudentSidebar"
 import { RejectAssignmentModal } from "@/components/RejectAssignmentModal"
@@ -397,7 +398,14 @@ function StudentDashboard() {
     } catch (err: any) {
       console.error("Failed to remove from calendar", err)
        if (err.message === 'Google account not connected' || (err.status === 400 && err.message.includes('Google'))) {
-         window.location.href = 'http://localhost:8000/google/login';
+         // Use API_BASE_URL to construct the login URL. 
+         // If API_BASE_URL is relative (e.g. /api), we need to prepend window.origin or just use it relative.
+         // But window.location.href handles relative paths relative to current page, which is wrong if we want /google/login relative to root.
+         // Actually, API_BASE_URL usually ends with /api. We want /google/login.
+         // So we should strip /api and append /google/login.
+         
+         const baseUrl = API_BASE_URL.replace(/\/api$/, '');
+         window.location.href = `${baseUrl}/google/login`;
       } else {
          setStatusDialog({
             isOpen: true,

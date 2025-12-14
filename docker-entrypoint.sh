@@ -16,6 +16,10 @@ if [ ! -z "$RAILWAY_PUBLIC_DOMAIN" ]; then
     fi
 fi
 
+# Clear caches before migration to avoid stale config issues
+echo "Clearing caches..."
+php artisan optimize:clear
+
 # Run migrations
 echo "Running migrations..."
 php artisan migrate --force
@@ -24,9 +28,11 @@ php artisan migrate --force
 echo "Running seeders..."
 php artisan db:seed --force
 
-# Clear caches to ensure config updates take effect
-php artisan config:clear
-php artisan cache:clear
+# Re-cache configuration for performance
+echo "Caching configuration..."
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
 
 # Start supervisor
 exec /usr/bin/supervisord -c /etc/supervisord.conf
