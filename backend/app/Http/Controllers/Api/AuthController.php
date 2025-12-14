@@ -59,7 +59,7 @@ class AuthController extends Controller
                 }
 
                 // Auto-verify email removed to enforce real verification
-                // $user->markEmailAsVerified();
+                $user->markEmailAsVerified();
 
                 try {
                     event(new Registered($user));
