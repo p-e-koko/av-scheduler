@@ -58,6 +58,9 @@ class AuthController extends Controller
                     // For now, we continue without assigning the Spatie role, but the 'role' column is set.
                 }
 
+                // Auto-verify email to bypass email sending issues
+                $user->markEmailAsVerified();
+
                 try {
                     event(new Registered($user));
                 } catch (\Exception $e) {
@@ -68,7 +71,7 @@ class AuthController extends Controller
                 AuditLogger::log('User Registered', ['email' => $user->email, 'role' => $user->role]);
 
                 return response()->json([
-                    'message' => 'User registered successfully. Please check your email for verification.',
+                    'message' => 'User registered successfully.',
                     'user' => new UserResource($user),
                 ], 201);
             });
