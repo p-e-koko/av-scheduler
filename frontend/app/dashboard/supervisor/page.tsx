@@ -243,7 +243,7 @@ function SupervisorDashboard() {
     // Initialize data structure with months
     const data = months.map(month => {
       const entry: any = { name: month };
-      // Initialize all students to 0 to ensure lines are continuous (or use connectNulls)
+      // Initialize all students to 0
       students.forEach(s => {
         entry[`user_${s.id}`] = 0;
       });
@@ -256,21 +256,23 @@ function SupervisorDashboard() {
         const duration = Math.abs(new Date(assignment.event_end_datetime).getTime() - date.getTime()) / (1000 * 60 * 60);
 
         if (assignment.users && assignment.users.length > 0) {
-          // We'll credit the full duration to each assignee for now (or split it if that's the business rule. Assuming full credit based on typical usage).
-          // Actually, "Completed Assignment Hours" usually means hours worked by the student. 
-          // If 3 students work on a 1 hour assignment, they each log 1 hour.
           assignment.users.forEach(user => {
-            const monthIndex = date.getMonth();
-            const key = `user_${user.id}`;
-            // Safely add
-            if (typeof data[monthIndex][key] !== 'number') data[monthIndex][key] = 0;
-            data[monthIndex][key] += duration;
+            // Only count hours if obtaining "real data" implies the user effectively completed it.
+            // We check user.pivot.status. 
+            // If status is 'completed', they surely worked.
+            // If distinct status implementation is used, we must rely on it.
+            if (user.pivot?.status === 'completed') {
+              const monthIndex = date.getMonth();
+              const key = `user_${user.id}`;
+              if (typeof data[monthIndex][key] !== 'number') data[monthIndex][key] = 0;
+              data[monthIndex][key] += duration;
+            }
           });
         }
       }
     });
 
-    // Clean up: Maybe round numbers
+    // Clean up: Round numbers
     return data.map(entry => {
       const newEntry = { ...entry };
       Object.keys(newEntry).forEach(key => {
