@@ -163,6 +163,13 @@ export const getCSRFToken = async (): Promise<string | null> => {
     const response = await fetch(`${API_BASE_URL}/csrf-token`, {
       credentials: 'include',
     });
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('CSRF endpoint returned non-JSON response:', contentType);
+      return null;
+    }
+
     const data = await response.json();
     return data.csrf_token;
   } catch (error) {
@@ -263,8 +270,20 @@ async function apiCall<T>(
       throw new APIError('Session expired or unauthenticated. Please log in again.', 401);
     }
 
-    const data = await response.json();
-    console.log('Response data:', data);
+    const contentType = response.headers.get('content-type');
+    let data;
+
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+      console.log('Response data:', data);
+    } else {
+      const text = await response.text();
+      console.error('Received non-JSON response:', text.substring(0, 500));
+      throw new APIError(
+        `Server returned unexpected response type: ${contentType}. Status: ${response.status}`,
+        response.status
+      );
+    }
 
     if (!response.ok) {
       throw new APIError(
@@ -360,7 +379,15 @@ export const authAPI = {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const contentType = response.headers.get('content-type');
+        let errorData: any = {};
+        if (contentType && contentType.includes('application/json')) {
+            errorData = await response.json();
+        } else {
+            const text = await response.text();
+            console.error('Register error non-JSON:', text);
+            errorData = { message: `Server error: ${response.status}` };
+        }
         throw new APIError(
           errorData.message || 'An error occurred',
           response.status,
@@ -368,14 +395,13 @@ export const authAPI = {
         );
       }
 
-      const result = await response.json();
-      
-      // Do not store user data on register as they need to verify email first
-      // if (result.user) {
-      //   setStoredUser(result.user);
-      // }
-
-      return result;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+          return await response.json();
+      } else {
+          console.warn('Register success but non-JSON response');
+          return { message: 'Registration successful' };
+      }
     } else {
       // For regular JSON data
       const response = await apiCall<ApiResponse>('/auth/register', {
@@ -455,7 +481,15 @@ export const authAPI = {
       },
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type');
+    let data;
+    if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+    } else {
+        const text = await response.text();
+        console.error('Verify email non-JSON:', text);
+        data = { message: `Server returned ${response.status}` };
+    }
 
     if (!response.ok) {
       throw new APIError(data.message || 'Verification failed', response.status);
@@ -683,7 +717,15 @@ export const userAPI = {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const contentType = response.headers.get('content-type');
+        let errorData: any = {};
+        if (contentType && contentType.includes('application/json')) {
+             errorData = await response.json();
+        } else {
+             const text = await response.text();
+             console.error('Create user error non-JSON:', text);
+             errorData = { message: `Server error: ${response.status}` };
+        }
         throw new APIError(
           errorData.message || 'An error occurred',
           response.status,
@@ -691,7 +733,13 @@ export const userAPI = {
         );
       }
 
-      return response.json();
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+          return await response.json();
+      } else {
+          console.warn('Create user success but non-JSON response');
+          return { message: 'User created successfully', user: {} as User };
+      }
     } else {
       // For regular JSON data, use standard endpoint
       return apiCall<{ message: string; user: User }>('/users', {
@@ -731,7 +779,15 @@ export const userAPI = {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const contentType = response.headers.get('content-type');
+        let errorData: any = {};
+        if (contentType && contentType.includes('application/json')) {
+             errorData = await response.json();
+        } else {
+             const text = await response.text();
+             console.error('Update user error non-JSON:', text);
+             errorData = { message: `Server error: ${response.status}` };
+        }
         throw new APIError(
           errorData.message || 'An error occurred',
           response.status,
@@ -739,7 +795,13 @@ export const userAPI = {
         );
       }
 
-      return response.json();
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+          return await response.json();
+      } else {
+          console.warn('Update user success but non-JSON response');
+          return { message: 'User updated successfully', user: {} as User };
+      }
     } else {
       // For regular JSON data, use standard PUT method
       return apiCall<{ message: string; user: User }>(`/users/${id}`, {

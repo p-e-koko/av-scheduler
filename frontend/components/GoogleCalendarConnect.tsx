@@ -71,8 +71,15 @@ export default function GoogleCalendarConnect() {
         alert('Event created successfully!');
         setFormData({ title: '', start: '', end: '' });
       } else {
-        const data = await response.json();
-        alert(`Failed to create event: ${data.message || 'Unknown error'}`);
+        const contentType = response.headers.get('content-type');
+        let message = 'Unknown error';
+        if (contentType && contentType.includes('application/json')) {
+             const data = await response.json();
+             message = data.message || message;
+        } else {
+             message = `Server error: ${response.status}`;
+        }
+        alert(`Failed to create event: ${message}`);
       }
     } catch (error) {
       console.error('Error creating booking:', error);
