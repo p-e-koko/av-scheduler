@@ -24,6 +24,7 @@ Route::get('/google/callback', function (Request $request) {
     }
 
     $userId = Cache::pull('google_auth_state_' . $state);
+    \Illuminate\Support\Facades\Log::info('Google Callback: State: ' . $state . ' UserID: ' . $userId);
 
     if (!$userId) {
         return redirect('http://localhost:3000/dashboard?error=invalid_state_or_timeout');
@@ -31,6 +32,7 @@ Route::get('/google/callback', function (Request $request) {
 
     $user = \App\Models\User::find($userId);
     if (!$user) {
+        \Illuminate\Support\Facades\Log::error('Google Callback: User not found for ID: ' . $userId);
         return redirect('http://localhost:3000/dashboard?error=user_not_found');
     }
 
@@ -42,20 +44,28 @@ Route::get('/google/callback', function (Request $request) {
 
     try {
         $token = $client->fetchAccessTokenWithAuthCode($request->code);
+        \Illuminate\Support\Facades\Log::info('Google Callback: Token received', ['token_keys' => array_keys($token)]);
 
         if (isset($token['error'])) {
              return redirect('http://localhost:3000/dashboard?error=' . $token['error']);
         }
 
-        $user->google_access_token = $token['access_token'];
+        $updateData = [
+            'google_access_token' => $token['access_token'],
+            'google_token_expires_at' => now()->addSeconds($token['expires_in']),
+        ];
+
         if (isset($token['refresh_token'])) {
-            $user->google_refresh_token = $token['refresh_token'];
+            $updateData['google_refresh_token'] = $token['refresh_token'];
         }
-        $user->google_token_expires_at = now()->addSeconds($token['expires_in']);
-        $user->save();
+
+        $user->update($updateData);
+        
+        \Illuminate\Support\Facades\Log::info('Google Callback: User saved. Token set for user: ' . $user->id);
 
         return redirect('http://localhost:3000/dashboard?success=google_connected');
     } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Google Callback Error: ' . $e->getMessage());
         return redirect('http://localhost:3000/dashboard?error=' . urlencode($e->getMessage()));
     }
 });

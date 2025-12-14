@@ -199,6 +199,7 @@ Route::middleware('auth:sanctum')->group(function () {
         $state = Str::random(40);
         // Store state -> user_id in cache for 5 minutes
         Cache::put('google_auth_state_' . $state, $request->user()->id, 300);
+        \Illuminate\Support\Facades\Log::info('Google Auth URL: State generated: ' . $state . ' for User: ' . $request->user()->id);
 
         $client->setState($state);
 

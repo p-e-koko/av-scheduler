@@ -559,6 +559,7 @@ class AssignmentController extends Controller
     public function addToCalendar(Request $request, Assignment $assignment)
     {
         $user = $request->user();
+        \Illuminate\Support\Facades\Log::info('AddToCalendar: User ' . $user->id . ' Token: ' . ($user->google_access_token ? 'Present' : 'Missing'));
 
         // Check if user is assigned to this assignment
         $pivot = $assignment->users()->where('user_id', $user->id)->first();
@@ -572,7 +573,7 @@ class AssignmentController extends Controller
         }
 
         // Check Google Tokens
-        if (!$user->google_access_token) {
+        if (!$user->google_access_token && !$user->google_refresh_token) {
             return response()->json(['message' => 'Google account not connected', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
         }
 
@@ -580,16 +581,27 @@ class AssignmentController extends Controller
         $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
         $client->setClientId(config('services.google.client_id'));
         $client->setClientSecret(config('services.google.client_secret'));
-        $client->setAccessToken([
+        
+        $accessToken = [
             'access_token' => $user->google_access_token,
             'refresh_token' => $user->google_refresh_token,
-        ]);
+            'created' => $user->updated_at->timestamp, // Approximate
+            'expires_in' => $user->google_token_expires_at ? $user->google_token_expires_at->diffInSeconds(now()) : 3600,
+        ];
+        
+        $client->setAccessToken($accessToken);
 
         if ($client->isAccessTokenExpired()) {
             if ($user->google_refresh_token) {
-                $client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
-                $user->google_access_token = $client->getAccessToken()['access_token'];
-                $user->save();
+                try {
+                    $client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
+                    $newToken = $client->getAccessToken();
+                    $user->google_access_token = $newToken['access_token'];
+                    $user->save();
+                } catch (\Exception $e) {
+                     \Illuminate\Support\Facades\Log::error('Google Token Refresh Failed: ' . $e->getMessage());
+                     return response()->json(['message' => 'Google session expired', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+                }
             } else {
                  return response()->json(['message' => 'Google session expired', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
             }
