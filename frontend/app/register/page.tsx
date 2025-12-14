@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { authAPI, formatAPIError, testConnection } from "@/lib/api"
 import {
   Dialog,
@@ -48,7 +49,7 @@ export default function RegisterPage() {
         setError("Cannot connect to backend server. Please check your connection.");
       }
     };
-    
+
     checkConnection();
   }, []);
 
@@ -59,7 +60,7 @@ export default function RegisterPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
     setFormData(prev => ({ ...prev, profile_picture: file }))
-    
+
     if (file) {
       const reader = new FileReader()
       reader.onload = () => setProfilePreview(reader.result as string)
@@ -110,13 +111,13 @@ export default function RegisterPage() {
       submitData.append('student_id', formData.student_id)
       submitData.append('username', formData.username)
       submitData.append('promised_hours_per_week', formData.promised_hours_per_week.toString())
-      
+
       if (formData.profile_picture) {
         submitData.append('profile_picture', formData.profile_picture)
       }
-      
+
       const response = await authAPI.register(submitData)
-      
+
       if (response.user) {
         // Show success dialog instead of immediate redirect
         setShowSuccessDialog(true)
@@ -279,11 +280,12 @@ export default function RegisterPage() {
                 <p className="text-xs text-muted-foreground">Maximum file size: 500MB. Supported: JPEG, PNG, JPG, GIF</p>
                 {profilePreview && (
                   <div className="mt-3">
-                    <img
-                      src={profilePreview}
-                      alt="Profile preview"
-                      className="h-20 w-20 rounded-full object-cover border-2 border-border shadow-sm"
-                    />
+                    <Avatar className="h-20 w-20 border-2 border-border shadow-sm">
+                      <AvatarImage src={profilePreview} alt="Profile preview" className="object-cover" />
+                      <AvatarFallback className="bg-muted text-2xl">
+                        {formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
                 )}
               </div>

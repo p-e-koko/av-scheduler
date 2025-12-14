@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { X, Save } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { userAPI, formatAPIError, type User } from "@/lib/api"
@@ -65,16 +66,16 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
     setFormData(prev => {
       const newData = {
         ...prev,
-        [name]: name === 'promised_hours_per_week' ? parseFloat(value) || 0 : 
-                name === 'role' ? value as 'admin' | 'supervisor' | 'coordinator' | 'student' : 
-                value
+        [name]: name === 'promised_hours_per_week' ? parseFloat(value) || 0 :
+          name === 'role' ? value as 'admin' | 'supervisor' | 'coordinator' | 'student' :
+            value
       }
-      
+
       // If role changed to student and no promised hours set, ensure minimum 1 hour
       if (name === 'role' && value === 'student' && newData.promised_hours_per_week === 0) {
         newData.promised_hours_per_week = 1
       }
-      
+
       return newData
     })
   }
@@ -82,7 +83,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
     setFormData(prev => ({ ...prev, profile_picture: file }))
-    
+
     if (file) {
       const reader = new FileReader()
       reader.onload = () => setProfilePreview(reader.result as string)
@@ -93,7 +94,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
-    
+
     setLoading(true)
     setError(null)
 
@@ -119,18 +120,18 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
       submitData.append('username', formData.username)
       submitData.append('role', formData.role)
       submitData.append('promised_hours_per_week', formData.promised_hours_per_week.toString())
-      
+
       // Only include password if it's not empty
       if (formData.password.trim()) {
         submitData.append('password', formData.password)
       }
-      
+
       if (formData.profile_picture) {
         submitData.append('profile_picture', formData.profile_picture)
       }
-      
+
       await userAPI.updateUser(user.id, submitData)
-      
+
       onUserUpdated()
       onClose()
     } catch (err) {
@@ -153,11 +154,11 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={handleClose}
       />
-      
+
       {/* Modal */}
       <div className="relative bg-card/95 backdrop-blur-xl rounded-lg shadow-2xl shadow-primary/10 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto border border-border">
         {/* Header */}
@@ -338,11 +339,12 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
             <p className="text-xs text-muted-foreground">Maximum file size: 500MB. Supported formats: JPEG, PNG, JPG, GIF</p>
             {profilePreview && (
               <div className="mt-2">
-                <img
-                  src={profilePreview}
-                  alt="Profile preview"
-                  className="h-32 w-32 rounded-full object-cover border-2 border-border"
-                />
+                <Avatar className="h-32 w-32 border-2 border-border">
+                  <AvatarImage src={profilePreview} alt="Profile preview" className="object-cover" />
+                  <AvatarFallback className="text-4xl bg-muted">
+                    {formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}
+                  </AvatarFallback>
+                </Avatar>
               </div>
             )}
           </div>
