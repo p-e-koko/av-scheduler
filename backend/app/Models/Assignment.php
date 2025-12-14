@@ -246,4 +246,50 @@ class Assignment extends Model
     {
         $this->users()->updateExistingPivot($user->id, ['checked_in' => false]);
     }
+
+    /**
+     * Get the formatted duration of the assignment.
+     */
+    public function getFormattedDuration(): string
+    {
+        return $this->event_start_datetime->diffForHumans($this->event_end_datetime, true);
+    }
+
+    /**
+     * Get the time until the assignment starts.
+     */
+    public function getTimeUntilStart(): string
+    {
+        return $this->event_start_datetime->diffForHumans();
+    }
+
+    /**
+     * Get the time since the assignment ended.
+     */
+    public function getTimeSinceEnd(): string
+    {
+        return $this->event_end_datetime->diffForHumans();
+    }
+
+    /**
+     * Get the completion percentage based on time.
+     */
+    public function getCompletionPercentage(): float
+    {
+        if ($this->isUpcoming()) {
+            return 0;
+        }
+        if ($this->isPast()) {
+            return 100;
+        }
+
+        $totalDuration = $this->event_start_datetime->diffInMinutes($this->event_end_datetime);
+        $elapsedDuration = $this->event_start_datetime->diffInMinutes(now());
+
+        if ($totalDuration == 0) {
+            return 100;
+        }
+
+        return round(($elapsedDuration / $totalDuration) * 100, 2);
+    }
 }

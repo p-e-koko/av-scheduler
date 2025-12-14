@@ -36,4 +36,42 @@ class Availability extends Model
     {
         return $this->belongsTo(User::class, 'student_id');
     }
+
+    /**
+     * Get duration in minutes.
+     */
+    public function getDurationInMinutes(): int
+    {
+        $start = \Carbon\Carbon::createFromFormat('H:i:s', $this->start_time);
+        $end = \Carbon\Carbon::createFromFormat('H:i:s', $this->end_time);
+
+        return abs($end->diffInMinutes($start));
+    }
+
+    /**
+     * Get formatted time range.
+     */
+    public function getFormattedTimeRange(): string
+    {
+        $start = \Carbon\Carbon::createFromFormat('H:i:s', $this->start_time)->format('g:i A');
+        $end = \Carbon\Carbon::createFromFormat('H:i:s', $this->end_time)->format('g:i A');
+
+        return "{$start} - {$end}";
+    }
+
+    /**
+     * Check if the availability date is in the past.
+     */
+    public function isPast(): bool
+    {
+        return \Carbon\Carbon::parse($this->date)->isPast();
+    }
+
+    /**
+     * Check if the availability date is today.
+     */
+    public function isToday(): bool
+    {
+        return \Carbon\Carbon::parse($this->date)->isToday();
+    }
 }
