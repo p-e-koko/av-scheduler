@@ -58,8 +58,8 @@ class AuthController extends Controller
                     // For now, we continue without assigning the Spatie role, but the 'role' column is set.
                 }
 
-                // Auto-verify email to bypass email sending issues
-                $user->markEmailAsVerified();
+                // Auto-verify email removed to enforce real verification
+                // $user->markEmailAsVerified();
 
                 try {
                     event(new Registered($user));
