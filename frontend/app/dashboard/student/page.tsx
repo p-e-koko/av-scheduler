@@ -47,6 +47,7 @@ import {
   type Availability,
   API_BASE_URL
 } from "@/lib/api"
+import { initServerTime, getServerTime } from "@/lib/server-time"
 import { StudentSidebar } from "@/components/StudentSidebar"
 import { RejectAssignmentModal } from "@/components/RejectAssignmentModal"
 import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
@@ -123,20 +124,27 @@ function StudentDashboard() {
   }, [])
 
   // Check authentication and permissions
+  // Check authentication and permissions
   useEffect(() => {
-    const user = getStoredUser()
-    if (!user) {
-      router.push('/login')
-      return
-    }
+    const init = async () => {
+      await initServerTime();
 
-    if (!hasAnyRole(['student', 'admin'])) {
-      router.push('/login')
-      return
-    }
+      const user = getStoredUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
-    setCurrentUser(user)
-    setLoading(false)
+      if (!hasAnyRole(['student', 'admin'])) {
+        router.push('/login')
+        return
+      }
+
+      setCurrentUser(user)
+      setLoading(false)
+    };
+
+    init();
   }, [])
 
   // Fetch data based on active tab
@@ -435,7 +443,7 @@ function StudentDashboard() {
     const promised = parseFloat(currentUser.promised_hours_per_week || '0')
 
     // Get start and end of current week
-    const now = new Date()
+    const now = getServerTime()
     const startOfWeek = new Date(now)
     const day = now.getDay() || 7 // Get current day number, converting Sun (0) to 7
     if (day !== 1) startOfWeek.setHours(-24 * (day - 1)) // Set to Monday

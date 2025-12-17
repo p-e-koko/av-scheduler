@@ -47,6 +47,7 @@ import {
   type Assignment,
   type Availability
 } from "@/lib/api"
+import { initServerTime, getServerTime, getServerTodayResult } from "@/lib/server-time"
 import { ModeToggle } from "@/components/mode-toggle"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -89,6 +90,7 @@ function SupervisorDashboard() {
 
   // Availability View State
   const [selectedDate, setSelectedDate] = useState<string>(() => {
+    // Initial render will use client time, but we'll try to sync quickly
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   })
@@ -109,19 +111,36 @@ function SupervisorDashboard() {
 
   // Check authentication and permissions
   useEffect(() => {
-    const user = getStoredUser()
-    if (!user) {
-      router.push('/login')
-      return
-    }
+    const initializeDashboard = async () => {
+      // Sync time first
+      await initServerTime();
 
-    if (!hasAnyRole(['supervisor', 'admin'])) {
-      router.push('/login')
-      return
-    }
+      // Update selected date to server time if it differs from client default
+      // This ensures we show the correct "today" based on server time
+      const serverToday = getServerTodayResult();
+      const d = new Date();
+      const clientToday = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-    setCurrentUser(user)
-    setLoading(false)
+      if (serverToday !== clientToday) {
+        setSelectedDate(serverToday);
+      }
+
+      const user = getStoredUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      if (!hasAnyRole(['supervisor', 'admin'])) {
+        router.push('/login')
+        return
+      }
+
+      setCurrentUser(user)
+      setLoading(false)
+    };
+
+    initializeDashboard();
   }, [])
 
   // Fetch data based on active tab
@@ -160,7 +179,7 @@ function SupervisorDashboard() {
         })
 
         // Calculate Assignment Stats
-        const today = new Date()
+        const today = getServerTime()
         today.setHours(0, 0, 0, 0)
 
         const assignmentStatsCalc = assignmentsResponse.data.reduce((acc, assignment) => {
@@ -173,7 +192,7 @@ function SupervisorDashboard() {
             acc.completedToday++
           }
 
-          if (startDate > new Date()) acc.upcoming++
+          if (startDate > getServerTime()) acc.upcoming++
 
           return acc
         }, { active: 0, completedToday: 0, upcoming: 0 })
@@ -218,7 +237,7 @@ function SupervisorDashboard() {
   // Calculate Monthly Data from Assignments (Total Hours)
   const calculateMonthlyData = () => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const currentYear = new Date().getFullYear();
+    const currentYear = getServerTime().getFullYear();
 
     // Initialize data structure
     const data = months.map(month => ({ name: month, hours: 0 }));
@@ -226,7 +245,7 @@ function SupervisorDashboard() {
     assignments.forEach(assignment => {
       const date = new Date(assignment.event_start_datetime);
       const endDate = new Date(assignment.event_end_datetime);
-      const now = new Date();
+      const now = getServerTime();
 
       // Consider 'complete' assignments OR 'confirmed' assignments that are in the past
       const isCompleteOrPastConfirmed =
@@ -573,7 +592,7 @@ function SupervisorDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     {assignments
-                      .filter(a => new Date(a.event_start_datetime) >= new Date())
+                      .filter(a => new Date(a.event_start_datetime) >= getServerTime())
                       .sort((a, b) => new Date(a.event_start_datetime).getTime() - new Date(b.event_start_datetime).getTime())
                       .slice(0, 5)
                       .map((assignment, index) => (
@@ -604,7 +623,7 @@ function SupervisorDashboard() {
                           </div>
                         </div>
                       ))}
-                    {assignments.filter(a => new Date(a.event_start_datetime) >= new Date()).length === 0 && (
+                    {assignments.filter(a => new Date(a.event_start_datetime) >= getServerTime()).length === 0 && (
                       <div className="text-center py-4 text-muted-foreground">No upcoming assignments found.</div>
                     )}
                   </div>
