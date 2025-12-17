@@ -98,16 +98,87 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-// Debug route for testing email sending
-Route::get('/debug/send-test-email', function (Request $request) {
-    $to = $request->query('email', 'delivered@resend.dev');
+use Resend\Laravel\Facades\Resend;
+
+// Debug route for testing Resend email sending
+Route::get('/debug/resend-fix', function (Request $request) {
     try {
-        \Illuminate\Support\Facades\Mail::raw('This is a test email from your Laravel application using Resend.', function ($message) use ($to) {
-            $message->to($to)
-                    ->subject('Test Email from Local Environment');
-        });
-        return "Email sent successfully to {$to}";
-    } catch (\Exception $e) {
-        return 'Error sending email: ' . $e->getMessage();
+        $to = $request->query('email');
+        
+        if (!$to) {
+            return response()->json([
+                'error' => 'Missing recipient email. Use ?email=your@email.com',
+                'config' => [
+                    'mail_mailer' => config('mail.default'),
+                    'mail_from_address' => config('mail.from.address'),
+                    'mail_from_name' => config('mail.from.name'),
+                    'resend_key_check' => [
+                        'exists' => !empty(config('services.resend.key')),
+                        'length' => strlen(config('services.resend.key')),
+                        'start' => substr(config('services.resend.key'), 0, 4) . '...',
+                        'end' => '...' . substr(config('services.resend.key'), -4),
+                    ],
+                ]
+            ], 400);
+        }
+
+        $results = [];
+
+        // 1. Test via Resend SDK (Direct Facade)
+        try {
+            $sdkResult = Resend::emails()->send([
+                'from' => config('mail.from.address'),
+                'to' => $to,
+                'subject' => 'Resend SDK Test: ' . now(),
+                'html' => '<p>This is a test email sent directly via Resend SDK Facade.</p>',
+            ]);
+            
+            $results['sdk_method'] = [
+                'status' => 'success',
+                'data' => $sdkResult->toArray()
+            ];
+        } catch (\Throwable $e) {
+            $results['sdk_method'] = [
+                'status' => 'failed',
+                'error' => $e->getMessage(),
+                'class' => get_class($e)
+            ];
+        }
+
+        // 2. Test via Laravel Mail Facade
+        try {
+            \Illuminate\Support\Facades\Mail::raw('This is a test email using Laravel Mail Facade.', function ($message) use ($to) {
+                $message->to($to)
+                        ->subject('Laravel Mail Facade Test: ' . now());
+            });
+            
+            $results['laravel_mail_method'] = [
+                'status' => 'success',
+                'message' => 'Email queued/sent successfully via Mail facade.'
+            ];
+        } catch (\Throwable $e) {
+            $results['laravel_mail_method'] = [
+                'status' => 'failed',
+                'error' => $e->getMessage(),
+                'class' => get_class($e)
+            ];
+        }
+
+        return response()->json([
+            'config' => [
+                'mail_mailer' => config('mail.default'),
+                'mail_from_address' => config('mail.from.address'),
+                'resend_key_set' => !empty(config('services.resend.key')),
+            ],
+            'results' => $results
+        ]);
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'critical_error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
     }
 });

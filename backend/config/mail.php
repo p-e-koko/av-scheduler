@@ -111,8 +111,8 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'no-reply@pann.khazifire.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => env('MAIL_FROM_ADDRESS', 'no-reply@av-scheduler.pekko.dev'),
+        'name' => env('MAIL_FROM_NAME', 'AV Scheduler'),
     ],
 
 ];
