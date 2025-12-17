@@ -1,91 +1,67 @@
 # -----------------------
-# Stage 1: Build Next (frontend)
+# Stage 1: Build Dependencies
 # -----------------------
-FROM node:20-alpine AS node_builder
-WORKDIR /app/frontend
-
-# install deps
-COPY frontend/package*.json ./
-RUN npm ci
-
-# copy source & build
-COPY frontend ./
-
-# Pass API URL during build
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
-
-# Build static export (output: 'export' in next.config.ts)
-RUN npm run build
-
-# -----------------------
-# Stage 2: Prepare Laravel (backend)
-# -----------------------
-FROM composer:2 AS composer_builder
-WORKDIR /app/backend
+FROM composer:2 AS vendor
+WORKDIR /app
 COPY backend/composer.json backend/composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-scripts --no-interaction --no-progress
-
-# copy the rest and run any composer post-install scripts
-COPY backend ./
-RUN composer run-script post-autoload-dump || true
+RUN composer install --no-dev --prefer-dist --no-scripts --no-interaction --no-progress --ignore-platform-reqs
 
 # -----------------------
-# Stage 3: Final runtime (nginx + php-fpm)
+# Stage 2: Final Runtime
 # -----------------------
 FROM php:8.2-fpm-alpine
 
-# Install extension installer
-COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
-
-# install system deps for Laravel & Nginx & Supervisor
+# Install system dependencies
 RUN apk add --no-cache \
     nginx \
     supervisor \
     bash \
     curl \
-    file
+    libpng-dev \
+    libzip-dev \
+    zip \
+    unzip
 
 # Install PHP extensions
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 RUN install-php-extensions \
     pdo_mysql \
+    pdo_pgsql \
     zip \
-    intl
+    gd \
+    bcmath \
+    intl \
+    opcache
 
-# Configure PHP upload limits
+# Configure PHP
 RUN echo "upload_max_filesize = 20M" > /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "post_max_size = 20M" >> /usr/local/etc/php/conf.d/uploads.ini
+    && echo "post_max_size = 20M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "variables_order = EGPCS" >> /usr/local/etc/php/conf.d/variables_order.ini
 
-# create app dir
-WORKDIR /var/www/html
-
-# copy Laravel from composer_builder
-COPY --from=composer_builder /app/backend /var/www/html
-
-# copy built Next static export into nginx html root
-# Note: Next.js 'output: export' creates an 'out' directory
-COPY --from=node_builder /app/frontend/out /usr/share/nginx/html
-
-# copy nginx config
+# Configure Nginx
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# copy supervisor config
+# Configure Supervisor
 COPY supervisord.conf /etc/supervisord.conf
 
-# copy entrypoint
+# Setup Working Directory
+WORKDIR /var/www/html
+
+# Copy Vendor
+COPY --from=vendor /app/vendor /var/www/html/vendor
+
+# Copy App Code
+COPY backend /var/www/html
+
+# Permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Expose Port
+EXPOSE 8080
+
+# Entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /usr/share/nginx/html
-
-# expose port
-EXPOSE 8080
-
-# production bootstrap: set envs here or via Railway
-ENV APP_ENV=production
-ENV APP_DEBUG=false
-ENV PORT=8080
-
-# Start supervisor via entrypoint
 CMD ["/usr/local/bin/docker-entrypoint.sh"]

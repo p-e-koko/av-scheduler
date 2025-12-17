@@ -1,0 +1,13 @@
+/node_modules
+/frontend
+/.git
+/.github
+/tests
+/docs
+/nginx.conf
+/Dockerfile
+/fly.toml
+.env
+.env.example
+.gitattributes
+.gitignore

@@ -1,0 +1,32 @@
+# fly.toml app configuration file generated for av-scheduler on 2024-01-24T00:00:00+00:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "av-scheduler"
+primary_region = "sin" # Singapore, close to user likely. Change if needed.
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  APP_ENV = "production"
+  APP_DEBUG = "false"
+  LOG_CHANNEL = "stderr"
+  LOG_LEVEL = "info"
+  # URL configs - set these via 'fly secrets' preferably, but defaults here
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb" # PHP might benefit from 512mb, monitor usage.
+  cpus = 1
+  cpu_kind = "shared"
