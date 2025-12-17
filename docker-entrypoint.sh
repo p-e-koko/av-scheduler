@@ -18,7 +18,7 @@ fi
 
 # Clear caches before migration to avoid stale config issues
 echo "Clearing caches..."
-php artisan optimize:clear
+CACHE_STORE=file CACHE_DRIVER=file php artisan optimize:clear
 
 # Run migrations
 echo "Running migrations..."
