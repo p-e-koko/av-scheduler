@@ -55,7 +55,7 @@ COPY --from=vendor /app/vendor /var/www/html/vendor
 COPY backend /var/www/html
 
 # Permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chown -R www-data:www-data /var/www/html
 
 # Expose Port
 EXPOSE 8080

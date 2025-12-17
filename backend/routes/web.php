@@ -98,3 +98,16 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+// Debug route for testing email sending
+Route::get('/debug/send-test-email', function (Request $request) {
+    $to = $request->query('email', 'delivered@resend.dev');
+    try {
+        \Illuminate\Support\Facades\Mail::raw('This is a test email from your Laravel application using Resend.', function ($message) use ($to) {
+            $message->to($to)
+                    ->subject('Test Email from Local Environment');
+        });
+        return "Email sent successfully to {$to}";
+    } catch (\Exception $e) {
+        return 'Error sending email: ' . $e->getMessage();
+    }
+});
