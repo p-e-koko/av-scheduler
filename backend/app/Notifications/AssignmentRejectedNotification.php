@@ -15,14 +15,16 @@ class AssignmentRejectedNotification extends Notification
 
     public $assignment;
     public $student;
+    public $reason;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(Assignment $assignment, User $student)
+    public function __construct(Assignment $assignment, User $student, $reason = null)
     {
         $this->assignment = $assignment;
         $this->student = $student;
+        $this->reason = $reason;
     }
 
     /**
@@ -32,7 +34,16 @@ class AssignmentRejectedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     */
+    public function toMail(object $notifiable): \App\Mail\AssignmentStatusUpdated
+    {
+        return (new \App\Mail\AssignmentStatusUpdated($this->assignment, $this->student, 'rejected', $this->reason))
+                    ->to($notifiable->email);
     }
 
     /**

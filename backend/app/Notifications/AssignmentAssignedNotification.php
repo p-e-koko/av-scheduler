@@ -29,7 +29,16 @@ class AssignmentAssignedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     */
+    public function toMail(object $notifiable): \App\Mail\AssignmentAssigned
+    {
+        return (new \App\Mail\AssignmentAssigned($this->assignment, $notifiable))
+                    ->to($notifiable->email);
     }
 
     /**

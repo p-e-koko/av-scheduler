@@ -32,7 +32,16 @@ class AssignmentAcceptedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    /**
+     * Get the mail representation of the notification.
+     */
+    public function toMail(object $notifiable): \App\Mail\AssignmentStatusUpdated
+    {
+        return (new \App\Mail\AssignmentStatusUpdated($this->assignment, $this->student, 'accepted'))
+                    ->to($notifiable->email);
     }
 
     /**

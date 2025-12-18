@@ -506,7 +506,7 @@ class AssignmentController extends Controller
 
         // Notify coordinator
         if ($assignment->creator) {
-            $assignment->creator->notify(new \App\Notifications\AssignmentRejectedNotification($assignment, $user));
+            $assignment->creator->notify(new \App\Notifications\AssignmentRejectedNotification($assignment, $user, $request->reason));
         }
 
         AuditLogger::log('Assignment Rejected', [
