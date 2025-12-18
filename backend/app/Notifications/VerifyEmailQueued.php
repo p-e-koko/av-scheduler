@@ -8,5 +8,5 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class VerifyEmailQueued extends VerifyEmail
 {
-    // use Queueable; // Disabled for debugging
+    use Queueable;
 }
