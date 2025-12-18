@@ -28,11 +28,11 @@ class DatabaseSeeder extends Seeder
             $admin->id = (string) \Illuminate\Support\Str::uuid();
             $admin->email = 'pekkodev@gmail.com';
             $admin->name = 'Admin User';
-            $admin->role = 'admin';
-            $admin->email_verified_at = now();
-            $admin->password = $password;
             $admin->save();
         }
+        $admin->role = 'admin';
+        $admin->email_verified_at = now();
+        $admin->save(); // Save changes for existing users too
         $admin->assignRole('admin');
 
         // 2. Coordinator User
@@ -42,11 +42,12 @@ class DatabaseSeeder extends Seeder
             $coordinator->id = (string) \Illuminate\Support\Str::uuid();
             $coordinator->email = 'panneikoko1221@gmail.com';
             $coordinator->name = 'Coordinator User';
-            $coordinator->role = 'coordinator';
-            $coordinator->email_verified_at = now();
             $coordinator->password = $password;
             $coordinator->save();
         }
+        $coordinator->role = 'coordinator';
+        $coordinator->email_verified_at = now();
+        $coordinator->save();
         $coordinator->assignRole('coordinator');
 
         // 3. Supervisor User
@@ -56,11 +57,12 @@ class DatabaseSeeder extends Seeder
             $supervisor->id = (string) \Illuminate\Support\Str::uuid();
             $supervisor->email = 'supervisor@apiu.edu';
             $supervisor->name = 'Supervisor User';
-            $supervisor->role = 'supervisor';
-            $supervisor->email_verified_at = now();
             $supervisor->password = $password;
             $supervisor->save();
         }
+        $supervisor->role = 'supervisor';
+        $supervisor->email_verified_at = now();
+        $supervisor->save();
         $supervisor->assignRole('supervisor');
 
         // 4. Student User (Test User)
@@ -70,11 +72,12 @@ class DatabaseSeeder extends Seeder
             $student->id = (string) \Illuminate\Support\Str::uuid();
             $student->email = '202300203@my.apiu.edu';
             $student->name = 'Student User';
-            $student->role = 'student';
-            $student->email_verified_at = now();
             $student->password = $password;
             $student->save();
         }
+        $student->role = 'student';
+        $student->email_verified_at = now();
+        $student->save();
         $student->assignRole('student');
     }
 }
