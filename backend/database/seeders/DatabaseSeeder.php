@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             $admin->email = 'pekkodev@gmail.com';
             $admin->name = 'Admin User';
             $admin->role = 'admin';
+            $admin->email_verified_at = now();
             $admin->password = $password;
             $admin->save();
         }
@@ -42,6 +43,7 @@ class DatabaseSeeder extends Seeder
             $coordinator->email = 'panneikoko1221@gmail.com';
             $coordinator->name = 'Coordinator User';
             $coordinator->role = 'coordinator';
+            $coordinator->email_verified_at = now();
             $coordinator->password = $password;
             $coordinator->save();
         }
@@ -55,6 +57,7 @@ class DatabaseSeeder extends Seeder
             $supervisor->email = 'supervisor@apiu.edu';
             $supervisor->name = 'Supervisor User';
             $supervisor->role = 'supervisor';
+            $supervisor->email_verified_at = now();
             $supervisor->password = $password;
             $supervisor->save();
         }
@@ -68,6 +71,7 @@ class DatabaseSeeder extends Seeder
             $student->email = '202300203@my.apiu.edu';
             $student->name = 'Student User';
             $student->role = 'student';
+            $student->email_verified_at = now();
             $student->password = $password;
             $student->save();
         }
