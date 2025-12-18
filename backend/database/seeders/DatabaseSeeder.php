@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
         if (!$admin) {
             $admin = new \App\Models\User();
             $admin->id = (string) \Illuminate\Support\Str::uuid();
-            $admin->email = 'admin@apiu.edu';
+            $admin->email = 'pekkodev@gmail.com';
             $admin->name = 'Admin User';
             $admin->role = 'admin';
             $admin->password = $password;
@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
         if (!$coordinator) {
             $coordinator = new \App\Models\User();
             $coordinator->id = (string) \Illuminate\Support\Str::uuid();
-            $coordinator->email = 'coordinator@apiu.edu';
+            $coordinator->email = 'panneikoko1221@gmail.com';
             $coordinator->name = 'Coordinator User';
             $coordinator->role = 'coordinator';
             $coordinator->password = $password;
@@ -65,7 +65,7 @@ class DatabaseSeeder extends Seeder
         if (!$student) {
             $student = new \App\Models\User();
             $student->id = (string) \Illuminate\Support\Str::uuid();
-            $student->email = 'student@apiu.edu';
+            $student->email = '202300203@my.apiu.edu';
             $student->name = 'Student User';
             $student->role = 'student';
             $student->password = $password;
