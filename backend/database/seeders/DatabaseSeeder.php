@@ -22,12 +22,13 @@ class DatabaseSeeder extends Seeder
         $password = Hash::make('password'); // Default password is 'password'
 
         // 1. Admin User
-        $admin = \App\Models\User::where('email', 'admin@apiu.edu')->first();
+        $admin = \App\Models\User::where('email', 'pekkodev@gmail.com')->first();
         if (!$admin) {
             $admin = new \App\Models\User();
             $admin->id = (string) \Illuminate\Support\Str::uuid();
             $admin->email = 'pekkodev@gmail.com';
             $admin->name = 'Admin User';
+            $admin->password = $password;
             $admin->save();
         }
         $admin->role = 'admin';
@@ -36,7 +37,7 @@ class DatabaseSeeder extends Seeder
         $admin->assignRole('admin');
 
         // 2. Coordinator User
-        $coordinator = \App\Models\User::where('email', 'coordinator@apiu.edu')->first();
+        $coordinator = \App\Models\User::where('email', 'panneikoko1221@gmail.com')->first();
         if (!$coordinator) {
             $coordinator = new \App\Models\User();
             $coordinator->id = (string) \Illuminate\Support\Str::uuid();
