@@ -67,7 +67,7 @@ class DatabaseSeeder extends Seeder
         $supervisor->assignRole('supervisor');
 
         // 4. Student User (Test User)
-        $student = \App\Models\User::where('email', 'student@apiu.edu')->first();
+        $student = \App\Models\User::where('email', '202300203@my.apiu.edu')->first();
         if (!$student) {
             $student = new \App\Models\User();
             $student->id = (string) \Illuminate\Support\Str::uuid();
