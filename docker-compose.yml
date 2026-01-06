@@ -1,0 +1,79 @@
+services:
+  # Laravel Backend
+  # Served on port 8080
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      APP_NAME: "UniTools"
+      APP_ENV: production
+      APP_DEBUG: false
+      APP_URL: ${APP_URL}
+      
+      # Database Configuration
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      
+      # Email Configuration (Resend)
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      MAIL_MAILER: resend
+      MAIL_FROM_ADDRESS: "onboarding@resend.dev"
+      MAIL_FROM_NAME: "${APP_NAME}"
+      
+      # CORS & Sanctum
+      # Adjust these to matching your frontend domain/IP
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS}
+      SESSION_DOMAIN: ${SESSION_DOMAIN}
+      FRONTEND_URL: ${FRONTEND_URL}
+      CORS_ALLOWED_ORIGINS: ${FRONTEND_URL}
+
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+  # Next.js Frontend
+  # Served on port 3000
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # This is accessed by the browser
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_APP_URL: ${FRONTEND_URL}
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+  # Postgres Database
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  db_data:

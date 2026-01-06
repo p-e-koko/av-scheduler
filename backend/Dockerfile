@@ -3,7 +3,7 @@
 # -----------------------
 FROM composer:2 AS vendor
 WORKDIR /app
-COPY backend/composer.json backend/composer.lock ./
+COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-scripts --no-interaction --no-progress --ignore-platform-reqs
 
 # -----------------------
@@ -52,7 +52,7 @@ WORKDIR /var/www/html
 COPY --from=vendor /app/vendor /var/www/html/vendor
 
 # Copy App Code
-COPY backend /var/www/html
+COPY . /var/www/html
 
 # Permissions
 RUN chown -R www-data:www-data /var/www/html
