@@ -20,7 +20,8 @@ RUN apk add --no-cache \
     libpng-dev \
     libzip-dev \
     zip \
-    unzip
+    unzip \
+    dos2unix
 
 # Install PHP extensions
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
@@ -62,6 +63,7 @@ EXPOSE 8080
 
 # Entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/
+RUN dos2unix /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 CMD ["/usr/local/bin/docker-entrypoint.sh"]
