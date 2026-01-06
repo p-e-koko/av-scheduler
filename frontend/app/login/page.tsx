@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { authAPI, formatAPIError, testConnection, APIError } from "@/lib/api"
+import { authAPI, formatAPIError, testConnection, APIError, removeAuthToken } from "@/lib/api"
 import { getRoleBasedDashboardPath } from "@/lib/role-routing"
 
 export default function LoginPage() {
@@ -30,11 +30,7 @@ export default function LoginPage() {
         setError("Cannot connect to backend server. Please check your connection.");
       }
       // Clear any existing session/cookies on load to prevent conflicts
-      try {
-        await authAPI.logout();
-      } catch (e) {
-        // Ignore errors if already logged out
-      }
+      removeAuthToken();
     };
     
     checkConnection();
