@@ -46,6 +46,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_APP_URL: ${FRONTEND_URL}
     restart: unless-stopped
     ports:
       - "3000:3000"
