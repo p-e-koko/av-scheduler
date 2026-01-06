@@ -22,63 +22,91 @@ class DatabaseSeeder extends Seeder
         $password = Hash::make('password'); // Default password is 'password'
 
         // 1. Admin User
-        $admin = \App\Models\User::where('email', 'pekkodev@gmail.com')->first();
+        $admin = \App\Models\User::withTrashed()->where('email', 'pekkodev@gmail.com')->first();
         if (!$admin) {
-            $admin = new \App\Models\User();
-            $admin->id = (string) \Illuminate\Support\Str::uuid();
-            $admin->email = 'pekkodev@gmail.com';
-            $admin->name = 'Admin User';
-            $admin->password = $password;
-            $admin->save();
+            $admin = \App\Models\User::create([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'email' => 'pekkodev@gmail.com',
+                'name' => 'Admin User',
+                'password' => $password,
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ]);
+        } else {
+            $admin->restore();
+            $admin->update([
+                'name' => 'Admin User',
+                'password' => $password,
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ]);
         }
-        $admin->role = 'admin';
-        $admin->email_verified_at = now();
-        $admin->save(); // Save changes for existing users too
         $admin->assignRole('admin');
 
         // 2. Coordinator User
-        $coordinator = \App\Models\User::where('email', 'panneikoko1221@gmail.com')->first();
+        $coordinator = \App\Models\User::withTrashed()->where('email', 'panneikoko1221@gmail.com')->first();
         if (!$coordinator) {
-            $coordinator = new \App\Models\User();
-            $coordinator->id = (string) \Illuminate\Support\Str::uuid();
-            $coordinator->email = 'panneikoko1221@gmail.com';
-            $coordinator->name = 'Coordinator User';
-            $coordinator->password = $password;
-            $coordinator->save();
+            $coordinator = \App\Models\User::create([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'email' => 'panneikoko1221@gmail.com',
+                'name' => 'Coordinator User',
+                'password' => $password,
+                'role' => 'coordinator',
+                'email_verified_at' => now(),
+            ]);
+        } else {
+             $coordinator->restore();
+             $coordinator->update([
+                'name' => 'Coordinator User',
+                'password' => $password,
+                'role' => 'coordinator',
+                'email_verified_at' => now(),
+            ]);
         }
-        $coordinator->role = 'coordinator';
-        $coordinator->email_verified_at = now();
-        $coordinator->save();
         $coordinator->assignRole('coordinator');
 
         // 3. Supervisor User
-        $supervisor = \App\Models\User::where('email', 'supervisor@apiu.edu')->first();
+        $supervisor = \App\Models\User::withTrashed()->where('email', 'supervisor@apiu.edu')->first();
         if (!$supervisor) {
-            $supervisor = new \App\Models\User();
-            $supervisor->id = (string) \Illuminate\Support\Str::uuid();
-            $supervisor->email = 'supervisor@apiu.edu';
-            $supervisor->name = 'Supervisor User';
-            $supervisor->password = $password;
-            $supervisor->save();
+            $supervisor = \App\Models\User::create([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'email' => 'supervisor@apiu.edu',
+                'name' => 'Supervisor User',
+                'password' => $password,
+                'role' => 'supervisor',
+                'email_verified_at' => now(),
+            ]);
+        } else {
+            $supervisor->restore();
+            $supervisor->update([
+                'name' => 'Supervisor User',
+                'password' => $password,
+                'role' => 'supervisor',
+                'email_verified_at' => now(),
+            ]);
         }
-        $supervisor->role = 'supervisor';
-        $supervisor->email_verified_at = now();
-        $supervisor->save();
         $supervisor->assignRole('supervisor');
 
         // 4. Student User (Test User)
-        $student = \App\Models\User::where('email', '202300203@my.apiu.edu')->first();
+        $student = \App\Models\User::withTrashed()->where('email', '202300203@my.apiu.edu')->first();
         if (!$student) {
-            $student = new \App\Models\User();
-            $student->id = (string) \Illuminate\Support\Str::uuid();
-            $student->email = '202300203@my.apiu.edu';
-            $student->name = 'Student User';
-            $student->password = $password;
-            $student->save();
+            $student = \App\Models\User::create([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'email' => '202300203@my.apiu.edu',
+                'name' => 'Student User',
+                'password' => $password,
+                'role' => 'student',
+                'email_verified_at' => now(),
+            ]);
+        } else {
+            $student->restore();
+            $student->update([
+                'name' => 'Student User',
+                'password' => $password,
+                'role' => 'student',
+                'email_verified_at' => now(),
+            ]);
         }
-        $student->role = 'student';
-        $student->email_verified_at = now();
-        $student->save();
         $student->assignRole('student');
     }
 }
