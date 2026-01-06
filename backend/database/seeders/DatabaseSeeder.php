@@ -22,91 +22,59 @@ class DatabaseSeeder extends Seeder
         $password = Hash::make('password'); // Default password is 'password'
 
         // 1. Admin User
-        $admin = \App\Models\User::withTrashed()->where('email', 'pekkodev@gmail.com')->first();
-        if (!$admin) {
-            $admin = \App\Models\User::create([
+        $adminEmail = 'pekkodev@gmail.com';
+        if (!\App\Models\User::withTrashed()->where('email', $adminEmail)->exists()) {
+             $admin = \App\Models\User::create([
                 'id' => (string) \Illuminate\Support\Str::uuid(),
-                'email' => 'pekkodev@gmail.com',
+                'email' => $adminEmail,
                 'name' => 'Admin User',
                 'password' => $password,
                 'role' => 'admin',
                 'email_verified_at' => now(),
             ]);
-        } else {
-            $admin->restore();
-            $admin->update([
-                'name' => 'Admin User',
-                'password' => $password,
-                'role' => 'admin',
-                'email_verified_at' => now(),
-            ]);
+            $admin->assignRole('admin');
         }
-        $admin->assignRole('admin');
 
         // 2. Coordinator User
-        $coordinator = \App\Models\User::withTrashed()->where('email', 'panneikoko1221@gmail.com')->first();
-        if (!$coordinator) {
+        $coordEmail = 'panneikoko1221@gmail.com';
+        if (!\App\Models\User::withTrashed()->where('email', $coordEmail)->exists()) {
             $coordinator = \App\Models\User::create([
                 'id' => (string) \Illuminate\Support\Str::uuid(),
-                'email' => 'panneikoko1221@gmail.com',
+                'email' => $coordEmail,
                 'name' => 'Coordinator User',
                 'password' => $password,
                 'role' => 'coordinator',
                 'email_verified_at' => now(),
             ]);
-        } else {
-             $coordinator->restore();
-             $coordinator->update([
-                'name' => 'Coordinator User',
-                'password' => $password,
-                'role' => 'coordinator',
-                'email_verified_at' => now(),
-            ]);
+            $coordinator->assignRole('coordinator');
         }
-        $coordinator->assignRole('coordinator');
 
         // 3. Supervisor User
-        $supervisor = \App\Models\User::withTrashed()->where('email', 'supervisor@apiu.edu')->first();
-        if (!$supervisor) {
+        $supEmail = 'supervisor@apiu.edu';
+        if (!\App\Models\User::withTrashed()->where('email', $supEmail)->exists()) {
             $supervisor = \App\Models\User::create([
                 'id' => (string) \Illuminate\Support\Str::uuid(),
-                'email' => 'supervisor@apiu.edu',
+                'email' => $supEmail,
                 'name' => 'Supervisor User',
                 'password' => $password,
                 'role' => 'supervisor',
                 'email_verified_at' => now(),
             ]);
-        } else {
-            $supervisor->restore();
-            $supervisor->update([
-                'name' => 'Supervisor User',
-                'password' => $password,
-                'role' => 'supervisor',
-                'email_verified_at' => now(),
-            ]);
+            $supervisor->assignRole('supervisor');
         }
-        $supervisor->assignRole('supervisor');
 
         // 4. Student User (Test User)
-        $student = \App\Models\User::withTrashed()->where('email', '202300203@my.apiu.edu')->first();
-        if (!$student) {
+        $studEmail = '202300203@my.apiu.edu';
+        if (!\App\Models\User::withTrashed()->where('email', $studEmail)->exists()) {
             $student = \App\Models\User::create([
                 'id' => (string) \Illuminate\Support\Str::uuid(),
-                'email' => '202300203@my.apiu.edu',
+                'email' => $studEmail,
                 'name' => 'Student User',
                 'password' => $password,
                 'role' => 'student',
                 'email_verified_at' => now(),
             ]);
-        } else {
-            $student->restore();
-            $student->update([
-                'name' => 'Student User',
-                'password' => $password,
-                'role' => 'student',
-                'email_verified_at' => now(),
-            ]);
+            $student->assignRole('student');
         }
-        $student->assignRole('student');
     }
 }
