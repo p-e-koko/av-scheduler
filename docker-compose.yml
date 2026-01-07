@@ -28,6 +28,11 @@ services:
       MAIL_FROM_ADDRESS: "onboarding@resend.dev"
       MAIL_FROM_NAME: "${APP_NAME}"
       
+      # Microsoft Auth
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
+      MICROSOFT_REDIRECT_URI: ${MICROSOFT_REDIRECT_URI}
+      
       # CORS & Sanctum
       # Adjust these to matching your frontend domain/IP
       SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS}
