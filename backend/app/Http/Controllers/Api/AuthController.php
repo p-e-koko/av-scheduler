@@ -328,7 +328,8 @@ class AuthController extends Controller
         try {
             $socialUser = \Laravel\Socialite\Facades\Socialite::driver($provider)->user();
         } catch (\Exception $e) {
-            return redirect(config('app.frontend_url') . '/login?error=Unable to login with ' . $provider);
+            \Illuminate\Support\Facades\Log::error('Socialite Login Error: ' . $e->getMessage());
+            return redirect(config('app.frontend_url') . '/login?error=Unable to login with ' . $provider . ': ' . $e->getMessage());
         }
 
         $user = User::withTrashed()->where('email', $socialUser->getEmail())->first();
