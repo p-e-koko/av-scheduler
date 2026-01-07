@@ -46,6 +46,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Force HTTPS if in production or if behind a secure proxy (Railway)
+        // Disabled for raw IP deployment to avoid connection refused errors
+        /*
         if($this->app->environment('production') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
             URL::forceScheme('https');
 
@@ -53,20 +55,9 @@ class AppServiceProvider extends ServiceProvider
                 $this->app['request']->server->set('HTTPS', 'on');
             }
         }
+        */
 
-        VerifyEmail::createUrlUsing(function ($notifiable) {
-            $frontendUrl = Config::get('app.frontend_url', 'https://av-scheduler.pekko.dev');
-
-            $verifyUrl = URL::temporarySignedRoute(
-                'verification.verify',
-                Carbon::now()->addMinutes(Config::get('auth.verification.expire', 60)),
-                [
-                    'id' => $notifiable->getKey(),
-                    'hash' => sha1($notifiable->getEmailForVerification()),
-                ]
-            );
-
-            return $frontendUrl . '/auth/verify?url=' . urlencode($verifyUrl);
-        });
+        // Use default Laravel verification URL generation (Points to Backend directly)
+        // VerifyEmail::createUrlUsing(function ($notifiable) { ... });
     }
 }
