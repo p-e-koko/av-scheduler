@@ -27,11 +27,11 @@ function SocialCallbackContent() {
           // 2. Fetch User Profile to get Role
           // We wait a tiny bit to ensure localStorage is set
           await new Promise(resolve => setTimeout(resolve, 100));
-          const userData = await authAPI.me();
+          const user = await authAPI.getCurrentUser();
           
-          if (userData && userData.user) {
+          if (user) {
             // 3. Redirect based on Role
-            const redirectPath = getRoleBasedDashboardPath(userData.user.role || 'student');
+            const redirectPath = getRoleBasedDashboardPath(user.role || 'student');
             window.location.href = redirectPath;
           } else {
              // Fallback
