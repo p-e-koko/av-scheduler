@@ -24,17 +24,25 @@ use Google\Service\Calendar as GoogleCalendar;
 |
 */
 
-// Public Health Check Route
+// Health Check
 Route::get('/health', function () {
     return response()->json(['status' => 'ok']);
 });
 
+// Explicit Microsoft Routes (Global Scope)
+Route::group(['middleware' => ['web']], function () {
+    Route::get('/login/microsoft/redirect', [AuthController::class, 'redirectToProvider'])->defaults('provider', 'microsoft');
+    Route::get('/login/microsoft/callback', [AuthController::class, 'handleProviderCallback'])->defaults('provider', 'microsoft');
+});
+
 // Social Login (Microsoft) - Wrapped in 'web' middleware for Session/State support
 // Excluded from 'auth' prefix to match Azure Redirect URI: /api/login/microsoft/callback
+/*
 Route::middleware(['web'])->group(function () {
     Route::get('/login/microsoft/redirect', [AuthController::class, 'redirectToProvider'])->defaults('provider', 'microsoft');
     Route::get('/login/microsoft/callback', [AuthController::class, 'handleProviderCallback'])->defaults('provider', 'microsoft');
 });
+*/
 
 // Public Authentication Routes with Rate Limiting
 Route::prefix('auth')->middleware('throttle:auth')->group(function () {
