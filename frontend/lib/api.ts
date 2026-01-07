@@ -171,11 +171,10 @@ export const getCSRFToken = async (): Promise<string | null> => {
   }
 };
 
-// Helper function to store token (legacy - for removing stored tokens)
+// Helper function to store token
 export const setAuthToken = (token: string): void => {
-  // No longer needed for session-based auth, but kept for cleanup
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('auth_token');
+    localStorage.setItem('auth_token', token);
   }
 };
 
@@ -214,6 +213,14 @@ async function apiCall<T>(
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
+
+  // Inject Bearer Token if available (for Social Login support)
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      defaultHeaders['Authorization'] = `Bearer ${token}`;
+    }
+  }
 
   // Get CSRF token for state-changing requests
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(options.method?.toUpperCase() || 'GET')) {
