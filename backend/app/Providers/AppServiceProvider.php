@@ -18,7 +18,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register Socialite Provider
         Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
-            $event->extendSocialite('microsoft', \SocialiteProviders\Microsoft\Provider::class);
+            $event->extendSocialite('microsoft', \SocialiteProviders\Azure\Provider::class);
         });
 
         // Override Resend Client to disable SSL verification (Fix for local dev)
