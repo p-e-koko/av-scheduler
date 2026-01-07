@@ -35,8 +35,8 @@ Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     // Social Login (Microsoft) - Wrapped in 'web' middleware for Session/State support
     Route::middleware(['web'])->group(function () {
-        Route::get('/microsoft/redirect', [AuthController::class, 'redirectToProvider'])->defaults('provider', 'microsoft');
-        Route::get('/microsoft/callback', [AuthController::class, 'handleProviderCallback'])->defaults('provider', 'microsoft');
+        Route::get('/login/microsoft/redirect', [AuthController::class, 'redirectToProvider'])->defaults('provider', 'microsoft');
+        Route::get('/login/microsoft/callback', [AuthController::class, 'handleProviderCallback'])->defaults('provider', 'microsoft');
     });
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);

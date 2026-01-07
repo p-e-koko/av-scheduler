@@ -190,8 +190,9 @@ export default function LoginPage() {
                 variant="outline"
                 className="w-full h-12 font-semibold rounded-xl border-2 hover:bg-muted transition-all duration-200"
                 onClick={() => {
-                   const backendUrl = API_BASE_URL.replace(/\/api\/?$/, '');
-                   window.location.href = `${backendUrl}/auth/microsoft/redirect`;
+                   // Clean base URL to ensure we point to the API route correctly
+                   const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+                   window.location.href = `${baseUrl}/auth/login/microsoft/redirect`;
                 }}
                 disabled={isLoading}
               >
