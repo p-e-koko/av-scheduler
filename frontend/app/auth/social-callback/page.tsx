@@ -2,7 +2,8 @@
 
 import { useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { setAuthToken } from "@/lib/api"
+import { setAuthToken, authAPI } from "@/lib/api"
+import { getRoleBasedDashboardPath } from "@/lib/role-routing"
 
 function SocialCallbackContent() {
   const router = useRouter()
@@ -18,10 +19,32 @@ function SocialCallbackContent() {
     }
 
     if (token) {
-      // Save token (which sets cookies/headers for future requests)
-      setAuthToken(token)
-      // Redirect to dashboard
-      window.location.href = "/dashboard"
+      const handleLogin = async () => {
+        try {
+          // 1. Save Token
+          setAuthToken(token)
+
+          // 2. Fetch User Profile to get Role
+          // We wait a tiny bit to ensure localStorage is set
+          await new Promise(resolve => setTimeout(resolve, 100));
+          const userData = await authAPI.me();
+          
+          if (userData && userData.user) {
+            // 3. Redirect based on Role
+            const redirectPath = getRoleBasedDashboardPath(userData.user.role || 'student');
+            window.location.href = redirectPath;
+          } else {
+             // Fallback
+             window.location.href = "/dashboard/student";
+          }
+        } catch (err) {
+          console.error("Failed to fetch user role:", err);
+          // If fetching user fails but we have token, default to student or main dashboard
+          window.location.href = "/dashboard/student"; 
+        }
+      };
+
+      handleLogin();
     } else {
       router.push("/login?error=Authentication failed")
     }
