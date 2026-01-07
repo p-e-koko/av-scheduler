@@ -269,27 +269,27 @@ class AuthController extends Controller
     /**
      * Verify user email.
      */
-    public function verifyEmail(Request $request): JsonResponse
+    public function verifyEmail(Request $request)
     {
         $user = User::find($request->route('id'));
 
         if (!$user) {
-            return response()->json(['message' => 'Invalid user.'], 400);
+             return redirect(config('app.frontend_url') . '/login?error=invalid_user');
         }
 
         if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
-            return response()->json(['message' => 'Invalid verification link.'], 400);
+             return redirect(config('app.frontend_url') . '/login?error=invalid_hash');
         }
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified.']);
+            return redirect(config('app.frontend_url') . '/dashboard?verified=1');
         }
 
         if ($user->markEmailAsVerified()) {
             event(new \Illuminate\Auth\Events\Verified($user));
         }
 
-        return response()->json(['message' => 'Email verified successfully.']);
+        return redirect(config('app.frontend_url') . '/dashboard?verified=1');
     }
 
     /**

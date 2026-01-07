@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Create a temporary .env file from environment variables if it doesn't exist
+# This is required for `php artisan key:generate` to work if it tries to write to the file
+if [ ! -f .env ]; then
+    echo "Creating .env file..."
+    touch .env
+    echo "APP_KEY=" >> .env
+fi
+
 # Configure Sanctum domains if on Railway
 if [ ! -z "$RAILWAY_PUBLIC_DOMAIN" ]; then
     echo "Configuring Sanctum for domain: $RAILWAY_PUBLIC_DOMAIN"
