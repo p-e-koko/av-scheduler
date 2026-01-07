@@ -192,7 +192,7 @@ export default function LoginPage() {
                 onClick={() => {
                    // Clean base URL to ensure we point to the API route correctly
                    const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-                   window.location.href = `${baseUrl}/auth/login/microsoft/redirect`;
+                   window.location.href = `${baseUrl}/login/microsoft/redirect`;
                 }}
                 disabled={isLoading}
               >

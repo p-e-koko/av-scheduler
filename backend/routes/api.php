@@ -29,15 +29,17 @@ Route::get('/health', function () {
     return response()->json(['status' => 'ok']);
 });
 
+// Social Login (Microsoft) - Wrapped in 'web' middleware for Session/State support
+// Excluded from 'auth' prefix to match Azure Redirect URI: /api/login/microsoft/callback
+Route::middleware(['web'])->group(function () {
+    Route::get('/login/microsoft/redirect', [AuthController::class, 'redirectToProvider'])->defaults('provider', 'microsoft');
+    Route::get('/login/microsoft/callback', [AuthController::class, 'handleProviderCallback'])->defaults('provider', 'microsoft');
+});
+
 // Public Authentication Routes with Rate Limiting
 Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
-    // Social Login (Microsoft) - Wrapped in 'web' middleware for Session/State support
-    Route::middleware(['web'])->group(function () {
-        Route::get('/login/microsoft/redirect', [AuthController::class, 'redirectToProvider'])->defaults('provider', 'microsoft');
-        Route::get('/login/microsoft/callback', [AuthController::class, 'handleProviderCallback'])->defaults('provider', 'microsoft');
-    });
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
