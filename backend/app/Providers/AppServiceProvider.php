@@ -16,11 +16,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register Socialite Provider
-        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
-            $event->extendSocialite('microsoft', \SocialiteProviders\Azure\Provider::class);
-        });
-
         // Override Resend Client to disable SSL verification (Fix for local dev)
         if ($this->app->environment('local')) {
             $this->app->singleton(\Resend\Contracts\Client::class, static function () {
@@ -51,6 +46,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register Socialite Provider
+        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
+            $event->extendSocialite('microsoft', \SocialiteProviders\Azure\Provider::class);
+        });
+
         // Force HTTPS in production (Essential for Socialite call_back generation)
         if($this->app->environment('production') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
             URL::forceScheme('https');
