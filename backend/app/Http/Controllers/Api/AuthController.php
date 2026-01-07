@@ -362,6 +362,10 @@ class AuthController extends Controller
 
         Auth::login($user, true);
 
-        return redirect(config('app.frontend_url') . '/dashboard');
+        // Generate Token for Frontend
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Redirect to a specific frontend callback page to handle the token
+        return redirect(config('app.frontend_url') . '/auth/social-callback?token=' . $token);
     }
 }
