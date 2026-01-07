@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { setAuthToken } from "@/lib/api"
 
-export default function SocialCallback() {
+function SocialCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -28,11 +28,19 @@ export default function SocialCallback() {
   }, [router, searchParams])
 
   return (
+    <div className="flex flex-col items-center space-y-4">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <p className="text-muted-foreground">Completing secure sign in...</p>
+    </div>
+  )
+}
+
+export default function SocialCallback() {
+  return (
     <div className="flex min-h-screen items-center justify-center">
-      <div className="flex flex-col items-center space-y-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="text-muted-foreground">Completing secure sign in...</p>
-      </div>
+      <Suspense fallback={<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />}>
+        <SocialCallbackContent />
+      </Suspense>
     </div>
   )
 }
