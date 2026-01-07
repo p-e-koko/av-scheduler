@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Event;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,6 +16,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Register Socialite Provider
+        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
+            $event->extendSocialite('microsoft', \SocialiteProviders\Microsoft\Provider::class);
+        });
+
         // Override Resend Client to disable SSL verification (Fix for local dev)
         if ($this->app->environment('local')) {
             $this->app->singleton(\Resend\Contracts\Client::class, static function () {
