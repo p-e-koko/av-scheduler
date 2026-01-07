@@ -313,6 +313,8 @@ class AuthController extends Controller
         $user->sendEmailVerificationNotification();
 
         return response()->json(['message' => 'Verification link sent.']);
+    }
+
     public function redirectToProvider(Request $request)
     {
         $provider = $request->route('provider', 'microsoft');
