@@ -326,10 +326,12 @@ class AuthController extends Controller
         $provider = $request->route('provider', 'microsoft');
         
         try {
-            $socialUser = \Laravel\Socialite\Facades\Socialite::driver($provider)->user();
+            // Use stateless() to bypass session state checking which often fails in API/Proxy setups
+            $socialUser = \Laravel\Socialite\Facades\Socialite::driver($provider)->stateless()->user();
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Socialite Login Error: ' . $e->getMessage());
-            return redirect(config('app.frontend_url') . '/login?error=Unable to login with ' . $provider . ': ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Socialite Login Error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            $errorMessage = $e->getMessage() ?: class_basename($e);
+            return redirect(config('app.frontend_url') . '/login?error=Unable to login with ' . $provider . ': ' . $errorMessage);
         }
 
         $user = User::withTrashed()->where('email', $socialUser->getEmail())->first();
