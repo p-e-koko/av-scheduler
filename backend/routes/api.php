@@ -24,6 +24,11 @@ use Google\Service\Calendar as GoogleCalendar;
 |
 */
 
+// Public Health Check Route
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok']);
+});
+
 // Public Authentication Routes with Rate Limiting
 Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
