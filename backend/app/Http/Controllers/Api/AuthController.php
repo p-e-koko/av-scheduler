@@ -313,5 +313,50 @@ class AuthController extends Controller
         $user->sendEmailVerificationNotification();
 
         return response()->json(['message' => 'Verification link sent.']);
+    public function redirectToProvider(Request $request)
+    {
+        $provider = $request->route('provider', 'microsoft');
+        return \Laravel\Socialite\Facades\Socialite::driver($provider)->redirect();
+    }
+
+    public function handleProviderCallback(Request $request)
+    {
+        $provider = $request->route('provider', 'microsoft');
+        
+        try {
+            $socialUser = \Laravel\Socialite\Facades\Socialite::driver($provider)->user();
+        } catch (\Exception $e) {
+            return redirect(config('app.frontend_url') . '/login?error=Unable to login with ' . $provider);
+        }
+
+        $user = User::withTrashed()->where('email', $socialUser->getEmail())->first();
+
+        if ($user) {
+            if ($user->trashed()) {
+                 $user->restore();
+            }
+            
+            $user->update([
+                'provider' => $provider,
+                'provider_id' => $socialUser->getId(),
+                'avatar' => $socialUser->getAvatar(),
+                'email_verified_at' => $user->email_verified_at ?? now(), // Auto verify email
+            ]);
+        } else {
+            $user = User::create([
+                'name' => $socialUser->getName(),
+                'email' => $socialUser->getEmail(),
+                'provider' => $provider,
+                'provider_id' => $socialUser->getId(),
+                'avatar' => $socialUser->getAvatar(),
+                'password' => null, 
+                'role' => 'student',
+                'email_verified_at' => now(),
+            ]);
+        }
+
+        Auth::login($user, true);
+
+        return redirect(config('app.frontend_url') . '/dashboard');
     }
 }

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { authAPI, formatAPIError, testConnection, APIError, removeAuthToken } from "@/lib/api"
+import { authAPI, formatAPIError, testConnection, APIError, removeAuthToken, API_BASE_URL } from "@/lib/api"
 import { getRoleBasedDashboardPath } from "@/lib/role-routing"
 
 export default function LoginPage() {
@@ -173,6 +173,32 @@ export default function LoginPage() {
                   "Sign In"
                 )}
               </Button>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12 font-semibold rounded-xl border-2 hover:bg-muted transition-all duration-200"
+                onClick={() => {
+                   const backendUrl = API_BASE_URL.replace(/\/api\/?$/, '');
+                   window.location.href = `${backendUrl}/auth/microsoft/redirect`;
+                }}
+                disabled={isLoading}
+              >
+                 <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="microsoft" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M0 32h214.6v214.6H0V32zm233.4 0H448v214.6H233.4V32zM0 265.4h214.6V480H0V265.4zm233.4 0H448V480H233.4V265.4z"></path></svg>
+                Microsoft
+              </Button>
+
             </form>
           </CardContent>
         </Card>

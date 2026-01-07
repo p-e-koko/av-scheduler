@@ -5,6 +5,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Google\Client as GoogleClient;
 use Google\Service\Calendar as GoogleCalendar;
+use App\Http\Controllers\Api\AuthController;
+use Laravel\Socialite\Facades\Socialite;
 
 Route::get('/', function () {
     return view('welcome');
@@ -14,6 +16,9 @@ Route::get('/', function () {
 Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated. Please login via API.'], 401);
 })->name('login');
+
+Route::get('/auth/{provider}/redirect', [AuthController::class, 'redirectToProvider']);
+Route::get('/auth/{provider}/callback', [AuthController::class, 'handleProviderCallback']);
 
 // Step 2: Google OAuth Callback (No auth middleware needed, we use state)
 Route::get('/google/callback', function (Request $request) {

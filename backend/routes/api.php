@@ -28,6 +28,11 @@ use Google\Service\Calendar as GoogleCalendar;
 Route::prefix('auth')->middleware('throttle:auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    // Social Login (Microsoft) - Wrapped in 'web' middleware for Session/State support
+    Route::middleware(['web'])->group(function () {
+        Route::get('/microsoft/redirect', [AuthController::class, 'redirectToProvider'])->defaults('provider', 'microsoft');
+        Route::get('/microsoft/callback', [AuthController::class, 'handleProviderCallback'])->defaults('provider', 'microsoft');
+    });
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])

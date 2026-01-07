@@ -45,17 +45,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Force HTTPS if in production or if behind a secure proxy (Railway)
-        // Disabled for raw IP deployment to avoid connection refused errors
-        /*
+        // Force HTTPS in production (Essential for Socialite call_back generation)
         if($this->app->environment('production') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
             URL::forceScheme('https');
-
-            if (!$this->app->runningInConsole()) {
-                $this->app['request']->server->set('HTTPS', 'on');
-            }
         }
-        */
 
         // Use default Laravel verification URL generation (Points to Backend directly)
         // VerifyEmail::createUrlUsing(function ($notifiable) { ... });
