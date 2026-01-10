@@ -23,10 +23,14 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       
-      # Email Configuration (Resend)
-      RESEND_API_KEY: ${RESEND_API_KEY}
-      MAIL_MAILER: resend
-      MAIL_FROM_ADDRESS: "onboarding@resend.dev"
+      # Email Configuration
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: "${APP_NAME}"
       
       # Microsoft Auth

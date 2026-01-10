@@ -318,13 +318,19 @@ class AuthController extends Controller
     public function redirectToProvider(Request $request)
     {
         $provider = $request->route('provider', 'microsoft');
-        return \Laravel\Socialite\Facades\Socialite::driver($provider)->redirect();
+        $driver = \Laravel\Socialite\Facades\Socialite::driver($provider);
+
+        if ($provider === 'microsoft') {
+            $driver->scopes(['openid', 'profile', 'email', 'offline_access', 'Calendars.ReadWrite']);
+        }
+
+        return $driver->redirect();
     }
 
     public function handleProviderCallback(Request $request)
     {
         $provider = $request->route('provider', 'microsoft');
-        
+
         try {
             // Use stateless() to bypass session state checking which often fails in API/Proxy setups
             $socialUser = \Laravel\Socialite\Facades\Socialite::driver($provider)->stateless()->user();
@@ -336,28 +342,39 @@ class AuthController extends Controller
 
         $user = User::withTrashed()->where('email', $socialUser->getEmail())->first();
 
+        $updateData = [
+            'provider' => $provider,
+            'provider_id' => $socialUser->getId(),
+            'avatar' => $socialUser->getAvatar(),
+        ];
+
+        if ($provider === 'microsoft') {
+            $updateData['microsoft_access_token'] = $socialUser->token;
+            $updateData['microsoft_refresh_token'] = $socialUser->refreshToken;
+            $updateData['microsoft_token_expires_at'] = now()->addSeconds($socialUser->expiresIn);
+        }
+
         if ($user) {
             if ($user->trashed()) {
                  $user->restore();
             }
-            
-            $user->update([
-                'provider' => $provider,
-                'provider_id' => $socialUser->getId(),
-                'avatar' => $socialUser->getAvatar(),
-                'email_verified_at' => $user->email_verified_at ?? now(), // Auto verify email
-            ]);
+
+            // Ensure email verified is set if not already
+            if (!$user->email_verified_at) {
+                $updateData['email_verified_at'] = now();
+            }
+
+            $user->update($updateData);
         } else {
-            $user = User::create([
+            $createData = array_merge([
                 'name' => $socialUser->getName(),
                 'email' => $socialUser->getEmail(),
-                'provider' => $provider,
-                'provider_id' => $socialUser->getId(),
-                'avatar' => $socialUser->getAvatar(),
-                'password' => null, 
+                'password' => null,
                 'role' => 'student',
                 'email_verified_at' => now(),
-            ]);
+            ], $updateData);
+
+            $user = User::create($createData);
         }
 
         Auth::login($user, true);
