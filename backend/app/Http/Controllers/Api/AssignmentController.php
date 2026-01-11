@@ -609,8 +609,8 @@ class AssignmentController extends Controller
              }
         }
 
-        $startDateTime = \Carbon\Carbon::parse($assignment->event_start_datetime)->format('Y-m-d\TH:i:s');
-        $endDateTime = \Carbon\Carbon::parse($assignment->event_end_datetime)->format('Y-m-d\TH:i:s');
+        $startDateTime = \Carbon\Carbon::parse($assignment->event_start_datetime)->setTimezone('Asia/Bangkok')->format('Y-m-d\TH:i:s');
+        $endDateTime = \Carbon\Carbon::parse($assignment->event_end_datetime)->setTimezone('Asia/Bangkok')->format('Y-m-d\TH:i:s');
 
         $eventData = [
            'subject' => $assignment->assignment_name,
@@ -755,8 +755,8 @@ class AssignmentController extends Controller
              }
         }
 
-        $startDateTime = \Carbon\Carbon::parse($assignment->event_start_datetime)->format('Y-m-d\TH:i:s');
-        $endDateTime = \Carbon\Carbon::parse($assignment->event_end_datetime)->format('Y-m-d\TH:i:s');
+        $startDateTime = \Carbon\Carbon::parse($assignment->event_start_datetime)->setTimezone('Asia/Bangkok')->format('Y-m-d\TH:i:s');
+        $endDateTime = \Carbon\Carbon::parse($assignment->event_end_datetime)->setTimezone('Asia/Bangkok')->format('Y-m-d\TH:i:s');
 
         $eventData = [
            'subject' => $assignment->assignment_name,

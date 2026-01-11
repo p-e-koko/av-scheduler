@@ -112,9 +112,17 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
             const start = new Date(assignmentToEdit.event_start_datetime)
             const end = new Date(assignmentToEdit.event_end_datetime)
             
-            setStartDate(start.toISOString().split('T')[0])
+            // Helper to format local date as YYYY-MM-DD
+            const formatLocalDate = (d: Date) => {
+              const year = d.getFullYear()
+              const month = String(d.getMonth() + 1).padStart(2, '0')
+              const day = String(d.getDate()).padStart(2, '0')
+              return `${year}-${month}-${day}`
+            }
+            
+            setStartDate(formatLocalDate(start))
             setStartTime(start.toTimeString().slice(0, 5))
-            setEndDate(end.toISOString().split('T')[0])
+            setEndDate(formatLocalDate(end))
             setEndTime(end.toTimeString().slice(0, 5))
             
             // Set assignees if available in the assignment object
