@@ -51,7 +51,7 @@ class Assignment extends Model
     {
         return $this->belongsToMany(User::class, 'assignment_users', 'assignment_id', 'user_id')
                     ->using(AssignmentUser::class)
-                    ->withPivot('status', 'checked_in', 'position', 'rejection_reason')
+                    ->withPivot('status', 'checked_in', 'position', 'rejection_reason', 'google_event_id', 'microsoft_event_id')
                     ->withTimestamps();
     }
 
