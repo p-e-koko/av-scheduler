@@ -72,6 +72,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'promised_hours_per_week' => 'decimal:2',
             'remaining_hours_this_week' => 'decimal:2',
+            'microsoft_token_expires_at' => 'datetime',
         ];
     }
 
