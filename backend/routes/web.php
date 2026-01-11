@@ -28,20 +28,15 @@ Route::get('/google/callback', function (Request $request) {
 });
 */
 
+/*
 Route::middleware('auth')->group(function () {
     // Legacy route - kept just in case, but not used by new flow
     Route::get('/google/login', function () {
-        $client = new GoogleClient();
-        $client->setClientId(config('services.google.client_id'));
-        $client->setClientSecret(config('services.google.client_secret'));
-        $client->setRedirectUri(config('services.google.redirect'));
-        $client->addScope(GoogleCalendar::CALENDAR);
-        $client->setAccessType('offline'); // for refresh token
-        $client->setPrompt('consent');
-
-        return redirect($client->createAuthUrl());
+        // Google Login Removed
+        return redirect(env('FRONTEND_URL', 'http://localhost:3000') . '/dashboard?error=deprecated');
     });
 });
+*/
 
 use Resend\Laravel\Facades\Resend;
 
@@ -49,7 +44,7 @@ use Resend\Laravel\Facades\Resend;
 Route::get('/debug/resend-fix', function (Request $request) {
     try {
         $to = $request->query('email');
-        
+
         if (!$to) {
             return response()->json([
                 'error' => 'Missing recipient email. Use ?email=your@email.com',
@@ -77,7 +72,7 @@ Route::get('/debug/resend-fix', function (Request $request) {
                 'subject' => 'Resend SDK Test: ' . now(),
                 'html' => '<p>This is a test email sent directly via Resend SDK Facade.</p>',
             ]);
-            
+
             $results['sdk_method'] = [
                 'status' => 'success',
                 'data' => $sdkResult->toArray()
@@ -96,7 +91,7 @@ Route::get('/debug/resend-fix', function (Request $request) {
                 $message->to($to)
                         ->subject('Laravel Mail Facade Test: ' . now());
             });
-            
+
             $results['laravel_mail_method'] = [
                 'status' => 'success',
                 'message' => 'Email queued/sent successfully via Mail facade.'
