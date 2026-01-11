@@ -14,8 +14,8 @@ use App\Helpers\AuditLogger;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AssignmentAssigned;
 use App\Mail\AssignmentStatusUpdated;
-use Google\Client as GoogleClient;
-use Google\Service\Calendar as GoogleCalendar;
+/* Use Google\Client as GoogleClient; */
+/* use Google\Service\Calendar as GoogleCalendar; */
 
 class AssignmentController extends Controller
 {
@@ -559,8 +559,6 @@ class AssignmentController extends Controller
     public function addToCalendar(Request $request, Assignment $assignment)
     {
         $user = $request->user();
-        file_put_contents(storage_path('logs/debug_google.log'), date('Y-m-d H:i:s') . " AddToCalendar: User " . $user->id . " Token: " . ($user->google_access_token ? 'Present' : 'Missing') . " Refresh: " . ($user->google_refresh_token ? 'Present' : 'Missing') . "\n", FILE_APPEND);
-        \Illuminate\Support\Facades\Log::info('AddToCalendar: User ' . $user->id . ' Token: ' . ($user->google_access_token ? 'Present' : 'Missing'));
 
         // Check if user is assigned to this assignment
         $pivot = $assignment->users()->where('user_id', $user->id)->first();
@@ -569,64 +567,85 @@ class AssignmentController extends Controller
         }
 
         // Check if already added
-        if ($pivot->pivot->google_event_id) {
+        if ($pivot->pivot->microsoft_event_id) {
              return response()->json(['message' => 'Already added to calendar'], 400);
         }
 
-        // Check Google Tokens
-        if (!$user->google_access_token && !$user->google_refresh_token) {
-            return response()->json(['message' => 'Google account not connected', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+        // Check Microsoft Tokens
+        if (!$user->microsoft_access_token) {
+            return response()->json(['message' => 'Microsoft account not connected', 'code' => 'MICROSOFT_NOT_CONNECTED'], 400);
         }
 
-        $client = new GoogleClient();
-        $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
-        $client->setClientId(config('services.google.client_id'));
-        $client->setClientSecret(config('services.google.client_secret'));
+        // Token Refresh Logic
+        if ($user->microsoft_token_expires_at && $user->microsoft_token_expires_at->isPast()) {
+             if ($user->microsoft_refresh_token) {
+                  try {
+                       $response = \Illuminate\Support\Facades\Http::asForm()->post('https://login.microsoftonline.com/' . config('services.microsoft.tenant') . '/oauth2/v2.0/token', [
+                           'client_id' => config('services.microsoft.client_id'),
+                           'client_secret' => config('services.microsoft.client_secret'),
+                           'grant_type' => 'refresh_token',
+                           'refresh_token' => $user->microsoft_refresh_token,
+                           'scope' => 'openid profile email offline_access Calendars.ReadWrite'
+                       ]);
 
-        $accessToken = [
-            'access_token' => $user->google_access_token,
-            'refresh_token' => $user->google_refresh_token,
-            'created' => $user->updated_at->timestamp, // Approximate
-            'expires_in' => $user->google_token_expires_at ? $user->google_token_expires_at->diffInSeconds(now()) : 3600,
-        ];
-
-        $client->setAccessToken($accessToken);
-
-        if ($client->isAccessTokenExpired()) {
-            if ($user->google_refresh_token) {
-                try {
-                    $client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
-                    $newToken = $client->getAccessToken();
-                    $user->google_access_token = $newToken['access_token'];
-                    $user->save();
-                } catch (\Exception $e) {
-                     \Illuminate\Support\Facades\Log::error('Google Token Refresh Failed: ' . $e->getMessage());
-                     return response()->json(['message' => 'Google session expired', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
-                }
-            } else {
-                 return response()->json(['message' => 'Google session expired', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
-            }
+                       if ($response->successful()) {
+                           $data = $response->json();
+                           $user->microsoft_access_token = $data['access_token'];
+                           if (isset($data['refresh_token'])) {
+                               $user->microsoft_refresh_token = $data['refresh_token'];
+                           }
+                           $user->microsoft_token_expires_at = now()->addSeconds($data['expires_in']);
+                           $user->save();
+                       } else {
+                           \Illuminate\Support\Facades\Log::error('Microsoft Token Refresh Failed: ' . $response->body());
+                           return response()->json(['message' => 'Microsoft session expired', 'code' => 'MICROSOFT_NOT_CONNECTED'], 400);
+                       }
+                  } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Microsoft Token Refresh Exception: ' . $e->getMessage());
+                        return response()->json(['message' => 'Microsoft session expired', 'code' => 'MICROSOFT_NOT_CONNECTED'], 400);
+                  }
+             } else {
+                 return response()->json(['message' => 'Microsoft session expired', 'code' => 'MICROSOFT_NOT_CONNECTED'], 400);
+             }
         }
-
-        $service = new GoogleCalendar($client);
 
         $startDateTime = \Carbon\Carbon::parse($assignment->event_start_datetime)->format('Y-m-d\TH:i:s');
         $endDateTime = \Carbon\Carbon::parse($assignment->event_end_datetime)->format('Y-m-d\TH:i:s');
 
-        $event = new GoogleCalendar\Event([
-            'summary' => $assignment->assignment_name,
-            'description' => $assignment->description,
-            'location' => $assignment->event_location,
-            'start' => ['dateTime' => $startDateTime, 'timeZone' => 'Asia/Bangkok'],
-            'end' => ['dateTime' => $endDateTime, 'timeZone' => 'Asia/Bangkok'],
-        ]);
+        $eventData = [
+           'subject' => $assignment->assignment_name,
+           'body' => [
+               'contentType' => 'HTML',
+               'content' => $assignment->description ?? ''
+           ],
+           'start' => [
+               'dateTime' => $startDateTime,
+               'timeZone' => 'Asia/Bangkok'
+           ],
+           'end' => [
+               'dateTime' => $endDateTime,
+               'timeZone' => 'Asia/Bangkok'
+           ],
+           'location' => [
+               'displayName' => $assignment->event_location ?? 'No Location'
+           ]
+        ];
 
         try {
-            $createdEvent = $service->events->insert('primary', $event);
-            $assignment->users()->updateExistingPivot($user->id, ['google_event_id' => $createdEvent->id]);
-            return response()->json(['message' => 'Added to calendar', 'google_event_id' => $createdEvent->id]);
+            $response = \Illuminate\Support\Facades\Http::withToken($user->microsoft_access_token)
+               ->post('https://graph.microsoft.com/v1.0/me/events', $eventData);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $assignment->users()->updateExistingPivot($user->id, ['microsoft_event_id' => $data['id']]);
+                // Return generic event_id or specific one. I'll stick to 'microsoft_event_id' and update frontend.
+                return response()->json(['message' => 'Added to Outlook calendar', 'microsoft_event_id' => $data['id']]);
+            } else {
+                return response()->json(['message' => 'Failed to add to Outlook calendar: ' . $response->body()], $response->status());
+            }
+
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to add to calendar: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to add to Outlook calendar: ' . $e->getMessage()], 500);
         }
     }
 
@@ -635,46 +654,51 @@ class AssignmentController extends Controller
         $user = $request->user();
 
         $pivot = $assignment->users()->where('user_id', $user->id)->first();
-        if (!$pivot || !$pivot->pivot->google_event_id) {
+        if (!$pivot || !$pivot->pivot->microsoft_event_id) { // Check microsoft_event_id
+             // Fallback for old Google events? Or just ignore? User said remove google logic.
+             // If we want to be clean, we could check google_event_id too, but we can't delete it since we removed Google client.
             return response()->json(['message' => 'Event not found in calendar'], 404);
         }
 
-        // Check Google Tokens
-        if (!$user->google_access_token) {
-             return response()->json(['message' => 'Google account not connected', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
+        if (!$user->microsoft_access_token) {
+             return response()->json(['message' => 'Microsoft account not connected', 'code' => 'MICROSOFT_NOT_CONNECTED'], 400);
         }
 
-        $client = new GoogleClient();
-        $client->setHttpClient(new \GuzzleHttp\Client(['verify' => false]));
-        $client->setClientId(config('services.google.client_id'));
-        $client->setClientSecret(config('services.google.client_secret'));
-        $client->setAccessToken([
-            'access_token' => $user->google_access_token,
-            'refresh_token' => $user->google_refresh_token,
-        ]);
-
-        if ($client->isAccessTokenExpired()) {
-             if ($user->google_refresh_token) {
-                $client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
-                $user->google_access_token = $client->getAccessToken()['access_token'];
-                $user->save();
-            } else {
-                 return response()->json(['message' => 'Google session expired', 'code' => 'GOOGLE_NOT_CONNECTED'], 400);
-            }
+        // Token Refresh Logic (Reuse from Add)
+        if ($user->microsoft_token_expires_at && $user->microsoft_token_expires_at->isPast()) {
+             if ($user->microsoft_refresh_token) {
+                 $response = \Illuminate\Support\Facades\Http::asForm()->post('https://login.microsoftonline.com/' . config('services.microsoft.tenant') . '/oauth2/v2.0/token', [
+                     'client_id' => config('services.microsoft.client_id'),
+                     'client_secret' => config('services.microsoft.client_secret'),
+                     'grant_type' => 'refresh_token',
+                     'refresh_token' => $user->microsoft_refresh_token,
+                     'scope' => 'openid profile email offline_access Calendars.ReadWrite'
+                 ]);
+                 if ($response->successful()) {
+                      $data = $response->json();
+                      $user->microsoft_access_token = $data['access_token'];
+                       if (isset($data['refresh_token'])) {
+                               $user->microsoft_refresh_token = $data['refresh_token'];
+                       }
+                      $user->microsoft_token_expires_at = now()->addSeconds($data['expires_in']);
+                      $user->save();
+                 }
+             }
         }
-
-        $service = new GoogleCalendar($client);
 
         try {
-            $service->events->delete('primary', $pivot->pivot->google_event_id);
-            $assignment->users()->updateExistingPivot($user->id, ['google_event_id' => null]);
-            return response()->json(['message' => 'Removed from calendar']);
+            $response = \Illuminate\Support\Facades\Http::withToken($user->microsoft_access_token)
+                ->delete('https://graph.microsoft.com/v1.0/me/events/' . $pivot->pivot->microsoft_event_id);
+
+            if ($response->successful() || $response->status() == 404) {
+                // Also clear google_event_id just in case
+                $assignment->users()->updateExistingPivot($user->id, ['microsoft_event_id' => null, 'google_event_id' => null]);
+                return response()->json(['message' => 'Removed from calendar']);
+            } else {
+                return response()->json(['message' => 'Failed to remove from Outlook calendar: ' . $response->body()], $response->status());
+            }
         } catch (\Exception $e) {
-             if ($e->getCode() == 404) {
-                $assignment->users()->updateExistingPivot($user->id, ['google_event_id' => null]);
-                return response()->json(['message' => 'Removed from calendar (was already deleted from Google)']);
-             }
-            return response()->json(['message' => 'Failed to remove from calendar: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Failed to remove from Outlook calendar: ' . $e->getMessage()], 500);
         }
     }
 

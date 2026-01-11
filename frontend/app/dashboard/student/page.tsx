@@ -360,29 +360,29 @@ function StudentDashboard() {
   const handleAddToCalendar = async (assignment: Assignment) => {
     try {
       setLoadingTitle("Adding to Calendar")
-      setLoadingDescription("Please wait while we add the assignment to your Google Calendar...")
+      setLoadingDescription("Please wait while we add the assignment to your Microsoft Calendar...")
       setIsProcessing(true)
       await assignmentAPI.addToCalendar(assignment.id)
       await refreshAssignments()
       setStatusDialog({
         isOpen: true,
         title: "Success",
-        description: "Added to Google Calendar successfully!",
+        description: "Added to Microsoft Calendar successfully!",
         type: "success"
       })
     } catch (err: any) {
       console.error("Failed to add to calendar", err)
-      if (err.message === 'Google account not connected' || (err.status === 400 && err.message.includes('Google'))) {
-        // Fetch Google Auth URL from API and redirect
+      if (err.message === 'Microsoft account not connected' || (err.status === 400 && err.message.includes('Microsoft'))) {
+        // Fetch Microsoft Auth URL from API and redirect
         try {
-          const { url } = await assignmentAPI.getGoogleAuthUrl();
+          const { url } = await assignmentAPI.getMicrosoftAuthUrl();
           window.location.href = url;
         } catch (authErr) {
-          console.error("Failed to get Google Auth URL", authErr);
+          console.error("Failed to get Microsoft Auth URL", authErr);
           setStatusDialog({
             isOpen: true,
             title: "Error",
-            description: "Failed to initiate Google connection. Please try again.",
+            description: "Failed to initiate Microsoft connection. Please try again.",
             type: "error"
           });
         }
@@ -402,27 +402,32 @@ function StudentDashboard() {
   const handleRemoveFromCalendar = async (assignment: Assignment) => {
     try {
       setLoadingTitle("Removing from Calendar")
-      setLoadingDescription("Please wait while we remove the assignment from your Google Calendar...")
+      setLoadingDescription("Please wait while we remove the assignment from your Microsoft Calendar...")
       setIsProcessing(true)
       await assignmentAPI.removeFromCalendar(assignment.id)
       await refreshAssignments()
       setStatusDialog({
         isOpen: true,
         title: "Success",
-        description: "Removed from Google Calendar successfully!",
+        description: "Removed from Microsoft Calendar successfully!",
         type: "success"
       })
     } catch (err: any) {
       console.error("Failed to remove from calendar", err)
-      if (err.message === 'Google account not connected' || (err.status === 400 && err.message.includes('Google'))) {
-        // Use API_BASE_URL to construct the login URL. 
-        // If API_BASE_URL is relative (e.g. /api), we need to prepend window.origin or just use it relative.
-        // But window.location.href handles relative paths relative to current page, which is wrong if we want /google/login relative to root.
-        // Actually, API_BASE_URL usually ends with /api. We want /google/login.
-        // So we should strip /api and append /google/login.
-
-        const baseUrl = API_BASE_URL.replace(/\/api$/, '');
-        window.location.href = `${baseUrl}/google/login`;
+      if (err.message === 'Microsoft account not connected' || (err.status === 400 && err.message.includes('Microsoft'))) {
+        // Fetch Microsoft Auth URL from API and redirect
+        try {
+          const { url } = await assignmentAPI.getMicrosoftAuthUrl();
+          window.location.href = url;
+        } catch (authErr) {
+          console.error("Failed to get Microsoft Auth URL", authErr);
+          setStatusDialog({
+            isOpen: true,
+            title: "Error",
+            description: "Failed to initiate Microsoft connection. Please try again.",
+            type: "error"
+          });
+        }
       } else {
         setStatusDialog({
           isOpen: true,
@@ -881,8 +886,8 @@ function StudentDashboard() {
                                           Reject
                                         </Button>
 
-                                        {/* Google Calendar Button */}
-                                        {assignment.pivot.google_event_id ? (
+                                        {/* Microsoft Calendar Button */}
+                                        {assignment.pivot.microsoft_event_id ? (
                                           <Button
                                             size="sm"
                                             variant="outline"

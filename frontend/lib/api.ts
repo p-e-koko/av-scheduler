@@ -86,7 +86,7 @@ export interface Assignment {
     checked_in: number;
     position?: string;
     rejection_reason?: string;
-    google_event_id?: string;
+    microsoft_event_id?: string;
   };
 }
 
@@ -887,21 +887,19 @@ export const assignmentAPI = {
     return apiCall<AssignmentsListResponse>(endpoint);
   },
 
-  // Add to Google Calendar
-  async addToCalendar(id: number): Promise<{ message: string; google_event_id: string }> {
-    return apiCall<{ message: string; google_event_id: string }>(`/assignments/${id}/add-to-calendar`, {
+  // Add to Microsoft Calendar
+  async addToCalendar(id: number): Promise<{ message: string; microsoft_event_id: string }> {
+    return apiCall<{ message: string; microsoft_event_id: string }>(`/assignments/${id}/add-to-calendar`, {
       method: 'POST',
     });
   },
 
-  // Get Google Auth URL
-  async getGoogleAuthUrl(): Promise<{ url: string }> {
-    return apiCall<{ url: string }>('/google/auth-url', {
-      method: 'GET',
-    });
+  // Get Microsoft Auth URL
+  async getMicrosoftAuthUrl(): Promise<{ url: string }> {
+    return Promise.resolve({ url: `${API_BASE_URL}/login/microsoft/redirect` });
   },
 
-  // Remove from Google Calendar
+  // Remove from Microsoft Calendar
   async removeFromCalendar(id: number): Promise<{ message: string }> {
     return apiCall<{ message: string }>(`/assignments/${id}/remove-from-calendar`, {
       method: 'POST',
