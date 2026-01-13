@@ -375,9 +375,11 @@ class AuthController extends Controller
             ], $updateData);
 
             $user = User::create($createData);
+            AuditLogger::log('User Registered (Microsoft)', ['email' => $user->email, 'role' => $user->role]);
         }
 
         Auth::login($user, true);
+        AuditLogger::log('User Logged In (Microsoft)', ['email' => $user->email]);
 
         // Generate Token for Frontend
         $token = $user->createToken('auth_token')->plainTextToken;
