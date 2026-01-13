@@ -620,7 +620,11 @@ function CoordinatorDashboard() {
                           return true;
                         })
                         .map((assignment, index) => (
-                          <div key={`${assignment.id}-${index}`} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4">
+                          <div 
+                            key={`${assignment.id}-${index}`} 
+                            className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4 cursor-pointer hover:bg-muted/70 transition-colors"
+                            onClick={() => handleViewAssignment(assignment)}
+                          >
                             <div className="flex items-center space-x-4 w-full md:w-auto">
                               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                                 <ClipboardList className="w-5 h-5 text-primary dark:text-white" />
@@ -630,7 +634,11 @@ function CoordinatorDashboard() {
                                 <p className="text-sm text-muted-foreground truncate">{assignment.event_name} • {new Date(assignment.event_start_datetime).toLocaleDateString('en-US')}</p>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2 w-full md:w-auto justify-end">
+                            <div className="flex items-center space-x-4 w-full md:w-auto justify-end">
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Clock className="w-4 h-4 mr-1" />
+                                <span>{((new Date(assignment.event_end_datetime).getTime() - new Date(assignment.event_start_datetime).getTime()) / (1000 * 60 * 60)).toFixed(1)}h</span>
+                              </div>
                               <Badge
                                 variant="secondary"
                                 className={`text-xs px-2 py-0.5 border-none ${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
@@ -640,39 +648,41 @@ function CoordinatorDashboard() {
                               >
                                 {assignment.status}
                               </Badge>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleViewAssignment(assignment);
-                                }}
-                                className="text-muted-foreground hover:text-foreground hover:bg-muted"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditAssignment(assignment);
-                                }}
-                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-white dark:hover:bg-blue-900/20"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteAssignment(assignment.id);
-                                }}
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleViewAssignment(assignment)
+                                  }}
+                                  className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleEditAssignment(assignment)
+                                  }}
+                                  className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost" 
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDeleteAssignment(assignment.id)
+                                  }}
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -794,9 +804,17 @@ function CoordinatorDashboard() {
                                     )}
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap mt-2">
                                   <Badge variant="secondary" className="text-xs px-2 py-0.5">Student</Badge>
-                                  <Badge variant="hours" className="text-xs px-2 py-0.5">{student.promised_hours_per_week || '0'}h/week</Badge>
+                                  <Badge variant="outline" className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800">
+                                    {Number(student.promised_hours_per_week || 0).toFixed(2)}h/week
+                                  </Badge>
+                                  <Badge variant="outline" className={`text-xs px-2 py-0.5 ${(Number(student.remaining_hours_this_week) || 0) > 0
+                                    ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800'
+                                    : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+                                    }`}>
+                                    {Number(student.remaining_hours_this_week || 0).toFixed(1)}h Remaining
+                                  </Badge>
                                 </div>
                               </div>
                             </div>
@@ -821,9 +839,6 @@ function CoordinatorDashboard() {
                               </th>
                               <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                 Email
-                              </th>
-                              <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Actions
                               </th>
                             </tr>
                           </thead>
@@ -875,19 +890,6 @@ function CoordinatorDashboard() {
                                       <XCircle className="w-4 h-4 text-red-500" />
                                     )}
                                   </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      router.push(`/student/${student.id}`)
-                                    }}
-                                    className="text-primary hover:text-primary-dark hover:bg-primary/10"
-                                  >
-                                    View Details
-                                  </Button>
                                 </td>
                               </tr>
                             ))}

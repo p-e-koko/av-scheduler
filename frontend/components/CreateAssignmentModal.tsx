@@ -308,7 +308,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
       <DialogContent className="sm:max-w-[700px] bg-card/95 backdrop-blur-xl border-border shadow-2xl max-h-[90vh] overflow-y-auto">
         <div ref={topRef} className="absolute top-0 left-0 w-full h-0" />
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-white">{assignmentToEdit ? "Edit Assignment" : "Create New Assignment"}</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-foreground">{assignmentToEdit ? "Edit Assignment" : "Create New Assignment"}</DialogTitle>
           <DialogDescription>
             {assignmentToEdit ? "Update the details of the assignment." : "Fill in the details below to create a new assignment and assign students."}
           </DialogDescription>
@@ -324,7 +324,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           {/* Event Name */}
           <div className="space-y-2">
-            <Label htmlFor="event_name" className="flex items-center gap-2 text-white font-semibold">
+            <Label htmlFor="event_name" className="flex items-center gap-2 text-foreground font-semibold">
               <Calendar className="w-4 h-4" />
               Event / Assignment Name
             </Label>
@@ -340,7 +340,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
 
           {/* Location */}
           <div className="space-y-2">
-            <Label htmlFor="event_location" className="flex items-center gap-2 text-white font-semibold">
+            <Label htmlFor="event_location" className="flex items-center gap-2 text-foreground font-semibold">
               <MapPin className="w-4 h-4" />
               Location
             </Label>
@@ -357,7 +357,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
           {/* Date & Time Selection */}
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-4">
-              <Label className="flex items-center gap-2 text-white font-semibold">
+              <Label className="flex items-center gap-2 text-foreground font-semibold">
                 <Clock className="w-4 h-4" />
                 Start
               </Label>
@@ -392,7 +392,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
               </div>
             </div>
             <div className="space-y-4">
-              <Label className="flex items-center gap-2 text-white font-semibold">
+              <Label className="flex items-center gap-2 text-foreground font-semibold">
                 <Clock className="w-4 h-4" />
                 End
               </Label>
@@ -430,7 +430,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="flex items-center gap-2 text-white font-semibold">
+            <Label htmlFor="description" className="flex items-center gap-2 text-foreground font-semibold">
               <FileText className="w-4 h-4" />
               Description
             </Label>
@@ -446,7 +446,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
           {/* Assignees Section */}
           <div className="space-y-4 border-t border-border pt-6">
             <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-2 text-white font-bold text-lg">
+              <Label className="flex items-center gap-2 text-foreground font-bold text-lg">
                 <UserPlus className="w-5 h-5" />
                 Assign Students
               </Label>
@@ -492,7 +492,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                               }}
                             >
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-green-600 dark:text-green-400">{student.name}</span>
+                                <span className="font-medium text-green-600 dark:text-green-400 dark:group-hover:text-white">{student.name}</span>
                                 {selectedStudentId === student.id.toString() && (
                                   <Check className="h-4 w-4 text-primary" />
                                 )}
