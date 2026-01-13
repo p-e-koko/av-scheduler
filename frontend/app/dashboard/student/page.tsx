@@ -694,17 +694,6 @@ function StudentDashboard() {
                         <span className="text-sm text-muted-foreground">Promised Hours/Week</span>
                         <span className="font-medium text-foreground">{currentUser.promised_hours_per_week || '0'}h</span>
                       </div>
-
-                      <div className="pt-4 space-y-2">
-                        <Button className="w-full bg-primary hover:bg-primary-dark text-primary-foreground">
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit Profile
-                        </Button>
-                        <Button variant="outline" className="w-full border-border hover:bg-accent hover:text-accent-foreground">
-                          <Star className="w-4 h-4 mr-2" />
-                          Update Skills
-                        </Button>
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -933,13 +922,91 @@ function StudentDashboard() {
                             </div>
                           )}
                           {viewMode === "list" && (
-                            <div className="hidden sm:flex items-center space-x-2">
-                              <Badge className={`${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
-                                assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
-                                  'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
-                                }`}>
-                                {assignment.status}
-                              </Badge>
+                            <div className="flex flex-col sm:flex-row items-center gap-2 mt-4 sm:mt-0 w-full sm:w-auto">
+                              <div className="hidden sm:flex mr-2">
+                                <Badge className={`${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' :
+                                  assignment.status === 'confirmed' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' :
+                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white'
+                                  }`}>
+                                  {assignment.status}
+                                </Badge>
+                              </div>
+
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full sm:w-auto"
+                                onClick={() => handleViewAssignment(assignment)}
+                              >
+                                View Details
+                              </Button>
+
+                              {assignment.pivot && assignment.status !== 'complete' && (
+                                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                                  {assignment.pivot.status !== 'accepted' && assignment.pivot.status !== 'rejected' && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        className="flex-1 sm:flex-none bg-emerald-900 hover:bg-emerald-950 text-white shadow-sm"
+                                        onClick={() => handleAcceptAssignment(assignment.id)}
+                                      >
+                                        Accept
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        className="flex-1 sm:flex-none bg-red-900 hover:bg-red-950 text-white shadow-sm"
+                                        onClick={() => handleRejectAssignment(assignment.id)}
+                                      >
+                                        Reject
+                                      </Button>
+                                    </>
+                                  )}
+                                  {assignment.pivot.status === 'accepted' && (
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        className="flex-1 sm:flex-none bg-red-900 hover:bg-red-950 text-white shadow-sm"
+                                        onClick={() => handleRejectAssignment(assignment.id)}
+                                      >
+                                        Reject
+                                      </Button>
+
+                                      {assignment.pivot.microsoft_event_id ? (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="flex-1 sm:flex-none border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                                          onClick={() => handleRemoveFromCalendar(assignment)}
+                                          disabled={isProcessing}
+                                        >
+                                          <Calendar className="w-3 h-3 md:mr-2" />
+                                          <span className="hidden md:inline">From Calendar</span>
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="flex-1 sm:flex-none border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                                          onClick={() => handleAddToCalendar(assignment)}
+                                          disabled={isProcessing}
+                                        >
+                                          <Calendar className="w-3 h-3 md:mr-2" />
+                                          <span className="hidden md:inline">To Calendar</span>
+                                        </Button>
+                                      )}
+                                    </>
+                                  )}
+                                  {assignment.pivot.status === 'rejected' && (
+                                    <Button
+                                      size="sm"
+                                      className="flex-1 sm:flex-none bg-emerald-900 hover:bg-emerald-950 text-white shadow-sm"
+                                      onClick={() => handleAcceptAssignment(assignment.id)}
+                                    >
+                                      Accept
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
