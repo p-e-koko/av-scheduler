@@ -276,6 +276,44 @@ function SupervisorDashboard() {
 
   const monthlyData = calculateMonthlyData();
 
+  // Helper to get student weekly stats
+  const getStudentWeeklyStats = (studentId: string) => {
+    const student = students.find(s => s.id === studentId);
+    if (!student) return { promised: 0, worked: 0, assigned: 0 };
+
+    const promised = parseFloat(student.promised_hours_per_week || '0');
+    
+    // Get current week range
+    const now = getServerTime();
+    const startOfWeek = new Date(now);
+    const day = now.getDay() || 7; 
+    startOfWeek.setHours(0,0,0,0);
+    if (day !== 1) startOfWeek.setDate(now.getDate() - (day - 1));
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23,59,59,999);
+
+    let worked = 0;
+    let assigned = 0;
+
+    assignments.forEach(a => {
+        if (a.users?.some(u => u.id === studentId)) {
+            const startDate = new Date(a.event_start_datetime);
+            if (startDate >= startOfWeek && startDate <= endOfWeek) {
+                const duration = (new Date(a.event_end_datetime).getTime() - new Date(a.event_start_datetime).getTime()) / (1000 * 60 * 60);
+                if (a.status === 'complete') {
+                     worked += duration;
+                } else if (a.status === 'confirmed' || a.status === 'pending') {
+                     assigned += duration;
+                }
+            }
+        }
+    });
+
+    return { promised, worked, assigned };
+  };
+
   // Filter students
   const filteredStudents = students.filter(student =>
     student.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
@@ -375,72 +413,157 @@ function SupervisorDashboard() {
           {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <div className="space-y-6">
-              {/* Key Metrics - Compact View */}
-              <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2 sm:gap-3">
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-full border border-border shadow-sm justify-center sm:justify-start">
-                  <Users className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
-                  <span className="text-xs sm:text-sm font-medium">{stats.totalStudents} Students</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-full border border-border shadow-sm justify-center sm:justify-start">
-                  <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 dark:text-green-400" />
-                  <span className="text-xs sm:text-sm font-medium">{Math.round(stats.monthlyHours)}h This Month</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-full border border-border shadow-sm justify-center sm:justify-start">
-                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-orange-600 dark:text-orange-400" />
-                  <span className="text-xs sm:text-sm font-medium">{stats.averageHours.toFixed(1)}h Avg/Week</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-3 py-2 rounded-full border border-border shadow-sm justify-center sm:justify-start">
-                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
-                  <span className="text-xs sm:text-sm font-medium">{Math.round(stats.completionRate)}% Completion</span>
-                </div>
-              </div>
-
-              {/* Monthly Hours Chart */}
-
-
-              {/* Top Performers */}
               <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                 <CardHeader>
-                  <CardTitle>Top Performing Students This Month</CardTitle>
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <CardTitle>Student Hours Overview (Weekly)</CardTitle>
+                    <div className="relative w-full md:w-64">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input 
+                        placeholder="Search students..." 
+                        value={studentSearchQuery}
+                        onChange={(e) => setStudentSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  {loading ? (
-                    <div className="text-center py-8 text-muted-foreground">Loading students...</div>
-                  ) : error ? (
-                    <div className="text-center py-8 text-destructive">{error}</div>
-                  ) : (
-                    <div className="space-y-4">
-                      {students
-                        .sort((a, b) => (b.hours_completion_percentage || 0) - (a.hours_completion_percentage || 0))
-                        .slice(0, 4)
-                        .map((student, index) => (
-                          <div
-                            key={student.id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted cursor-pointer transition-colors gap-4 sm:gap-0"
-                            onClick={() => router.push(`/student/${student.id}`)}
-                          >
-                            <div className="flex items-center space-x-4">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-muted-foreground' : index === 2 ? 'bg-orange-500' : 'bg-muted-foreground/70'
-                                }`}>
-                                {index + 1}
+                  <div className="space-y-4">
+                    {/* Desktop View */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-muted/50 text-muted-foreground uppercase text-xs">
+                          <tr>
+                            <th className="px-4 py-3 rounded-l-lg">Student</th>
+                            <th className="px-4 py-3">Promised Hours</th>
+                            <th className="px-4 py-3">Hours Status</th>
+                            <th className="px-4 py-3 text-right rounded-r-lg">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {filteredStudents.map(student => {
+                            const stats = getStudentWeeklyStats(student.id);
+                            const totalProjected = stats.worked + stats.assigned;
+                            const progress = stats.promised > 0 ? (totalProjected / stats.promised) * 100 : 0;
+                            const isOverPromised = totalProjected > stats.promised;
+                            const workedPercent = stats.promised > 0 ? (stats.worked / stats.promised) * 100 : 0;
+                            const assignedPercent = stats.promised > 0 ? (stats.assigned / stats.promised) * 100 : 0;
+
+                            return (
+                              <tr key={student.id} className="hover:bg-muted/50 transition-colors">
+                                <td className="px-4 py-4 font-medium">
+                                  <div className="flex items-center space-x-3">
+                                    <Avatar className="h-8 w-8">
+                                      <AvatarImage src={student.profile_picture || student.profile_picture_url || ""} />
+                                      <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                      <div className="text-foreground">{student.name}</div>
+                                      <div className="text-xs text-muted-foreground">{student.email}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <span className="font-semibold">{stats.promised}h</span> <span className="text-muted-foreground">/ week</span>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <div className="w-full max-w-xs space-y-1.5">
+                                    <div className="flex justify-between text-xs">
+                                      <span>
+                                          <span className="font-medium text-green-600 dark:text-green-400">{stats.worked.toFixed(1)}h</span> worked 
+                                          <span className="text-muted-foreground mx-1">•</span>
+                                          <span className="font-medium text-blue-600 dark:text-blue-400">{stats.assigned.toFixed(1)}h</span> assigned
+                                      </span>
+                                      <span className={isOverPromised ? "text-green-600 font-medium" : "text-muted-foreground"}>
+                                        {Math.round(progress)}%
+                                      </span>
+                                    </div>
+                                    <div className="h-2 w-full bg-secondary rounded-full overflow-hidden flex">
+                                      <div 
+                                        style={{ width: `${Math.min(100, workedPercent)}%` }} 
+                                        className="h-full bg-green-500"
+                                      />
+                                      <div 
+                                        style={{ width: `${Math.min(100 - Math.min(100, workedPercent), assignedPercent)}%` }} 
+                                        className="h-full bg-blue-500"
+                                      />
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4 text-right">
+                                  <Button size="sm" variant="outline" onClick={() => router.push(`/student/${student.id}`)}>
+                                    View Details
+                                  </Button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile View */}
+                    <div className="space-y-4 md:hidden">
+                      {filteredStudents.map(student => {
+                        const stats = getStudentWeeklyStats(student.id);
+                        const totalProjected = stats.worked + stats.assigned;
+                        const progress = stats.promised > 0 ? (totalProjected / stats.promised) * 100 : 0;
+                        const workedPercent = stats.promised > 0 ? (stats.worked / stats.promised) * 100 : 0;
+                        const assignedPercent = stats.promised > 0 ? (stats.assigned / stats.promised) * 100 : 0;
+                        
+                        return (
+                          <div key={student.id} className="bg-muted/50 p-4 rounded-lg space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <Avatar className="h-10 w-10">
+                                  <AvatarImage src={student.profile_picture || student.profile_picture_url || ""} />
+                                  <AvatarFallback>{getInitials(student.name)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="font-medium text-foreground">{student.name}</div>
+                                  <div className="text-xs text-muted-foreground">Target: {stats.promised}h / week</div>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-semibold text-foreground">{student.name}</h4>
-                                <p className="text-sm text-muted-foreground">{student.hours_worked_this_week || 0} hours completed</p>
-                              </div>
+                              <Button size="icon" variant="ghost" onClick={() => router.push(`/student/${student.id}`)}>
+                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                              </Button>
                             </div>
-                            <div className="text-left sm:text-right pl-12 sm:pl-0">
-                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                                {student.hours_completion_percentage || 0}% completion
-                              </Badge>
+                            
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <div className="flex gap-2">
+                                  <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 dark:bg-green-900/10 dark:border-green-800">
+                                    {stats.worked.toFixed(1)}h Done
+                                  </Badge>
+                                  <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-900/10 dark:border-blue-800">
+                                    {stats.assigned.toFixed(1)}h Assigned
+                                  </Badge>
+                                </div>
+                                <span className="font-semibold text-sm">{Math.round(progress)}%</span>
+                              </div>
+                              <div className="h-2 w-full bg-secondary rounded-full overflow-hidden flex">
+                                <div 
+                                  style={{ width: `${Math.min(100, workedPercent)}%` }} 
+                                  className="h-full bg-green-500"
+                                />
+                                <div 
+                                  style={{ width: `${Math.min(100 - Math.min(100, workedPercent), assignedPercent)}%` }} 
+                                  className="h-full bg-blue-500"
+                                />
+                              </div>
                             </div>
                           </div>
-                        ))}
-                      {students.length === 0 && (
-                        <div className="text-center py-8 text-muted-foreground">No students found</div>
-                      )}
+                        );
+                      })}
                     </div>
-                  )}
+                    
+                    {filteredStudents.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No students found matching your search.
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
