@@ -12,15 +12,16 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { availabilityAPI } from "@/lib/api"
+import { availabilityAPI, type Availability } from "@/lib/api"
 
 interface AddAvailabilityModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  existingAvailability?: Availability[]
 }
 
-export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabilityModalProps) {
+export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvailability }: AddAvailabilityModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -97,6 +98,32 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess }: AddAvailabi
 
       if (availabilities.length === 0) {
           throw new Error("No valid dates generated with the selected options.")
+      }
+
+      // Check for overlaps
+      if (existingAvailability) {
+        for (const newSlot of availabilities) {
+           const newStart = newSlot.start_time
+           const newEnd = newSlot.end_time
+           
+           const hasOverlap = existingAvailability.some(existing => {
+             // Only check same date
+             // backend format might be YYYY-MM-DD or with time. Assume YYYY-MM-DD for date part comparison.
+             const existingDate = existing.date.split('T')[0]
+             if (existingDate !== newSlot.date) return false
+             
+             // Compare times
+             // Ensure we are comparing comparable strings (both HH:MM:SS or HH:MM)
+             // API usually returns HH:MM:SS. We handle inputs by ensuring HH:MM:00
+             
+             // Simple string comparison works for ISO formatted times
+             return newStart < existing.end_time && newEnd > existing.start_time
+           })
+
+           if (hasOverlap) {
+             throw new Error(`Time slot ${newSlot.start_time} - ${newSlot.end_time} on ${newSlot.date} overlaps with an existing availability.`)
+           }
+        }
       }
 
       // Use bulkCreateAvailability with isMyAvailability = true

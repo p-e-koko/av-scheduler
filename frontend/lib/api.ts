@@ -1075,8 +1075,8 @@ export const availabilityAPI = {
   },
 
   // Update availability
-  async updateAvailability(id: number, availabilityData: Partial<Availability>): Promise<{ message: string; availability: Availability }> {
-    const endpoint = availabilityData.student_id ? `/availability/${id}` : `/my-availability/${id}`;
+  async updateAvailability(id: number, availabilityData: Partial<Availability>, isMyAvailability = false): Promise<{ message: string; availability: Availability }> {
+    const endpoint = isMyAvailability ? `/my-availability/${id}` : `/availability/${id}`;
     return apiCall<{ message: string; availability: Availability }>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(availabilityData),

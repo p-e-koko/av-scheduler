@@ -1102,12 +1102,14 @@ function StudentDashboard() {
         isOpen={isAddAvailabilityModalOpen}
         onClose={() => setIsAddAvailabilityModalOpen(false)}
         onSuccess={handleAvailabilityAdded}
+        existingAvailability={availability}
       />
       <EditAvailabilityModal
         isOpen={isEditAvailabilityModalOpen}
         onClose={() => setIsEditAvailabilityModalOpen(false)}
         onSuccess={handleAvailabilityAdded}
         availability={selectedAvailability}
+        existingAvailability={availability}
       />
       <AssignmentDetailModal
         isOpen={isDetailModalOpen}

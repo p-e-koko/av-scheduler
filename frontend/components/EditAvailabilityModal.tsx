@@ -21,9 +21,10 @@ interface EditAvailabilityModalProps {
   onClose: () => void
   onSuccess: () => void
   availability: Availability | null
+  existingAvailability?: Availability[]
 }
 
-export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability }: EditAvailabilityModalProps) {
+export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability, existingAvailability }: EditAvailabilityModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -65,13 +66,30 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
       const startTimeWithSeconds = formData.start_time.length === 5 ? `${formData.start_time}:00` : formData.start_time
       const endTimeWithSeconds = formData.end_time.length === 5 ? `${formData.end_time}:00` : formData.end_time
 
+      // Check for overlaps
+      if (existingAvailability) {
+        const hasOverlap = existingAvailability.some(existing => {
+          // Exclude self
+          if (existing.id === availability.id) return false
+
+          const existingDate = existing.date.split('T')[0]
+          if (existingDate !== formData.date) return false
+
+          return startTimeWithSeconds < existing.end_time && endTimeWithSeconds > existing.start_time
+        })
+
+        if (hasOverlap) {
+          throw new Error("This time slot overlaps with another existing availability.")
+        }
+      }
+
       await availabilityAPI.updateAvailability(availability.id, {
         date: formData.date,
         start_time: startTimeWithSeconds,
         end_time: endTimeWithSeconds,
         status: formData.status,
         student_id: availability.student_id
-      })
+      }, true) // isMyAvailability = true
 
       onSuccess()
       onClose()

@@ -163,7 +163,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // Coordinator Availability Management - Coordinators have full CRUD access
-    Route::middleware(['role:coordinator', 'throttle:sensitive'])->group(function () {
+    Route::middleware(['role:coordinator,admin', 'throttle:sensitive'])->group(function () {
         Route::apiResource('availability', AvailabilityController::class);
         Route::prefix('availability')->group(function () {
             Route::get('/schedule', [AvailabilityController::class, 'schedule']);
