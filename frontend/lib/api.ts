@@ -566,8 +566,16 @@ export const hasRole = (role: string): boolean => {
 
 // Check if user has any of the specified roles
 export const hasAnyRole = (roles: string[]): boolean => {
-  const userRole = getUserRole();
-  return userRole ? roles.includes(userRole) : false;
+  const user = getStoredUser();
+  if (!user || (!user.role && (!user.roles || user.roles.length === 0))) return false;
+  
+  const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+  
+  // Normalize both user roles and requested roles to lowercase for comparison
+  const normalizedUserRoles = userRoles.map(r => r.toLowerCase());
+  const normalizedRequestedRoles = roles.map(r => r.toLowerCase());
+  
+  return normalizedRequestedRoles.some(role => normalizedUserRoles.includes(role));
 };
 
 // Format API errors for display

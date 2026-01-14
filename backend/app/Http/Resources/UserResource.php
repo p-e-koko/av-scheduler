@@ -43,7 +43,6 @@ class UserResource extends JsonResource
 
             // Include role-based permissions if using Spatie
             'permissions' => $this->whenLoaded('permissions'),
-            'roles' => $this->whenLoaded('roles'),
         ];
     }
 }
