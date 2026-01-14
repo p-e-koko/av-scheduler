@@ -323,7 +323,7 @@ function AdminDashboard() {
                 {users.map((user) => (
                   <Card
                     key={user.id}
-                    className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all hover:scale-[1.01] h-32"
+                    className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all hover:scale-[1.01] h-auto min-h-[8rem]"
                   >
                     <CardContent className="p-4 h-full">
                       <div className="flex items-center space-x-4 h-full">

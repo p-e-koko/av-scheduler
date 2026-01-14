@@ -12,13 +12,15 @@ import {
   CheckCircle,
   Clock,
   X,
-  Loader2
+  Loader2,
+  LayoutDashboard
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ModeToggle } from "@/components/mode-toggle"
 import { authAPI, getStoredUser, type User as UserType } from "@/lib/api"
+import { getAllowedDashboards } from "@/lib/role-routing"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import {
   Dialog,
@@ -162,6 +164,42 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
             <Clock className="w-5 h-5 flex-shrink-0" />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">My Schedule</span>}
           </div>
+
+          {/* Switch Dashboard Section */}
+          {currentUser && getAllowedDashboards(currentUser.roles || []).filter(path => !path.includes('/dashboard/student')).length > 0 && (
+            <>
+              <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
+                {(!sidebarCollapsed || isMobile) ? (
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Switch View
+                  </p>
+                ) : (
+                  <div className="h-px w-8 mx-auto bg-border" />
+                )}
+              </div>
+              {getAllowedDashboards(currentUser.roles || [])
+                .filter(path => !path.includes('/dashboard/student'))
+                .map(path => {
+                  const label = path.split('/').pop();
+                  return (
+                    <div
+                      key={path}
+                      onClick={() => {
+                        router.push(path);
+                        if (isMobile && onClose) onClose();
+                      }}
+                      className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
+                      title={sidebarCollapsed && !isMobile ? `Switch to ${label}` : undefined}
+                    >
+                      <LayoutDashboard className="w-5 h-5 flex-shrink-0" />
+                      {(!sidebarCollapsed || isMobile) && (
+                        <span className="font-medium capitalize">{label}</span>
+                      )}
+                    </div>
+                  );
+                })}
+            </>
+          )}
         </nav>
       </div>
 
