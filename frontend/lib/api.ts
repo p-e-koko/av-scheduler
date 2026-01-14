@@ -48,6 +48,8 @@ export interface User {
   email: string;
   phone_number?: string;
   role: 'admin' | 'supervisor' | 'coordinator' | 'student';
+  roles?: string[];
+  permissions?: string[];
   profile_picture?: string;
   profile_picture_url?: string;
   promised_hours_per_week?: string;

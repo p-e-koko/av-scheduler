@@ -33,11 +33,12 @@ export function RoleProtectedRoute({
 
       // If this is a dashboard route, check role-based access
       if (isDashboardPath(pathname)) {
-        const userCanAccess = canAccessDashboard(user.role, pathname);
+        const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+        const userCanAccess = canAccessDashboard(userRoles, pathname);
         
         if (!userCanAccess) {
           // Redirect to user's appropriate dashboard
-          const correctDashboard = getRoleBasedDashboardPath(user.role);
+          const correctDashboard = getRoleBasedDashboardPath(userRoles);
           router.push(correctDashboard);
           return;
         }
@@ -45,7 +46,8 @@ export function RoleProtectedRoute({
 
       // If specific roles are required, check them
       if (allowedRoles && allowedRoles.length > 0) {
-        const hasRequiredRole = allowedRoles.includes(user.role);
+        const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
+        const hasRequiredRole = userRoles.some(r => allowedRoles.includes(r as any));
         
         if (!hasRequiredRole) {
           // Redirect to specified path or user's dashboard

@@ -65,6 +65,19 @@ class UserController extends Controller
 
         $user = User::create($userData);
 
+        if (isset($userData['roles'])) {
+            $user->assignRole($userData['roles']);
+            // Sync main role for backward compatibility
+            if (!empty($userData['roles'])) {
+                $user->role = $userData['roles'][0];
+                $user->save();
+            }
+        } elseif (isset($userData['role'])) {
+            $user->assignRole($userData['role']);
+        } else {
+             $user->assignRole('student');
+        }
+
         AuditLogger::log('User Created', ['user_id' => $user->id, 'email' => $user->email]);
 
         return response()->json([
@@ -94,6 +107,19 @@ class UserController extends Controller
         }
 
         $user = User::create($userData);
+
+        if (isset($userData['roles'])) {
+            $user->assignRole($userData['roles']);
+            // Sync main role for backward compatibility
+            if (!empty($userData['roles'])) {
+                $user->role = $userData['roles'][0];
+                $user->save();
+            }
+        } elseif (isset($userData['role'])) {
+            $user->assignRole($userData['role']);
+        } else {
+             $user->assignRole('student');
+        }
 
         AuditLogger::log('User Created', ['user_id' => $user->id, 'email' => $user->email]);
 
@@ -135,19 +161,33 @@ class UserController extends Controller
 
         $user->update($userData);
 
+         if (isset($userData['roles'])) {
+            $user->syncRoles($userData['roles']);
+             // Sync main role for backward compatibility
+            if (!empty($userData['roles'])) {
+                $user->role = $userData['roles'][0];
+                $user->save();
+            }
+        } elseif (isset($userData['role'])) {
+            $user->syncRoles([$userData['role']]);
+        }
+
+        // Refresh model to get updated role
+        $user->refresh();
+
         // Always recalculate remaining hours for students to ensure consistency
-        if ($user->role === 'student') {
+        if ($user->hasRole('student') || $user->role === 'student') {
             $this->recalculateRemainingHours($user);
         }
 
         AuditLogger::log('User Updated', ['user_id' => $user->id, 'email' => $user->email]);
 
-        if (isset($userData['role']) && $userData['role'] !== $oldRole) {
+        if ((isset($userData['role']) && $userData['role'] !== $oldRole) || isset($userData['roles'])) {
              AuditLogger::log('User Role Changed', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'old_role' => $oldRole,
-                'new_role' => $userData['role']
+                'new_roles' => $user->getRoleNames()
             ]);
         }
 

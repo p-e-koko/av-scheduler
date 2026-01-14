@@ -444,12 +444,26 @@ function AdminDashboard() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge
-                              variant="outline"
-                              className="text-xs font-medium bg-background text-foreground border-border group-hover:bg-primary-foreground/20 group-hover:text-primary-foreground group-hover:border-primary-foreground/30"
-                            >
-                              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                            </Badge>
+                            <div className="flex flex-wrap gap-1">
+                              {user.roles && user.roles.length > 0 ? (
+                                user.roles.map(role => (
+                                  <Badge
+                                    key={role}
+                                    variant="outline"
+                                    className="text-xs font-medium bg-background text-foreground border-border group-hover:bg-primary-foreground/20 group-hover:text-primary-foreground group-hover:border-primary-foreground/30 capitalize"
+                                  >
+                                    {role}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs font-medium bg-background text-foreground border-border group-hover:bg-primary-foreground/20 group-hover:text-primary-foreground group-hover:border-primary-foreground/30 capitalize"
+                                >
+                                  {user.role}
+                                </Badge>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-sm text-muted-foreground group-hover:text-primary-foreground/90">

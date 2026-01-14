@@ -1,27 +1,28 @@
 import { User } from './api';
 
+// Helper to normalize roles input
+const normalizeRoles = (roleOrRoles: string | string[]): string[] => {
+  const roles = Array.isArray(roleOrRoles) ? roleOrRoles : [roleOrRoles];
+  return roles.map(r => r.toLowerCase());
+};
+
 // Role-based dashboard routing
-export const getRoleBasedDashboardPath = (role: string): string => {
-  switch (role.toLowerCase()) {
-    case 'admin':
-      return '/dashboard/admin';
-    case 'coordinator':
-      return '/dashboard/coordinator';
-    case 'student':
-      return '/dashboard/student';
-    case 'supervisor':
-      return '/dashboard/supervisor';
-    default:
-      return '/login'; // Fallback to login if role is unknown
-  }
+export const getRoleBasedDashboardPath = (role: string | string[]): string => {
+  const roles = normalizeRoles(role);
+
+  if (roles.includes('admin')) return '/dashboard/admin';
+  if (roles.includes('supervisor')) return '/dashboard/supervisor';
+  if (roles.includes('coordinator')) return '/dashboard/coordinator';
+  
+  return '/dashboard/student';
 };
 
 // Check if user can access a specific dashboard
-export const canAccessDashboard = (userRole: string, dashboardPath: string): boolean => {
-  const normalizedRole = userRole.toLowerCase();
+export const canAccessDashboard = (userRole: string | string[], dashboardPath: string): boolean => {
+  const roles = normalizeRoles(userRole);
   
   // Admin can access all dashboards
-  if (normalizedRole === 'admin') {
+  if (roles.includes('admin')) {
     return true;
   }
   
@@ -32,14 +33,20 @@ export const canAccessDashboard = (userRole: string, dashboardPath: string): boo
     'supervisor': '/dashboard/supervisor'
   };
   
-  return rolePathMap[normalizedRole] === dashboardPath;
+  // Allow access if any of the user's roles matches the dashboard path
+  // Note: This checks for exact match or if the path starts with the dashboard path 
+  // (to support sub-pages if any, though strict equality was used before)
+  return roles.some(role => {
+      const allowedPath = rolePathMap[role];
+      return allowedPath === dashboardPath || (allowedPath && dashboardPath.startsWith(allowedPath + '/'));
+  });
 };
 
 // Get allowed dashboard paths for a user
-export const getAllowedDashboards = (userRole: string): string[] => {
-  const normalizedRole = userRole.toLowerCase();
+export const getAllowedDashboards = (userRole: string | string[]): string[] => {
+  const roles = normalizeRoles(userRole);
   
-  if (normalizedRole === 'admin') {
+  if (roles.includes('admin')) {
     return [
       '/dashboard/admin',
       '/dashboard/coordinator',
@@ -54,7 +61,13 @@ export const getAllowedDashboards = (userRole: string): string[] => {
     'supervisor': ['/dashboard/supervisor']
   };
   
-  return rolePathMap[normalizedRole] || [];
+  const allowed = new Set<string>();
+  roles.forEach(role => {
+      const paths = rolePathMap[role];
+      if (paths) paths.forEach(p => allowed.add(p));
+  });
+  
+  return Array.from(allowed);
 };
 
 // Check if current path is a dashboard path

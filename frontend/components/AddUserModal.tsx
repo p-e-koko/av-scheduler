@@ -22,7 +22,7 @@ interface AddUserFormData {
   password: string
   student_id: string
   username: string
-  role: 'admin' | 'supervisor' | 'coordinator' | 'student'
+  roles: string[]
   promised_hours_per_week: number
   profile_picture: File | null
 }
@@ -34,7 +34,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
     password: "",
     student_id: "",
     username: "",
-    role: "student",
+    roles: ["student"],
     promised_hours_per_week: 0,
     profile_picture: null
   })
@@ -44,22 +44,34 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => {
-      const newData = {
-        ...prev,
-        [name]: name === 'promised_hours_per_week' ? parseFloat(value) || 0 :
-          name === 'role' ? value as 'admin' | 'supervisor' | 'coordinator' | 'student' :
-            value
-      }
-
-      // If role changed to student and no promised hours set, ensure minimum 1 hour
-      if (name === 'role' && value === 'student' && newData.promised_hours_per_week === 0) {
-        newData.promised_hours_per_week = 1
-      }
-
-      return newData
-    })
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'promised_hours_per_week' ? parseFloat(value) || 0 : value
+    }))
   }
+
+  const handleRoleChange = (role: string, checked: boolean) => {
+    setFormData(prev => {
+      let newRoles = [...prev.roles];
+      if (checked) {
+        if (!newRoles.includes(role)) newRoles.push(role);
+      } else {
+        newRoles = newRoles.filter(r => r !== role);
+      }
+      
+      // Ensure at least one role is selected or handle empty? 
+      // User must have at least one role usually.
+      
+      const newData = { ...prev, roles: newRoles };
+
+      // If student role added and no promised hours, default to 1
+      if (checked && role === 'student' && newData.promised_hours_per_week === 0) {
+        newData.promised_hours_per_week = 1;
+      }
+      return newData;
+    });
+  }
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -79,8 +91,14 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
     setLoading(true)
     setError(null)
 
+    if (formData.roles.length === 0) {
+      setError('At least one role must be selected.')
+      setLoading(false)
+      return
+    }
+
     // Client-side validation for students
-    if (formData.role === 'student' && formData.promised_hours_per_week < 1) {
+    if (formData.roles.includes('student') && formData.promised_hours_per_week < 1) {
       setError('Students must promise at least 1 hour per week.')
       setLoading(false)
       return
@@ -99,7 +117,12 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
       submitData.append('password', formData.password)
       submitData.append('student_id', formData.student_id)
       submitData.append('username', formData.username)
-      submitData.append('role', formData.role)
+      
+      // Append roles array
+      formData.roles.forEach((role, index) => {
+        submitData.append(`roles[${index}]`, role)
+      })
+
       submitData.append('promised_hours_per_week', formData.promised_hours_per_week.toString())
 
       if (formData.profile_picture) {
@@ -115,7 +138,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
         password: "",
         student_id: "",
         username: "",
-        role: "student",
+        roles: ["student"],
         promised_hours_per_week: 0,
         profile_picture: null
       })
@@ -137,7 +160,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
         password: "",
         student_id: "",
         username: "",
-        role: "student",
+        roles: ["student"],
         promised_hours_per_week: 0,
         profile_picture: null
       })
@@ -276,29 +299,28 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
 
           {/* Role */}
           <div className="space-y-2">
-            <Label htmlFor="role" className="text-sm font-medium text-foreground">
-              Role *
+            <Label className="text-sm font-medium text-foreground">
+              Roles *
             </Label>
-            <select
-              id="role"
-              name="role"
-              required
-              value={formData.role}
-              onChange={handleInputChange}
-              disabled={loading}
-              className="w-full px-3 py-2 bg-background/80 backdrop-blur-xl border border-input rounded-md focus:border-primary focus:ring-1 focus:ring-primary text-sm text-foreground"
-            >
-              <option value="student">Student</option>
-              <option value="coordinator">Coordinator</option>
-              <option value="supervisor">Supervisor</option>
-              <option value="admin">Admin</option>
-            </select>
+            <div className="flex flex-wrap gap-4 p-3 bg-background/80 backdrop-blur-xl border border-input rounded-md">
+              {['student', 'coordinator', 'supervisor', 'admin'].map((roleOption) => (
+                <label key={roleOption} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.roles.includes(roleOption)}
+                    onChange={(e) => handleRoleChange(roleOption, e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <span className="text-sm capitalize">{roleOption}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* Promised Hours */}
           <div className="space-y-2">
             <Label htmlFor="promised_hours_per_week" className="text-sm font-medium text-foreground">
-              Promised Hours per Week {formData.role === 'student' && '*'}
+              Promised Hours per Week {formData.roles.includes('student') && '*'}
             </Label>
             <Input
               id="promised_hours_per_week"
@@ -310,11 +332,11 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               value={formData.promised_hours_per_week}
               onChange={handleInputChange}
               disabled={loading}
-              required={formData.role === 'student'}
+              required={formData.roles.includes('student')}
               className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
-              placeholder={formData.role === 'student' ? "Required for students (1-20 hours)" : "0-20 hours"}
+              placeholder={formData.roles.includes('student') ? "Required for students (1-20 hours)" : "0-20 hours"}
             />
-            {formData.role === 'student' ? (
+            {formData.roles.includes('student') ? (
               <p className="text-xs text-muted-foreground">Students must promise 1-20 hours per week</p>
             ) : (
               <p className="text-xs text-muted-foreground">Maximum 20 hours per week</p>

@@ -29,7 +29,9 @@ class UpdateUserRequest extends FormRequest
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $userId,
             'password' => 'nullable|string|min:8',
-            'role' => 'sometimes|required|in:admin,supervisor,coordinator,student',
+            'role' => 'sometimes|in:admin,supervisor,coordinator,student',
+            'roles' => 'sometimes|array',
+            'roles.*' => 'exists:roles,name',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:512000', // 500MB = 512000KB
             'promised_hours_per_week' => 'nullable|numeric|min:0|max:20',
             'remaining_hours_this_week' => [

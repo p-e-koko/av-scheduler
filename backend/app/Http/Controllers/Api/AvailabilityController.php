@@ -277,16 +277,16 @@ class AvailabilityController extends Controller
         ]);
 
         $user = $request->user();
-        
+
         // Ensure we only delete the current user's availability if they are a student
-        // If we want to support admins deleting others later, we'd need more logic, 
+        // If we want to support admins deleting others later, we'd need more logic,
         // but for now this is for the student dashboard.
         $query = Availability::where('student_id', $user->id);
 
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
+
         $count = $query->count();
         $query->delete();
 
