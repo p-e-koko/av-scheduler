@@ -319,6 +319,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                         <h3 className="text-2xl font-bold text-foreground">{student.name}</h3>
                         <div className="flex flex-col md:flex-row gap-4 text-muted-foreground justify-center md:justify-start">
                           <p>{student.email}</p>
+                          {student.phone_number && <span>• {student.phone_number}</span>}
                           {student.student_id && <span>• ID: {student.student_id}</span>}
                         </div>
                       </div>

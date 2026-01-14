@@ -691,9 +691,6 @@ function StudentDashboard() {
                       {currentUser.student_id && (
                         <p className="text-sm text-muted-foreground mt-1">ID: {currentUser.student_id}</p>
                       )}
-                      {currentUser.phone_number && (
-                        <p className="text-sm text-muted-foreground mt-1">{currentUser.phone_number}</p>
-                      )}
                     </div>
 
                     <div className="space-y-4">

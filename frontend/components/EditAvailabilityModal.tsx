@@ -66,6 +66,10 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
       const startTimeWithSeconds = formData.start_time.length === 5 ? `${formData.start_time}:00` : formData.start_time
       const endTimeWithSeconds = formData.end_time.length === 5 ? `${formData.end_time}:00` : formData.end_time
 
+      if (endTimeWithSeconds <= startTimeWithSeconds) {
+        throw new Error("End time must be after start time")
+      }
+
       // Check for overlaps
       if (existingAvailability) {
         const hasOverlap = existingAvailability.some(existing => {

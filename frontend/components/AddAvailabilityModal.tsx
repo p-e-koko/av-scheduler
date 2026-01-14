@@ -51,6 +51,10 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
       const startTimeWithSeconds = formData.start_time.length === 5 ? `${formData.start_time}:00` : formData.start_time
       const endTimeWithSeconds = formData.end_time.length === 5 ? `${formData.end_time}:00` : formData.end_time
 
+      if (endTimeWithSeconds <= startTimeWithSeconds) {
+        throw new Error("End time must be after start time")
+      }
+
       const availabilities = []
       
       if (repeatType === "none") {
