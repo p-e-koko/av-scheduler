@@ -35,7 +35,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
 
   // Generate time slots
   const timeSlots = []
-  for (let i = 7; i <= 22; i++) {
+  for (let i = 0; i <= 23; i++) {
     const hour = i.toString().padStart(2, '0')
     timeSlots.push(`${hour}:00`)
     timeSlots.push(`${hour}:30`)

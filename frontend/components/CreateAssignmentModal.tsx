@@ -84,7 +84,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
 
   // Generate time slots
   const timeSlots: string[] = []
-  for (let i = 7; i <= 22; i++) {
+  for (let i = 0; i <= 23; i++) {
     const hour = i.toString().padStart(2, '0')
     timeSlots.push(`${hour}:00`)
     timeSlots.push(`${hour}:30`)
