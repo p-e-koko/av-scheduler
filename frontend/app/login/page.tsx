@@ -1,23 +1,14 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff } from "lucide-react"
 
 import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { authAPI, formatAPIError, testConnection, APIError, removeAuthToken, API_BASE_URL } from "@/lib/api"
-import { getRoleBasedDashboardPath } from "@/lib/role-routing"
+import { testConnection, removeAuthToken, API_BASE_URL } from "@/lib/api"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
@@ -36,40 +27,12 @@ export default function LoginPage() {
     checkConnection();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-
-    try {
-      const response = await authAPI.login({ email, password })
-      
-      if (response.user) {
-        // Check if email is verified
-        if (!response.user.email_verified_at) {
-          router.push('/auth/verify?reason=unverified');
-          return;
-        }
-
-        // Redirect based on user role using role-based routing
-        const redirectPath = getRoleBasedDashboardPath(response.user.role);
-        
-        // Small delay to ensure session cookies are properly set before redirecting
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        router.push(redirectPath);
-      }
-    } catch (error) {
-      // Handle unverified email error specifically
-      if (error instanceof APIError && error.status === 403 && (error.message.includes('verified') || (error as any).email_verified === false)) {
-        router.push(`/auth/verify?reason=unverified&email=${encodeURIComponent(email)}`);
-        return;
-      }
-      setError(formatAPIError(error))
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const handleMicrosoftLogin = () => {
+    setIsLoading(true);
+    // Clean base URL to ensure we point to the API route correctly
+    const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+    window.location.href = `${baseUrl}/login/microsoft/redirect`;
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
@@ -88,133 +51,32 @@ export default function LoginPage() {
           <p className="text-muted-foreground text-sm font-medium">Welcome back</p>
         </div>
 
-        <Card className="border-0 bg-card/70 backdrop-blur-xl shadow-xl shadow-gray-100/50 dark:shadow-none ring-1 ring-border/50">
-          <CardContent className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error Message */}
-              {error && (
-                <div className="p-4 rounded-xl bg-destructive/10">
-                  <p className="text-sm text-destructive font-medium">{error}</p>
-                </div>
-              )}
+        <div className="space-y-6">
+          {/* Error Message */}
+          {error && (
+            <div className="p-4 rounded-xl bg-destructive/10">
+              <p className="text-sm text-destructive font-medium">{error}</p>
+            </div>
+          )}
 
-              {/* Email Field */}
-              <div className="space-y-3">
-                <Label htmlFor="email" className="text-foreground font-medium text-sm tracking-wide">
-                  Email Address
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 rounded-xl border-0 bg-muted/50 ring-1 ring-border focus:ring-2 focus:ring-primary/30 focus:bg-background transition-all duration-200 placeholder:text-muted-foreground text-foreground"
-                  required
-                  disabled={isLoading}
-                />
+          <Button
+            type="button"
+            className="w-full h-12 text-white font-semibold rounded-xl bg-gradient-to-r from-primary via-primary-medium to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
+            onClick={handleMicrosoftLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Redirecting...</span>
               </div>
-
-              {/* Password Field */}
-              <div className="space-y-3">
-                <Label htmlFor="password" className="text-foreground font-medium text-sm tracking-wide">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 pr-12 rounded-xl border-0 bg-muted/50 ring-1 ring-border focus:ring-2 focus:ring-primary/30 focus:bg-background transition-all duration-200 placeholder:text-muted-foreground text-foreground"
-                    required
-                    disabled={isLoading}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-10 w-10 rounded-lg hover:bg-accent/80 transition-colors"
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={isLoading}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5 text-muted-foreground" />
-                    ) : (
-                      <Eye className="w-5 h-5 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Forgot Password */}
-              <div className="text-right">
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-primary dark:text-blue-400 font-medium hover:text-primary-dark dark:hover:text-blue-300 transition-colors"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full h-12 text-white font-semibold rounded-xl bg-gradient-to-r from-primary via-primary-medium to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center space-x-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Signing in...</span>
-                  </div>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-12 font-semibold rounded-xl border-2 hover:bg-muted transition-all duration-200"
-                onClick={() => {
-                   // Clean base URL to ensure we point to the API route correctly
-                   const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
-                   window.location.href = `${baseUrl}/login/microsoft/redirect`;
-                }}
-                disabled={isLoading}
-              >
-                 <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="microsoft" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M0 32h214.6v214.6H0V32zm233.4 0H448v214.6H233.4V32zM0 265.4h214.6V480H0V265.4zm233.4 0H448V480H233.4V265.4z"></path></svg>
-                Microsoft
-              </Button>
-
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Register Link */}
-        <div className="text-center mt-8">
-          <p className="text-muted-foreground text-sm">
-            Don't have an account?{" "}
-            <Link
-              href="/register"
-              className="text-primary dark:text-blue-400 font-semibold hover:text-primary-dark dark:hover:text-blue-300 transition-colors"
-            >
-              Create account
-            </Link>
-          </p>
+            ) : (
+              <>
+                <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="microsoft" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M0 32h214.6v214.6H0V32zm233.4 0H448v214.6H233.4V32zM0 265.4h214.6V480H0V265.4zm233.4 0H448V480H233.4V265.4z"></path></svg>
+                Sign in with Microsoft
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>
