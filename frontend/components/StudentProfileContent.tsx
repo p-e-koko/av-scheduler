@@ -47,6 +47,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
   const [isEditing, setIsEditing] = useState(false)
   const [editData, setEditData] = useState<Partial<UserType>>({})
   const [isMobile, setIsMobile] = useState(false)
+  const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month")
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -296,96 +297,97 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Profile Info */}
-          <div className="lg:col-span-1 space-y-6">
+        <div className="flex flex-col space-y-6">
+          {/* Top Row - Profile Info */}
+          <div className="space-y-6">
             {/* Profile Card */}
             <Card className="bg-card/90 backdrop-blur-xl border-border shadow-lg">
               <CardContent className="p-6">
-                <div className="text-center mb-6">
-                  <div className="relative inline-block">
-                    <Avatar className="h-24 w-24 mx-auto">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                  <div className="flex-shrink-0">
+                    <Avatar className="h-32 w-32">
                       <AvatarImage src={student.profile_picture || student.profile_picture_url || ""} />
-                      <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-semibold">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-3xl font-semibold">
                         {getInitials(student.name)}
                       </AvatarFallback>
                     </Avatar>
                   </div>
 
-                  {!isEditing ? (
-                    <>
-                      <h3 className="text-xl font-semibold text-foreground mt-4">{student.name}</h3>
-                      <p className="text-muted-foreground">{student.email}</p>
-                      {student.student_id && (
-                        <p className="text-sm text-muted-foreground mt-1">ID: {student.student_id}</p>
+                  <div className="flex-1 w-full space-y-6">
+                    {!isEditing ? (
+                      <div className="space-y-2 text-center md:text-left">
+                        <h3 className="text-2xl font-bold text-foreground">{student.name}</h3>
+                        <div className="flex flex-col md:flex-row gap-4 text-muted-foreground justify-center md:justify-start">
+                          <p>{student.email}</p>
+                          {student.student_id && <span>• ID: {student.student_id}</span>}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Full Name</Label>
+                          <Input
+                            id="name"
+                            value={editData.name || ''}
+                            onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={editData.email || ''}
+                            onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="student_id">Student ID</Label>
+                          <Input
+                            id="student_id"
+                            value={editData.student_id || ''}
+                            onChange={(e) => setEditData({ ...editData, student_id: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
+                      {!isEditing ? (
+                        <>
+                           <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
+                             <span className="text-sm font-medium text-muted-foreground">Status</span>
+                             <Badge className="w-fit bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active Student</Badge>
+                           </div>
+                           <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
+                             <span className="text-sm font-medium text-muted-foreground">Role</span>
+                             <Badge variant="secondary" className="w-fit">Student</Badge>
+                           </div>
+                           <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
+                             <span className="text-sm font-medium text-muted-foreground">Promised Hours/Week</span>
+                             <span className="text-lg font-semibold text-foreground">{student.promised_hours_per_week || '0'}h</span>
+                           </div>
+                        </>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label htmlFor="hours">Promised Hours/Week</Label>
+                          <Input
+                            id="hours"
+                            type="number"
+                            value={editData.promised_hours_per_week || ''}
+                            onChange={(e) => setEditData({ ...editData, promised_hours_per_week: e.target.value })}
+                          />
+                        </div>
                       )}
-                    </>
-                  ) : (
-                    <div className="space-y-3 mt-4">
-                      <div>
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input
-                          id="name"
-                          value={editData.name || ''}
-                          onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={editData.email || ''}
-                          onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="student_id">Student ID</Label>
-                        <Input
-                          id="student_id"
-                          value={editData.student_id || ''}
-                          onChange={(e) => setEditData({ ...editData, student_id: e.target.value })}
-                        />
-                      </div>
                     </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Status</span>
-                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active Student</Badge>
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Role</span>
-                    <Badge variant="secondary">Student</Badge>
-                  </div>
-
-                  {!isEditing ? (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Promised Hours/Week</span>
-                      <span className="font-medium text-foreground">{student.promised_hours_per_week || '0'}h</span>
-                    </div>
-                  ) : (
-                    <div>
-                      <Label htmlFor="hours">Promised Hours/Week</Label>
-                      <Input
-                        id="hours"
-                        type="number"
-                        value={editData.promised_hours_per_week || ''}
-                        onChange={(e) => setEditData({ ...editData, promised_hours_per_week: e.target.value })}
-                      />
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Right Column - Assignments & Availability */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Availability Schedule */}
+          {/* Bottom Row - Availability Schedule */}
+          <div className="space-y-6">
             <div className="bg-card/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-border">
               <div className="p-6 border-b border-border">
                 <h3 className="text-lg font-semibold flex items-center text-foreground">
@@ -396,8 +398,9 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
               <div className="p-0">
                 <CalendarComponent
                   events={calendarEvents}
-                  view="day"
-                  className="border-0 shadow-none h-[400px]"
+                  view={calendarView}
+                  onViewChange={setCalendarView}
+                  className="border-0 shadow-none min-h-[600px]"
                   isMobile={isMobile}
                 />
               </div>

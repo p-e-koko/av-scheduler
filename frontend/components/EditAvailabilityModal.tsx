@@ -240,7 +240,7 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
         title="Delete Availability"
         description="Are you sure you want to delete this availability slot? This action cannot be undone."
         confirmText="Delete"
-        critical
+        variant="destructive"
       />
     </>
   )
