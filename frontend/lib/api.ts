@@ -46,7 +46,7 @@ export interface User {
   username?: string;
   name: string;
   email: string;
-  phone_number?: string;
+  phone_number?: string | null;
   role: 'admin' | 'supervisor' | 'coordinator' | 'student';
   roles?: string[];
   permissions?: string[];

@@ -20,6 +20,7 @@ interface AddUserFormData {
   name: string
   email: string
   password: string
+  phone_number: string
   student_id: string
   username: string
   roles: string[]
@@ -32,6 +33,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
     name: "",
     email: "",
     password: "",
+    phone_number: "",
     student_id: "",
     username: "",
     roles: ["student"],
@@ -115,6 +117,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
       submitData.append('name', formData.name)
       submitData.append('email', formData.email)
       submitData.append('password', formData.password)
+      submitData.append('phone_number', formData.phone_number)
       submitData.append('student_id', formData.student_id)
       submitData.append('username', formData.username)
       
@@ -135,7 +138,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
       setFormData({
         name: "",
         email: "",
-        password: "",
+        phone_number: "",
         student_id: "",
         username: "",
         roles: ["student"],
@@ -157,6 +160,8 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
       setFormData({
         name: "",
         email: "",
+        password: "",
+        phone_number",
         password: "",
         student_id: "",
         username: "",
@@ -242,7 +247,24 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
               placeholder="Enter email address"
             />
+          </divhone Number */}
+          <div className="space-y-2">
+            <Label htmlFor="phone_number" className="text-sm font-medium text-foreground">
+              Phone Number
+            </Label>
+            <Input
+              id="phone_number"
+              name="phone_number"
+              type="text"
+              value={formData.phone_number}
+              onChange={handleInputChange}
+              disabled={loading}
+              className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
+              placeholder="+1 234 567 8900"
+            />
           </div>
+
+          {/* P>
 
           {/* Password */}
           <div className="space-y-2">

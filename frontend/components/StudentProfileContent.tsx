@@ -11,7 +11,8 @@ import {
   Save,
   X,
   AlertCircle,
-  User
+  User,
+  Phone
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -49,6 +50,9 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
   const [isMobile, setIsMobile] = useState(false)
   const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month")
 
+  const [isEditingPhone, setIsEditingPhone] = useState(false)
+  const [phoneNumberInput, setPhoneNumberInput] = useState("")
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
@@ -77,6 +81,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
 
         setStudent(studentResponse.user)
         setEditData(studentResponse.user)
+        setPhoneNumberInput(studentResponse.user.phone_number || "")
 
         // Filter assignments for this specific student
         const studentAssignments = assignmentsResponse.data.filter(assignment =>
@@ -96,6 +101,31 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
       fetchStudentData()
     }
   }, [studentId])
+
+  const handleUpdatePhoneNumber = async () => {
+    if (!student) return
+    try {
+      setLoading(true)
+      // Call update API
+        const formData = new FormData();
+        formData.append('name', student.name);
+        formData.append('email', student.email);
+        formData.append('phone_number', phoneNumberInput);
+        formData.append('_method', 'PATCH');
+        
+        await userAPI.updateUser(student.id, formData);
+        
+        // Update local state
+        setStudent(prev => prev ? ({ ...prev, phone_number: phoneNumberInput }) : null)
+        setIsEditingPhone(false)
+        setError(null)
+    } catch (err: any) {
+      console.error("Failed to update phone number", err)
+      setError("Failed to update phone number")
+    } finally {
+        setLoading(false)
+    }
+  }
 
   const getInitials = (name: string) => {
     return name
@@ -317,10 +347,66 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                     {!isEditing ? (
                       <div className="space-y-2 text-center md:text-left">
                         <h3 className="text-2xl font-bold text-foreground">{student.name}</h3>
-                        <div className="flex flex-col md:flex-row gap-4 text-muted-foreground justify-center md:justify-start">
+                        <div className="flex flex-col md:flex-row gap-4 text-muted-foreground justify-center md:justify-start items-center md:items-center">
                           <p>{student.email}</p>
-                          {student.phone_number && <span>• {student.phone_number}</span>}
-                          {student.student_id && <span>• ID: {student.student_id}</span>}
+                          <span className="hidden md:inline">•</span>
+                          
+                          {/* Phone Number Display & Edit */}
+                          <div className="flex items-center gap-2">
+                             <Phone className="w-4 h-4" />
+                             {isEditingPhone ? (
+                                <div className="flex items-center gap-2">
+                                     <input 
+                                        type="text" 
+                                        value={phoneNumberInput}
+                                        onChange={(e) => setPhoneNumberInput(e.target.value)}
+                                        className="h-7 px-2 text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-32 md:w-40"
+                                        placeholder="Phone number"
+                                    />
+                                     <Button 
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={handleUpdatePhoneNumber}
+                                        className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/30"
+                                        title="Save"
+                                    >
+                                        <Save className="w-3 h-3" />
+                                    </Button>
+                                     <Button 
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => {
+                                            setIsEditingPhone(false)
+                                            setPhoneNumberInput(student.phone_number || "")
+                                        }}
+                                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                        title="Cancel"
+                                    >
+                                        <X className="w-3 h-3" />
+                                    </Button>
+                                </div>
+                             ) : (
+                                <div className="flex items-center gap-2 group">
+                                    <span>
+                                        {student.phone_number ? student.phone_number : <span className="italic opacity-70 text-xs">No phone</span>}
+                                    </span>
+                                    <button 
+                                        onClick={() => setIsEditingPhone(true)}
+                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-primary"
+                                        title="Edit Phone Number"
+                                    > 
+                                      <Edit className="w-3 h-3" />
+                                    </button>
+                                </div>
+                             )}
+                          </div>
+
+                          {student.student_id && (
+                            <>
+                              <span className="hidden md:inline">•</span>
+                              <span>ID: {student.student_id}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     ) : (

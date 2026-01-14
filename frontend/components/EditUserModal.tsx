@@ -21,6 +21,7 @@ interface EditUserFormData {
   name: string
   email: string
   password: string
+  phone_number: string
   student_id: string
   username: string
   roles: string[]
@@ -33,6 +34,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
     name: "",
     email: "",
     password: "",
+    phone_number: "",
     student_id: "",
     username: "",
     roles: ["student"],
@@ -55,6 +57,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
         name: user.name || "",
         email: user.email || "",
         password: "", // Always empty for security
+        phone_number: user.phone_number || "",
         student_id: user.student_id || "",
         username: user.username || "",
         roles: initialRoles,
@@ -134,6 +137,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
       // Use FormData for file upload
       const submitData = new FormData()
       submitData.append('name', formData.name)
+      submitData.append('phone_number', formData.phone_number)
       submitData.append('email', formData.email)
       submitData.append('student_id', formData.student_id)
       submitData.append('username', formData.username)
@@ -247,6 +251,23 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
               disabled={loading}
               className="bg-muted/50 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
               placeholder="Enter email address"
+            />
+          </div>
+
+          {/* Phone Number */}
+          <div className="space-y-2">
+            <Label htmlFor="edit-phone_number" className="text-sm font-medium text-foreground">
+              Phone Number
+            </Label>
+            <Input
+              id="edit-phone_number"
+              name="phone_number"
+              type="text"
+              value={formData.phone_number}
+              onChange={handleInputChange}
+              disabled={loading}
+              className="bg-muted/50 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
+              placeholder="+1 234 567 8900"
             />
           </div>
 
