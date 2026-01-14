@@ -111,7 +111,6 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
         formData.append('name', student.name);
         formData.append('email', student.email);
         formData.append('phone_number', phoneNumberInput);
-        formData.append('_method', 'PATCH');
         
         await userAPI.updateUser(student.id, formData);
         

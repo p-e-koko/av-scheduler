@@ -158,9 +158,6 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
         submitData.append('profile_picture', formData.profile_picture)
       }
 
-      // Add _method: PATCH for file upload update
-      submitData.append('_method', 'PATCH')
-
       await userAPI.updateUser(user.id, submitData)
 
       onUserUpdated()
