@@ -350,10 +350,18 @@ function AdminDashboard() {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="text-xs px-2 py-0.5">
-                              {user.role}
-                            </Badge>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {user.roles && user.roles.length > 0 ? (
+                              user.roles.map((role) => (
+                                <Badge key={role} variant="secondary" className="text-xs px-2 py-0.5 capitalize">
+                                  {role}
+                                </Badge>
+                              ))
+                            ) : (
+                              <Badge variant="secondary" className="text-xs px-2 py-0.5 capitalize">
+                                {user.role}
+                              </Badge>
+                            )}
                             <Badge variant="hours" className="text-xs px-2 py-0.5">
                               {user.promised_hours_per_week || '0'}h
                             </Badge>

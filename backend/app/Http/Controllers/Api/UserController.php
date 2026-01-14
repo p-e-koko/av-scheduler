@@ -218,6 +218,23 @@ class UserController extends Controller
 
         $user->update($userData);
 
+        // Handle multiple roles update
+        if ($request->has('roles')) {
+            $roles = $request->input('roles');
+            // Sync roles using Spatie permission package
+            $user->syncRoles($roles);
+            
+            // Update the legacy single 'role' column to match the first role in the list
+            // This ensures backward compatibility with parts of the app using the single column
+            if (!empty($roles)) {
+                $primaryRole = is_array($roles) ? $roles[0] : $roles;
+                if ($user->role !== $primaryRole) {
+                    $user->role = $primaryRole;
+                    $user->save();
+                }
+            }
+        }
+
         // Always recalculate remaining hours for students to ensure consistency
         if ($user->role === 'student') {
             $this->recalculateRemainingHours($user);
