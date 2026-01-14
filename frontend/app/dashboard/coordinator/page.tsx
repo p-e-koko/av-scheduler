@@ -1112,7 +1112,10 @@ function CoordinatorDashboard() {
                                 <p className="text-sm text-muted-foreground line-clamp-1">{position.description || 'No description'}</p>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge variant={position.is_active ? "secondary" : "outline"}>
+                                <Badge 
+                                  variant={position.is_active ? "secondary" : "outline"}
+                                  className={position.is_active ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-none" : ""}
+                                >
                                   {position.is_active ? "Active" : "Inactive"}
                                 </Badge>
                               </td>

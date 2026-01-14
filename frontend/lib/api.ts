@@ -46,6 +46,7 @@ export interface User {
   username?: string;
   name: string;
   email: string;
+  phone_number?: string;
   role: 'admin' | 'supervisor' | 'coordinator' | 'student';
   profile_picture?: string;
   profile_picture_url?: string;

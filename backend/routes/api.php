@@ -77,10 +77,11 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
 });
 
 // Protected User Management Routes - Role-Based Access Control
-Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
 
     // User Management - Admin only with sensitive rate limiting
-    Route::middleware(['role:admin', 'throttle:sensitive'])->group(function () {
+    Route::middleware(['role:admin'])->group(function () {
+
         Route::get('/audit-logs', [\App\Http\Controllers\Api\AuditLogController::class, 'index']);
         Route::apiResource('users', UserController::class)->except(['index', 'show']);
         Route::prefix('users')->group(function () {
