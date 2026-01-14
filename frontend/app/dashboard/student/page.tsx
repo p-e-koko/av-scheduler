@@ -33,6 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { AddAvailabilityModal } from "@/components/AddAvailabilityModal"
+import { EditAvailabilityModal } from "@/components/EditAvailabilityModal"
 import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
 
 import {
@@ -74,6 +75,8 @@ function StudentDashboard() {
   const [assignmentFilter, setAssignmentFilter] = useState<"all" | "me">("all")
   const [viewMode, setViewMode] = useState<"card" | "list">("card")
   const [isAddAvailabilityModalOpen, setIsAddAvailabilityModalOpen] = useState(false)
+  const [isEditAvailabilityModalOpen, setIsEditAvailabilityModalOpen] = useState(false)
+  const [selectedAvailability, setSelectedAvailability] = useState<Availability | null>(null)
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false)
   const [selectedAssignmentForRejection, setSelectedAssignmentForRejection] = useState<Assignment | null>(null)
   const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false)
@@ -562,6 +565,14 @@ function StudentDashboard() {
     }
   }
 
+  const handleEventClick = (event: CalendarEvent) => {
+    const availabilityItem = availability.find(a => a.id.toString() === event.id)
+    if (availabilityItem) {
+      setSelectedAvailability(availabilityItem)
+      setIsEditAvailabilityModalOpen(true)
+    }
+  }
+
   const handleLogout = async () => {
     try {
       await authAPI.logout()
@@ -715,6 +726,7 @@ function StudentDashboard() {
                     <CalendarComponent
                       events={calendarEvents}
                       view="day"
+                      onEventClick={handleEventClick}
                       className="border-0 shadow-none h-[400px]"
                     />
                   </div>
@@ -1072,6 +1084,7 @@ function StudentDashboard() {
                 events={calendarEvents}
                 view={calendarView}
                 onViewChange={setCalendarView}
+                onEventClick={handleEventClick}
                 isMobile={isMobile}
                 className="min-h-[600px]"
               />
@@ -1083,6 +1096,12 @@ function StudentDashboard() {
         isOpen={isAddAvailabilityModalOpen}
         onClose={() => setIsAddAvailabilityModalOpen(false)}
         onSuccess={handleAvailabilityAdded}
+      />
+      <EditAvailabilityModal
+        isOpen={isEditAvailabilityModalOpen}
+        onClose={() => setIsEditAvailabilityModalOpen(false)}
+        onSuccess={handleAvailabilityAdded}
+        availability={selectedAvailability}
       />
       <AssignmentDetailModal
         isOpen={isDetailModalOpen}
