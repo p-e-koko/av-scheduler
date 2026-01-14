@@ -266,4 +266,39 @@ class AvailabilityController extends Controller
             'count' => count($created)
         ], 201);
     }
+
+    /**
+     * Bulk delete availability slots.
+     */
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $request->validate([
+            'status' => 'nullable|in:available,unavailable,class',
+        ]);
+
+        $user = $request->user();
+        
+        // Ensure we only delete the current user's availability if they are a student
+        // If we want to support admins deleting others later, we'd need more logic, 
+        // but for now this is for the student dashboard.
+        $query = Availability::where('student_id', $user->id);
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        $count = $query->count();
+        $query->delete();
+
+        AuditLogger::log('Availability Bulk Deleted', [
+            'count' => $count,
+            'student_id' => $user->id,
+            'status' => $request->status ?? 'all'
+        ]);
+
+        return response()->json([
+            'message' => 'Availability slots deleted successfully',
+            'count' => $count
+        ]);
+    }
 }
