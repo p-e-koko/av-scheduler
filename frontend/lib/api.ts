@@ -1098,6 +1098,18 @@ export const availabilityAPI = {
       method: 'POST',
       body: JSON.stringify({ availability: availabilityData }),
     });
+  },
+
+  // Bulk delete availability
+  async bulkDeleteAvailability(status?: 'available' | 'unavailable' | 'class'): Promise<{ message: string; count: number }> {
+    const queryParams = new URLSearchParams();
+    if (status) queryParams.append('status', status);
+    
+    const endpoint = `/my-availability/bulk${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    
+    return apiCall<{ message: string; count: number }>(endpoint, {
+      method: 'DELETE',
+    });
   }
 };
 

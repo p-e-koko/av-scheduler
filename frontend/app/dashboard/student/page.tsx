@@ -23,11 +23,19 @@ import {
   Star,
   ChevronDown,
   ChevronUp,
-  Menu
+  Menu,
+  Trash2
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -565,6 +573,36 @@ function StudentDashboard() {
     }
   }
 
+  const handleBulkDelete = async (status?: 'available' | 'unavailable' | 'class') => {
+    try {
+      setLoadingTitle("Deleting Availability")
+      setLoadingDescription("Please wait while we delete your availability slots...")
+      setIsProcessing(true)
+      
+      const response = await availabilityAPI.bulkDeleteAvailability(status)
+      
+      // Refresh data
+      await handleAvailabilityAdded()
+      
+      setStatusDialog({
+        isOpen: true,
+        title: "Success",
+        description: `Deleted ${response.count} availability slots.` ,
+        type: "success"
+      })
+    } catch (err: any) {
+      console.error(err)
+      setStatusDialog({
+        isOpen: true,
+        title: "Error",
+        description: err.message || "Failed to delete availability slots.",
+        type: "error"
+      })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   const handleEventClick = (event: CalendarEvent) => {
     const availabilityItem = availability.find(a => a.id.toString() === event.id)
     if (availabilityItem) {
@@ -1073,14 +1111,35 @@ function StudentDashboard() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-foreground">My Schedule</h2>
-                <Button
-                  size="sm"
-                  className="bg-primary hover:bg-primary-dark text-primary-foreground"
-                  onClick={() => setIsAddAvailabilityModalOpen(true)}
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  {isMobile ? "Add" : "Add Availability"}
-                </Button>
+                <div className="flex gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        {isMobile ? "Delete" : "Bulk Delete"}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleBulkDelete('class')} className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/20">
+                        Delete all class
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkDelete('available')} className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/20">
+                        Delete all available
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleBulkDelete('unavailable')} className="text-red-600 focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/20">
+                        Delete all unavailable
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button
+                    size="sm"
+                    className="bg-primary hover:bg-primary-dark text-primary-foreground"
+                    onClick={() => setIsAddAvailabilityModalOpen(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    {isMobile ? "Add" : "Add Availability"}
+                  </Button>
+                </div>
               </div>
 
               <CalendarComponent
