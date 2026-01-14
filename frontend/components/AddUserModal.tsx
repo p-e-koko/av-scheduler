@@ -138,6 +138,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
       setFormData({
         name: "",
         email: "",
+        password: "",
         phone_number: "",
         student_id: "",
         username: "",
@@ -161,8 +162,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
         name: "",
         email: "",
         password: "",
-        phone_number",
-        password: "",
+        phone_number: "",
         student_id: "",
         username: "",
         roles: ["student"],
@@ -247,7 +247,9 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
               placeholder="Enter email address"
             />
-          </divhone Number */}
+          </div>
+
+          {/* Phone Number */}
           <div className="space-y-2">
             <Label htmlFor="phone_number" className="text-sm font-medium text-foreground">
               Phone Number
