@@ -25,11 +25,11 @@ class RoleMiddleware
 
         $user = $request->user();
 
-        // Check if user has any of the required roles (using enum role field)
-        if (!in_array($user->role, $roles)) {
+        // Check if user has any of the required roles (using Spatie Permissions)
+        if (!$user->hasAnyRole($roles)) {
             return response()->json([
                 'message' => 'Forbidden. Required roles: ' . implode(', ', $roles),
-                'user_role' => $user->role
+                'user_roles' => $user->getRoleNames()
             ], 403);
         }
 

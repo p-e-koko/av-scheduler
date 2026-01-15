@@ -106,11 +106,14 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Check if user has a specific role.
+     * Removed manual override to use Spatie's hasRole method.
      */
+    /*
     public function hasRole(string $role): bool
     {
         return $this->role === $role;
     }
+    */
 
     /**
      * Check if user is admin.
@@ -247,7 +250,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function syncSpatieRole(): void
     {
         // Remove all existing roles
-        $this->syncRoles([]);
+        // $this->syncRoles([]);
 
         // Assign the role based on enum value
         if ($this->role) {
