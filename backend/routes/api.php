@@ -80,7 +80,6 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
 
     // User Management - Authorization handled by Policy
-    Route::apiResource('users', UserController::class);
     Route::prefix('users')->group(function () {
         Route::post('/create-with-files', [UserController::class, 'storeWithFiles']);
         Route::post('/{user}/update-with-files', [UserController::class, 'updateWithFiles']);
@@ -88,6 +87,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{id}/restore', [UserController::class, 'restore']);
         Route::delete('/{id}/force', [UserController::class, 'forceDelete']);
     });
+    Route::apiResource('users', UserController::class);
 
     // Audit Logs - Admin only
     Route::middleware(['role:admin'])->get('/audit-logs', [\App\Http\Controllers\Api\AuditLogController::class, 'index']);
