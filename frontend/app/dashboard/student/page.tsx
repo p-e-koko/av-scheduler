@@ -160,7 +160,7 @@ function StudentDashboard() {
       }
 
       setCurrentUser(user)
-      setEditData(user)
+
       setPhoneNumberInput(user.phone_number || "")
       setLoading(false)
     };
@@ -169,8 +169,6 @@ function StudentDashboard() {
   }, [])
 
   // Additional Profile States
-  const [isEditing, setIsEditing] = useState(false)
-  const [editData, setEditData] = useState<Partial<UserType>>({})
   const [isEditingPhone, setIsEditingPhone] = useState(false)
   const [phoneNumberInput, setPhoneNumberInput] = useState("")
 
@@ -190,7 +188,6 @@ function StudentDashboard() {
 
       setCurrentUser(updatedUser.user)
       setStoredUser(updatedUser.user) // Persist to local storage
-      setEditData(updatedUser.user)
       setIsEditingPhone(false)
 
       setStatusDialog({
@@ -212,43 +209,7 @@ function StudentDashboard() {
     }
   }
 
-  const handleSaveEdit = async () => {
-    if (!currentUser) return
-    try {
-      setLoadingTitle("Updating Profile")
-      setLoadingDescription("Please wait while we update your profile...")
-      setIsProcessing(true)
 
-      const updatedUser = await userAPI.updateUser(currentUser.id, editData)
-      setCurrentUser(updatedUser.user)
-      setStoredUser(updatedUser.user) // Persist to local storage
-      setIsEditing(false)
-
-      setStatusDialog({
-        isOpen: true,
-        title: "Success",
-        description: "Profile updated successfully!",
-        type: "success"
-      })
-    } catch (err: any) {
-      console.error("Failed to update profile", err)
-      setStatusDialog({
-        isOpen: true,
-        title: "Error",
-        description: err.message || "Failed to update profile",
-        type: "error"
-      })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  const cancelEdit = () => {
-    if (currentUser) {
-      setEditData(currentUser)
-    }
-    setIsEditing(false)
-  }
 
   // Fetch data based on active tab
   useEffect(() => {
@@ -792,40 +753,8 @@ function StudentDashboard() {
           {/* Profile Tab */}
           {activeTab === "profile" && (
             <div className="flex flex-col space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
-                <div></div>
-                {!isEditing ? (
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                    className="bg-primary hover:bg-primary/90 w-full md:w-auto"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                ) : (
-                  <div className="flex space-x-2 w-full md:w-auto">
-                    <Button
-                      onClick={handleSaveEdit}
-                      className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 flex-1 md:flex-none"
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      Save
-                    </Button>
-                    <Button
-                      onClick={cancelEdit}
-                      variant="outline"
-                      className="flex-1 md:flex-none"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-              </div>
-
               {/* Top Row - Profile Info */}
               <div className="space-y-6">
-                {/* Profile Card */}
                 <Card className="bg-card/90 backdrop-blur-xl border-border shadow-lg">
                   <CardContent className="p-6">
                     <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
@@ -839,128 +768,84 @@ function StudentDashboard() {
                       </div>
 
                       <div className="flex-1 w-full space-y-6">
-                        {!isEditing ? (
-                          <div className="space-y-2 text-center md:text-left">
-                            <h3 className="text-2xl font-bold text-foreground">{currentUser.name}</h3>
-                            <div className="flex flex-col md:flex-row gap-4 text-muted-foreground justify-center md:justify-start items-center md:items-center">
-                              <p>{currentUser.email}</p>
-                              <span className="hidden md:inline">•</span>
+                        <div className="space-y-2 text-center md:text-left">
+                          <h3 className="text-2xl font-bold text-foreground">{currentUser.name}</h3>
+                          <div className="flex flex-col md:flex-row gap-4 text-muted-foreground justify-center md:justify-start items-center md:items-center">
+                            <p>{currentUser.email}</p>
+                            <span className="hidden md:inline">•</span>
 
-                              {/* Phone Number Display & Edit */}
-                              <div className="flex items-center gap-2">
-                                <Phone className="w-4 h-4" />
-                                {isEditingPhone ? (
-                                  <div className="flex items-center gap-2">
-                                    <input
-                                      type="text"
-                                      value={phoneNumberInput}
-                                      onChange={(e) => setPhoneNumberInput(e.target.value)}
-                                      className="h-7 px-2 text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-32 md:w-40"
-                                      placeholder="Phone number"
-                                    />
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      onClick={handleUpdatePhoneNumber}
-                                      className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/30"
-                                      title="Save"
-                                    >
-                                      <Save className="w-3 h-3" />
-                                    </Button>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      onClick={() => {
-                                        setIsEditingPhone(false)
-                                        setPhoneNumberInput(currentUser.phone_number || "")
-                                      }}
-                                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                      title="Cancel"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-2 group">
-                                    <span>
-                                      {currentUser.phone_number ? currentUser.phone_number : <span className="italic opacity-70 text-xs">No phone</span>}
-                                    </span>
-                                    <button
-                                      onClick={() => setIsEditingPhone(true)}
-                                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-primary"
-                                      title="Edit Phone Number"
-                                    >
-                                      <Edit className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-
-                              {currentUser.student_id && (
-                                <>
-                                  <span className="hidden md:inline">•</span>
-                                  <span>ID: {currentUser.student_id}</span>
-                                </>
+                            {/* Phone Number Display & Edit */}
+                            <div className="flex items-center gap-2">
+                              <Phone className="w-4 h-4" />
+                              {isEditingPhone ? (
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={phoneNumberInput}
+                                    onChange={(e) => setPhoneNumberInput(e.target.value)}
+                                    className="h-7 px-2 text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-32 md:w-40"
+                                    placeholder="Phone number"
+                                  />
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={handleUpdatePhoneNumber}
+                                    className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/30"
+                                    title="Save"
+                                  >
+                                    <Save className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setIsEditingPhone(false)
+                                      setPhoneNumberInput(currentUser.phone_number || "")
+                                    }}
+                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                    title="Cancel"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2 group">
+                                  <span>
+                                    {currentUser.phone_number ? currentUser.phone_number : <span className="italic opacity-70 text-xs">No phone</span>}
+                                  </span>
+                                  <button
+                                    onClick={() => setIsEditingPhone(true)}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-primary"
+                                    title="Edit Phone Number"
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </button>
+                                </div>
                               )}
                             </div>
+
+                            {currentUser.student_id && (
+                              <>
+                                <span className="hidden md:inline">•</span>
+                                <span>ID: {currentUser.student_id}</span>
+                              </>
+                            )}
                           </div>
-                        ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="name">Full Name</Label>
-                              <Input
-                                id="name"
-                                value={editData.name || ''}
-                                onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="email">Email</Label>
-                              <Input
-                                id="email"
-                                type="email"
-                                value={editData.email || ''}
-                                onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="student_id">Student ID</Label>
-                              <Input
-                                id="student_id"
-                                value={editData.student_id || ''}
-                                onChange={(e) => setEditData({ ...editData, student_id: e.target.value })}
-                              />
-                            </div>
-                          </div>
-                        )}
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
-                          {!isEditing ? (
-                            <>
-                              <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
-                                <span className="text-sm font-medium text-muted-foreground">Status</span>
-                                <Badge className="w-fit bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active Student</Badge>
-                              </div>
-                              <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
-                                <span className="text-sm font-medium text-muted-foreground">Role</span>
-                                <Badge variant="secondary" className="w-fit">Student</Badge>
-                              </div>
-                              <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
-                                <span className="text-sm font-medium text-muted-foreground">Promised Hours/Week</span>
-                                <span className="text-lg font-semibold text-foreground">{currentUser.promised_hours_per_week || '0'}h</span>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="space-y-2">
-                              <Label htmlFor="hours">Promised Hours/Week</Label>
-                              <Input
-                                id="hours"
-                                type="number"
-                                value={editData.promised_hours_per_week || ''}
-                                onChange={(e) => setEditData({ ...editData, promised_hours_per_week: e.target.value })}
-                              />
-                            </div>
-                          )}
+                          <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
+                            <span className="text-sm font-medium text-muted-foreground">Status</span>
+                            <Badge className="w-fit bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active Student</Badge>
+                          </div>
+                          <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
+                            <span className="text-sm font-medium text-muted-foreground">Role</span>
+                            <Badge variant="secondary" className="w-fit">Student</Badge>
+                          </div>
+                          <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
+                            <span className="text-sm font-medium text-muted-foreground">Promised Hours/Week</span>
+                            <span className="text-lg font-semibold text-foreground">{currentUser.promised_hours_per_week || '0'}h</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1368,7 +1253,7 @@ function StudentDashboard() {
             </div>
           )}
         </main>
-      </div>
+      </div >
       <AddAvailabilityModal
         isOpen={isAddAvailabilityModalOpen}
         onClose={() => setIsAddAvailabilityModalOpen(false)}
@@ -1387,14 +1272,16 @@ function StudentDashboard() {
         onClose={() => setIsDetailModalOpen(false)}
         assignment={selectedAssignment}
       />
-      {selectedAssignmentForRejection && (
-        <RejectAssignmentModal
-          isOpen={isRejectModalOpen}
-          onClose={() => setIsRejectModalOpen(false)}
-          onConfirm={confirmRejectAssignment}
-          assignmentName={selectedAssignmentForRejection.assignment_name}
-        />
-      )}
+      {
+        selectedAssignmentForRejection && (
+          <RejectAssignmentModal
+            isOpen={isRejectModalOpen}
+            onClose={() => setIsRejectModalOpen(false)}
+            onConfirm={confirmRejectAssignment}
+            assignmentName={selectedAssignmentForRejection.assignment_name}
+          />
+        )
+      }
       <ConfirmationDialog
         isOpen={isAcceptModalOpen}
         onClose={() => setIsAcceptModalOpen(false)}
@@ -1415,7 +1302,7 @@ function StudentDashboard() {
         description={statusDialog.description}
         type={statusDialog.type}
       />
-    </div>
+    </div >
   )
 }
 
