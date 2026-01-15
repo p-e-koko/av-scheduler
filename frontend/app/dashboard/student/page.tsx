@@ -52,6 +52,7 @@ import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComp
 import {
   authAPI,
   getStoredUser,
+  setStoredUser,
   formatAPIError,
   hasAnyRole,
   type User as UserType,
@@ -188,6 +189,7 @@ function StudentDashboard() {
       const updatedUser = await userAPI.updateUser(currentUser.id, formData)
 
       setCurrentUser(updatedUser.user)
+      setStoredUser(updatedUser.user) // Persist to local storage
       setEditData(updatedUser.user)
       setIsEditingPhone(false)
 
@@ -219,6 +221,7 @@ function StudentDashboard() {
 
       const updatedUser = await userAPI.updateUser(currentUser.id, editData)
       setCurrentUser(updatedUser.user)
+      setStoredUser(updatedUser.user) // Persist to local storage
       setIsEditing(false)
 
       setStatusDialog({
