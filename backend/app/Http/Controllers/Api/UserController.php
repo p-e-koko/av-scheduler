@@ -19,6 +19,8 @@ class UserController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', User::class);
+
         $query = User::query();
 
         // Add filtering
@@ -48,6 +50,8 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request): JsonResponse
     {
+        $this->authorize('create', User::class);
+
         $userData = $request->validated();
 
         // Handle profile picture upload
@@ -91,6 +95,8 @@ class UserController extends Controller
      */
     public function storeWithFiles(StoreUserRequest $request): JsonResponse
     {
+        $this->authorize('create', User::class);
+
         $userData = $request->validated();
 
         // Handle profile picture upload
@@ -134,6 +140,8 @@ class UserController extends Controller
      */
     public function show(User $user): JsonResponse
     {
+        $this->authorize('view', $user);
+        
         AuditLogger::log('User Details Viewed', ['viewed_user_id' => $user->id, 'viewed_user_email' => $user->email]);
         return response()->json([
             'user' => new UserResource($user)
@@ -145,7 +153,18 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
+        // Authorize the request
+        $this->authorize('update', $user);
+
         $userData = $request->validated();
+        
+        // Prevent non-admins from updating sensitive fields
+        if (!$request->user()->hasRole('admin')) {
+            unset($userData['role']);
+            unset($userData['roles']);
+            unset($userData['student_id']); // Prevent changing student ID
+        }
+
         $oldRole = $user->role;
 
         // Handle profile picture upload
@@ -202,7 +221,18 @@ class UserController extends Controller
      */
     public function updateWithFiles(UpdateUserRequest $request, User $user): JsonResponse
     {
+        // Authorize the request
+        $this->authorize('update', $user);
+
         $userData = $request->validated();
+        
+        // Prevent non-admins from updating sensitive fields
+        if (!$request->user()->hasRole('admin')) {
+            unset($userData['role']);
+            unset($userData['roles']);
+            unset($userData['student_id']); // Prevent changing student ID
+        }
+
         $oldRole = $user->role;
 
         // Handle profile picture upload
@@ -262,6 +292,8 @@ class UserController extends Controller
      */
     public function destroy(User $user): JsonResponse
     {
+        $this->authorize('delete', $user);
+
         $user->delete();
 
         AuditLogger::log('User Deleted (Soft)', ['user_id' => $user->id, 'email' => $user->email]);
@@ -277,6 +309,8 @@ class UserController extends Controller
     public function restore(string $id): JsonResponse
     {
         $user = User::withTrashed()->findOrFail($id);
+        $this->authorize('restore', $user);
+        
         $user->restore();
 
         AuditLogger::log('User Restored', ['user_id' => $user->id, 'email' => $user->email]);
@@ -293,6 +327,8 @@ class UserController extends Controller
     public function forceDelete(string $id): JsonResponse
     {
         $user = User::withTrashed()->findOrFail($id);
+        $this->authorize('forceDelete', $user);
+
         $user->forceDelete();
 
         AuditLogger::log('User Deleted (Permanent)', ['user_id' => $user->id, 'email' => $user->email]);
@@ -307,6 +343,8 @@ class UserController extends Controller
      */
     public function trashed(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', User::class); // Only admins/coords can see list, effectively just admins due to whereTrashed usually
+
         $perPage = $request->get('per_page', 15);
         $users = User::onlyTrashed()->paginate($perPage);
 

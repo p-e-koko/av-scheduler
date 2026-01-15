@@ -3,7 +3,8 @@
 namespace App\Providers;
 
 use App\Models\Availability;
-use App\Policies\AvailabilityPolicy;
+use App\Models\User;
+use App\Policies\UserPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
@@ -16,6 +17,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         Availability::class => AvailabilityPolicy::class,
+        User::class => UserPolicy::class,
     ];
 
     /**

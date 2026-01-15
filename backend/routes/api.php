@@ -79,25 +79,18 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
 // Protected User Management Routes - Role-Based Access Control
 Route::middleware(['auth:sanctum'])->group(function () {
 
-    // User Management - Admin only with sensitive rate limiting
-    Route::middleware(['role:admin'])->group(function () {
-
-        Route::get('/audit-logs', [\App\Http\Controllers\Api\AuditLogController::class, 'index']);
-        Route::apiResource('users', UserController::class)->except(['index', 'show']);
-        Route::prefix('users')->group(function () {
-            Route::post('/create-with-files', [UserController::class, 'storeWithFiles']);
-            Route::post('/{user}/update-with-files', [UserController::class, 'updateWithFiles']);
-            Route::get('/trashed', [UserController::class, 'trashed']);
-            Route::post('/{id}/restore', [UserController::class, 'restore']);
-            Route::delete('/{id}/force', [UserController::class, 'forceDelete']);
-        });
+    // User Management - Authorization handled by Policy
+    Route::apiResource('users', UserController::class);
+    Route::prefix('users')->group(function () {
+        Route::post('/create-with-files', [UserController::class, 'storeWithFiles']);
+        Route::post('/{user}/update-with-files', [UserController::class, 'updateWithFiles']);
+        Route::get('/trashed', [UserController::class, 'trashed']);
+        Route::post('/{id}/restore', [UserController::class, 'restore']);
+        Route::delete('/{id}/force', [UserController::class, 'forceDelete']);
     });
 
-    // View Users - Admin, Supervisor, Coordinator
-    Route::middleware(['role:admin,supervisor,coordinator'])->group(function () {
-        Route::get('/users', [UserController::class, 'index']);
-        Route::get('/users/{user}', [UserController::class, 'show']);
-    });
+    // Audit Logs - Admin only
+    Route::middleware(['role:admin'])->get('/audit-logs', [\App\Http\Controllers\Api\AuditLogController::class, 'index']);
 
     // Assignment Management Routes - Role-Based Access Control
 
