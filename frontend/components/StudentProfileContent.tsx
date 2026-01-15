@@ -30,7 +30,8 @@ import {
   formatAPIError,
   type User as UserType,
   type Assignment,
-  type Availability
+  type Availability,
+  getStoredUser
 } from "@/lib/api"
 
 interface StudentProfileContentProps {
@@ -107,22 +108,22 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
     try {
       setLoading(true)
       // Call update API
-        const formData = new FormData();
-        formData.append('name', student.name);
-        formData.append('email', student.email);
-        formData.append('phone_number', phoneNumberInput);
-        
-        await userAPI.updateUser(student.id, formData);
-        
-        // Update local state
-        setStudent(prev => prev ? ({ ...prev, phone_number: phoneNumberInput }) : null)
-        setIsEditingPhone(false)
-        setError(null)
+      const formData = new FormData();
+      formData.append('name', student.name);
+      formData.append('email', student.email);
+      formData.append('phone_number', phoneNumberInput);
+
+      await userAPI.updateUser(student.id, formData);
+
+      // Update local state
+      setStudent(prev => prev ? ({ ...prev, phone_number: phoneNumberInput }) : null)
+      setIsEditingPhone(false)
+      setError(null)
     } catch (err: any) {
       console.error("Failed to update phone number", err)
       setError("Failed to update phone number")
     } finally {
-        setLoading(false)
+      setLoading(false)
     }
   }
 
@@ -297,7 +298,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
             </div>
           </div>
 
-          {!isEditing ? (
+          {!isEditing && getStoredUser()?.role === 'admin' ? (
             <Button
               onClick={() => setIsEditing(true)}
               className="bg-primary hover:bg-primary/90 w-full md:w-auto"
@@ -305,7 +306,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
               <Edit className="w-4 h-4 mr-2" />
               Edit Profile
             </Button>
-          ) : (
+          ) : isEditing ? (
             <div className="flex space-x-2 w-full md:w-auto">
               <Button
                 onClick={handleSaveEdit}
@@ -323,7 +324,7 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                 Cancel
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="flex flex-col space-y-6">
@@ -349,55 +350,56 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                         <div className="flex flex-col md:flex-row gap-4 text-muted-foreground justify-center md:justify-start items-center md:items-center">
                           <p>{student.email}</p>
                           <span className="hidden md:inline">•</span>
-                          
+
                           {/* Phone Number Display & Edit */}
                           <div className="flex items-center gap-2">
-                             <Phone className="w-4 h-4" />
-                             {isEditingPhone ? (
-                                <div className="flex items-center gap-2">
-                                     <input 
-                                        type="text" 
-                                        value={phoneNumberInput}
-                                        onChange={(e) => setPhoneNumberInput(e.target.value)}
-                                        className="h-7 px-2 text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-32 md:w-40"
-                                        placeholder="Phone number"
-                                    />
-                                     <Button 
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={handleUpdatePhoneNumber}
-                                        className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/30"
-                                        title="Save"
-                                    >
-                                        <Save className="w-3 h-3" />
-                                    </Button>
-                                     <Button 
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={() => {
-                                            setIsEditingPhone(false)
-                                            setPhoneNumberInput(student.phone_number || "")
-                                        }}
-                                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                        title="Cancel"
-                                    >
-                                        <X className="w-3 h-3" />
-                                    </Button>
-                                </div>
-                             ) : (
-                                <div className="flex items-center gap-2 group">
-                                    <span>
-                                        {student.phone_number ? student.phone_number : <span className="italic opacity-70 text-xs">No phone</span>}
-                                    </span>
-                                    <button 
-                                        onClick={() => setIsEditingPhone(true)}
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-primary"
-                                        title="Edit Phone Number"
-                                    > 
-                                      <Edit className="w-3 h-3" />
-                                    </button>
-                                </div>
-                             )}
+                            <Phone className="w-4 h-4" />
+                            {isEditingPhone ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={phoneNumberInput}
+                                  onChange={(e) => setPhoneNumberInput(e.target.value)}
+                                  className="h-7 px-2 text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-32 md:w-40"
+                                  placeholder="Phone number"
+                                />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={handleUpdatePhoneNumber}
+                                  className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100 dark:hover:bg-green-900/30"
+                                  title="Save"
+                                >
+                                  <Save className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setIsEditingPhone(false)
+                                    setPhoneNumberInput(student.phone_number || "")
+                                  }}
+                                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                  title="Cancel"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 group">
+                                <span>
+                                  {student.phone_number ? student.phone_number : <span className="italic opacity-70 text-xs">No phone</span>}
+                                </span>
+                                <button
+                                  onClick={() => setIsEditingPhone(true)}
+                                  className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-primary ${getStoredUser()?.role === 'admin' || getStoredUser()?.id === student.id ? '' : 'hidden'
+                                    }`}
+                                  title="Edit Phone Number"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
                           </div>
 
                           {student.student_id && (
@@ -441,18 +443,18 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
                       {!isEditing ? (
                         <>
-                           <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
-                             <span className="text-sm font-medium text-muted-foreground">Status</span>
-                             <Badge className="w-fit bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active Student</Badge>
-                           </div>
-                           <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
-                             <span className="text-sm font-medium text-muted-foreground">Role</span>
-                             <Badge variant="secondary" className="w-fit">Student</Badge>
-                           </div>
-                           <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
-                             <span className="text-sm font-medium text-muted-foreground">Promised Hours/Week</span>
-                             <span className="text-lg font-semibold text-foreground">{student.promised_hours_per_week || '0'}h</span>
-                           </div>
+                          <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
+                            <span className="text-sm font-medium text-muted-foreground">Status</span>
+                            <Badge className="w-fit bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Active Student</Badge>
+                          </div>
+                          <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
+                            <span className="text-sm font-medium text-muted-foreground">Role</span>
+                            <Badge variant="secondary" className="w-fit">Student</Badge>
+                          </div>
+                          <div className="flex flex-col space-y-1 p-3 bg-muted/30 rounded-lg">
+                            <span className="text-sm font-medium text-muted-foreground">Promised Hours/Week</span>
+                            <span className="text-lg font-semibold text-foreground">{student.promised_hours_per_week || '0'}h</span>
+                          </div>
                         </>
                       ) : (
                         <div className="space-y-2">
