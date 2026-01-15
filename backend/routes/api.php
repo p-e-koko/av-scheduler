@@ -152,15 +152,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Student Availability Management - Students have full CRUD on own availability
     Route::middleware(['role:student'])->group(function () {
+        Route::post('/my-availability/bulk', [AvailabilityController::class, 'bulkStore']);
+        Route::delete('/my-availability/bulk', [AvailabilityController::class, 'bulkDestroy']);
+        Route::get('/my-availability/schedule', [AvailabilityController::class, 'schedule']);
+
         Route::get('/my-availability', [AvailabilityController::class, 'myAvailability']);
         Route::post('/my-availability', [AvailabilityController::class, 'store']);
         Route::put('/my-availability/{availability}', [AvailabilityController::class, 'update'])
             ->middleware('can:update,availability');
         Route::delete('/my-availability/{availability}', [AvailabilityController::class, 'destroy'])
             ->middleware('can:delete,availability');
-        Route::post('/my-availability/bulk', [AvailabilityController::class, 'bulkStore']);
-        Route::delete('/my-availability/bulk', [AvailabilityController::class, 'bulkDestroy']);
-        Route::get('/my-availability/schedule', [AvailabilityController::class, 'schedule']);
     });
 
     // Coordinator Availability Management - Coordinators have full CRUD access
