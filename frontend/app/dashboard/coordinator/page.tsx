@@ -221,11 +221,15 @@ function CoordinatorDashboard() {
           break
 
         case 'schedules':
-          const availabilityResponse = await availabilityAPI.getAvailability({
-            per_page: 100,
-            date: selectedDate
-          })
+          const [availabilityResponse, studentsResponseSchedules] = await Promise.all([
+            availabilityAPI.getAvailability({
+              per_page: 100,
+              date: selectedDate
+            }),
+            userAPI.getUsers({ role: 'student', per_page: 100 })
+          ])
           setAvailability(availabilityResponse.data)
+          setStudents(studentsResponseSchedules.data)
           break
 
         case 'positions':
@@ -484,8 +488,8 @@ function CoordinatorDashboard() {
                             setAssignmentCurrentPage(1)
                           }}
                           className={`transition-all duration-200 w-full sm:w-auto ${assignmentFilter === 'all'
-                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                            ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                             }`}
                         >
                           All
@@ -498,8 +502,8 @@ function CoordinatorDashboard() {
                             setAssignmentCurrentPage(1)
                           }}
                           className={`transition-all duration-200 w-full sm:w-auto ${assignmentFilter === 'pending'
-                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                            ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                             }`}
                         >
                           Pending
@@ -512,8 +516,8 @@ function CoordinatorDashboard() {
                             setAssignmentCurrentPage(1)
                           }}
                           className={`transition-all duration-200 w-full sm:w-auto ${assignmentFilter === 'confirmed'
-                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                            ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                             }`}
                         >
                           Confirmed
@@ -526,8 +530,8 @@ function CoordinatorDashboard() {
                             setAssignmentCurrentPage(1)
                           }}
                           className={`transition-all duration-200 w-full sm:w-auto ${assignmentFilter === 'complete'
-                              ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                            ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                             }`}
                         >
                           Completed
@@ -620,8 +624,8 @@ function CoordinatorDashboard() {
                           return true;
                         })
                         .map((assignment, index) => (
-                          <div 
-                            key={`${assignment.id}-${index}`} 
+                          <div
+                            key={`${assignment.id}-${index}`}
                             className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 bg-muted/50 rounded-lg gap-4 cursor-pointer hover:bg-muted/70 transition-colors"
                             onClick={() => handleViewAssignment(assignment)}
                           >
@@ -642,15 +646,15 @@ function CoordinatorDashboard() {
                               <Badge
                                 variant="secondary"
                                 className={`text-xs px-2 py-0.5 border-none ${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                    assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white' :
-                                      'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                                  assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white' :
+                                    'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                                   }`}
                               >
                                 {assignment.status}
                               </Badge>
                               <div className="flex items-center gap-1">
                                 <Button
-                                  variant="ghost" 
+                                  variant="ghost"
                                   size="icon"
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -661,7 +665,7 @@ function CoordinatorDashboard() {
                                   <Eye className="w-4 h-4" />
                                 </Button>
                                 <Button
-                                  variant="ghost" 
+                                  variant="ghost"
                                   size="icon"
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -672,7 +676,7 @@ function CoordinatorDashboard() {
                                   <Edit className="w-4 h-4" />
                                 </Button>
                                 <Button
-                                  variant="ghost" 
+                                  variant="ghost"
                                   size="icon"
                                   onClick={(e) => {
                                     e.stopPropagation()
@@ -874,8 +878,8 @@ function CoordinatorDashboard() {
                                       {student.promised_hours_per_week || '0'}h Promised
                                     </Badge>
                                     <Badge variant="outline" className={`text-xs w-fit ${(Number(student.remaining_hours_this_week) || 0) > 0
-                                        ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800'
-                                        : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+                                      ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800'
+                                      : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
                                       }`}>
                                       {student.remaining_hours_this_week ? Number(student.remaining_hours_this_week).toFixed(1) : '0'}h Remaining
                                     </Badge>
@@ -991,19 +995,23 @@ function CoordinatorDashboard() {
                         {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => { // 7 AM to 9 PM
                           const timeString = `${hour.toString().padStart(2, '0')}:00`;
 
-                          // Filter students available at this hour
-                          const availableStudents = availability.filter(a => {
-                            if (a.date !== selectedDate) return false;
-                            if (a.status !== 'available') return false;
+                          // Filter students who don't have a conflict
+                          const uniqueStudents = (students || []).filter(student => {
+                            // Check for conflicts
+                            const hasConflict = availability.some(a => {
+                              if (a.student_id !== student.id.toString() && a.student_id !== student.id) return false; // Handle potential string/number mismatch
+                              // We only care about blocking statuses
+                              if (a.status !== 'class' && a.status !== 'unavailable') return false;
 
-                            const startHour = parseInt(a.start_time.split(':')[0]);
-                            const endHour = parseInt(a.end_time.split(':')[0]);
+                              const startHour = parseInt(a.start_time.split(':')[0]);
+                              const endHour = parseInt(a.end_time.split(':')[0]);
 
-                            return hour >= startHour && hour < endHour;
+                              // Check if this hour falls within the blocked slot
+                              return hour >= startHour && hour < endHour;
+                            });
+
+                            return !hasConflict;
                           });
-
-                          // Remove duplicates and ensure user object exists
-                          const uniqueStudents = Array.from(new Map(availableStudents.map(item => [item.student_id, item.user])).values()).filter(Boolean);
 
                           return (
                             <div key={hour} className="flex border-b border-border py-3 last:border-0">
@@ -1112,7 +1120,7 @@ function CoordinatorDashboard() {
                                 <p className="text-sm text-muted-foreground line-clamp-1">{position.description || 'No description'}</p>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <Badge 
+                                <Badge
                                   variant={position.is_active ? "secondary" : "outline"}
                                   className={position.is_active ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-none" : ""}
                                 >
