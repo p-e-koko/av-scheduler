@@ -16,13 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { 
-  assignmentAPI, 
-  userAPI, 
-  positionAPI, 
+import {
+  assignmentAPI,
+  userAPI,
+  positionAPI,
   availabilityAPI,
-  formatAPIError, 
-  type User, 
+  formatAPIError,
+  type User,
   type Position,
   type Availability,
   type Assignment
@@ -43,12 +43,12 @@ interface Assignee {
 export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, assignmentToEdit }: CreateAssignmentModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Form State
   const [eventName, setEventName] = useState("")
   const [eventLocation, setEventLocation] = useState("")
   const [description, setDescription] = useState("")
-  
+
   // Date/Time State
   const [startDate, setStartDate] = useState("")
   const [startTime, setStartTime] = useState("")
@@ -107,11 +107,11 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
             setEventName(assignmentToEdit.event_name)
             setEventLocation(assignmentToEdit.event_location)
             setDescription(assignmentToEdit.description || "")
-            
+
             // Parse dates
             const start = new Date(assignmentToEdit.event_start_datetime)
             const end = new Date(assignmentToEdit.event_end_datetime)
-            
+
             // Helper to format local date as YYYY-MM-DD
             const formatLocalDate = (d: Date) => {
               const year = d.getFullYear()
@@ -119,17 +119,17 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
               const day = String(d.getDate()).padStart(2, '0')
               return `${year}-${month}-${day}`
             }
-            
+
             setStartDate(formatLocalDate(start))
             setStartTime(start.toTimeString().slice(0, 5))
             setEndDate(formatLocalDate(end))
             setEndTime(end.toTimeString().slice(0, 5))
-            
+
             // Set assignees if available in the assignment object
             if (assignmentToEdit.users) {
               const existingAssignees = assignmentToEdit.users.map(user => ({
                 user,
-                position: (user as any).pivot?.position || 'Unknown' 
+                position: (user as any).pivot?.position || 'Unknown'
               }))
               setAssignees(existingAssignees)
             }
@@ -176,21 +176,32 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
 
   const isStudentAvailable = (studentId: string) => {
     if (!startDate || !startTime || !endTime) return false
-    
-    // Convert form times to hours for comparison
-    const startHour = parseInt(startTime.split(':')[0])
-    const endHour = parseInt(endTime.split(':')[0])
-    
-    return availabilities.some(a => {
-      if (a.student_id !== studentId || a.status !== 'available') return false
-      
-      const availStart = parseInt(a.start_time.split(':')[0])
-      const availEnd = parseInt(a.end_time.split(':')[0])
-      
+
+    // Convert form times to minutes for comparison
+    const getMinutes = (time: string) => {
+      const parts = time.split(':')
+      return parseInt(parts[0]) * 60 + parseInt(parts[1])
+    }
+
+    const startMinutes = getMinutes(startTime)
+    const endMinutes = getMinutes(endTime)
+
+    // Return true UNLESS we find a conflicting "class" or "unavailable" slot
+    const hasConflict = availabilities.some(a => {
+      if (a.student_id !== studentId) return false
+
+      // We only care about blocking statuses
+      if (a.status !== 'class' && a.status !== 'unavailable') return false
+
+      const availStart = getMinutes(a.start_time)
+      const availEnd = getMinutes(a.end_time)
+
       // Check if availability covers the assignment time
       // Simple overlap check: (StartA < EndB) and (EndA > StartB)
-      return (availStart < endHour) && (availEnd > startHour)
+      return (availStart < endMinutes) && (availEnd > startMinutes)
     })
+
+    return !hasConflict
   }
 
   const handleAddAssignee = () => {
@@ -202,7 +213,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
       if (assignees.some(a => a.user.id === student.id)) {
         return // Already added
       }
-      
+
       setAssignees(prev => [...prev, { user: student, position: selectedPosition }])
       setSelectedStudentId("")
       setSelectedPosition("")
@@ -222,7 +233,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
       // Construct datetime strings
       const startTimeWithSeconds = startTime.length === 5 ? `${startTime}:00` : startTime
       const endTimeWithSeconds = endTime.length === 5 ? `${endTime}:00` : endTime
-      
+
       const event_start_datetime = `${startDate}T${startTimeWithSeconds}`
       const event_end_datetime = `${endDate}T${endTimeWithSeconds}`
 
@@ -249,34 +260,34 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
         const { assignment } = await assignmentAPI.createAssignment(payload)
         assignmentId = assignment.id
       }
-      
+
       // Handle Assignees with Diffing Logic
       const currentIds = new Set(currentUsers.map(u => u.id))
       const newIds = new Set(assignees.map(a => a.user.id))
 
       // Users to add
       const toAdd = assignees.filter(a => !currentIds.has(a.user.id))
-      
+
       // Users to remove
       const toRemove = currentUsers.filter(u => !newIds.has(u.id))
-      
+
       // Users to update (if position changed)
       const toUpdate = assignees.filter(a => {
-          if (!currentIds.has(a.user.id)) return false
-          const currentUser = currentUsers.find(u => u.id === a.user.id)
-          const currentPosition = (currentUser as any).pivot?.position
-          return (currentPosition || '') !== (a.position || '')
+        if (!currentIds.has(a.user.id)) return false
+        const currentUser = currentUsers.find(u => u.id === a.user.id)
+        const currentPosition = (currentUser as any).pivot?.position
+        return (currentPosition || '') !== (a.position || '')
       })
 
       await Promise.all([
-          ...toAdd.map(a => assignmentAPI.assignUser(assignmentId, a.user.id, { position: a.position })),
-          ...toRemove.map(u => assignmentAPI.unassignUser(assignmentId, u.id)),
-          ...toUpdate.map(a => assignmentAPI.updateUserPosition(assignmentId, a.user.id, a.position))
+        ...toAdd.map(a => assignmentAPI.assignUser(assignmentId, a.user.id, { position: a.position })),
+        ...toRemove.map(u => assignmentAPI.unassignUser(assignmentId, u.id)),
+        ...toUpdate.map(a => assignmentAPI.updateUserPosition(assignmentId, a.user.id, a.position))
       ])
 
       onAssignmentCreated()
       onClose()
-      
+
       // Reset form
       setEventName("")
       setEventLocation("")
@@ -313,7 +324,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
             {assignmentToEdit ? "Update the details of the assignment." : "Fill in the details below to create a new assignment and assign students."}
           </DialogDescription>
         </DialogHeader>
-        
+
         {error && (
           <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm border border-destructive/20 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -385,7 +396,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-foreground">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                     </svg>
                   </div>
                 </div>
@@ -420,7 +431,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-foreground">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                     </svg>
                   </div>
                 </div>
@@ -461,8 +472,8 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                   className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-muted/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
                 >
                   <span className={!selectedStudentId ? "text-muted-foreground" : "font-medium"}>
-                    {selectedStudentId 
-                      ? students.find(s => s.id.toString() === selectedStudentId)?.name 
+                    {selectedStudentId
+                      ? students.find(s => s.id.toString() === selectedStudentId)?.name
                       : "Select Student..."}
                   </span>
                   <ChevronDown className="h-4 w-4 opacity-50" />
@@ -470,14 +481,13 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
 
                 {isStudentDropdownOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-10" 
-                      onClick={() => setIsStudentDropdownOpen(false)} 
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsStudentDropdownOpen(false)}
                     />
-                    <div 
-                      className={`absolute z-20 w-full overflow-auto rounded-md border border-border bg-card/90 backdrop-blur-xl py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm max-h-60 ${
-                        dropdownPosition === 'top' ? 'bottom-full mb-1' : 'mt-1'
-                      }`}
+                    <div
+                      className={`absolute z-20 w-full overflow-auto rounded-md border border-border bg-card/90 backdrop-blur-xl py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm max-h-60 ${dropdownPosition === 'top' ? 'bottom-full mb-1' : 'mt-1'
+                        }`}
                     >
                       {availableStudents.length > 0 && (
                         <>
@@ -504,7 +514,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                           ))}
                         </>
                       )}
-                      
+
                       {unavailableStudents.length > 0 && (
                         <>
                           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 border-t border-border">Others</div>
@@ -530,7 +540,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                           ))}
                         </>
                       )}
-                      
+
                       {students.length === 0 && (
                         <div className="py-2 px-3 text-sm text-muted-foreground text-center">No students found</div>
                       )}
@@ -550,8 +560,8 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                   ))}
                 </select>
               </div>
-              <Button 
-                type="button" 
+              <Button
+                type="button"
                 onClick={handleAddAssignee}
                 disabled={!selectedStudentId || !selectedPosition}
                 className="bg-primary text-primary-foreground hover:bg-primary/90"

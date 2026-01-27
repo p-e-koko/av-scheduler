@@ -40,7 +40,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
     date: "",
     start_time: "",
     end_time: "",
-    status: "available" as "available" | "unavailable" | "class",
+    status: "class" as "available" | "unavailable" | "class",
     title: ""
   })
   const [repeatType, setRepeatType] = useState<"none" | "daily" | "weekly" | "weekday">("none")
@@ -128,6 +128,9 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
           const newEnd = newSlot.end_time
 
           const hasOverlap = existingAvailability.some(existing => {
+            // Ignore existing "available" slots as they are now effectively deleted/ignored
+            if (existing.status === 'available') return false
+
             // Only check same date
             // backend format might be YYYY-MM-DD or with time. Assume YYYY-MM-DD for date part comparison.
             const existingDate = existing.date.split('T')[0]
@@ -324,7 +327,6 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                   className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                 >
-                  <option value="available">Available</option>
                   <option value="class">Class</option>
                   <option value="unavailable">Unavailable</option>
                 </select>

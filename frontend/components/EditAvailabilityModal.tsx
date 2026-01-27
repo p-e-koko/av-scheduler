@@ -95,6 +95,9 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
       // Check for overlaps (Basic check only for single for now, complex for bulk)
       if (existingAvailability && mode === 'single') {
         const hasOverlap = existingAvailability.some(existing => {
+          // Ignore existing "available" slots as they are now effectively deleted/ignored
+          if (existing.status === 'available') return false
+
           // Exclude self
           if (existing.id === availability.id) return false
           const existingDate = existing.date.split('T')[0]
@@ -257,7 +260,6 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                     className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-input disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
                   >
-                    <option value="available">Available</option>
                     <option value="class">Class</option>
                     <option value="unavailable">Unavailable</option>
                   </select>
