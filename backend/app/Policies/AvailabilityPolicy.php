@@ -49,6 +49,13 @@ class AvailabilityPolicy
      */
     public function update(User $user, Availability $availability): bool
     {
+        \Illuminate\Support\Facades\Log::info('AvailabilityPolicy update check', [
+            'user_id' => $user->id,
+            'user_role' => $user->role,
+            'availability_student_id' => $availability->student_id,
+            'match' => $user->id === $availability->student_id
+        ]);
+
         // Coordinators can update any availability
         if ($user->role === 'coordinator') {
             return true;

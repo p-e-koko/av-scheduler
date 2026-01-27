@@ -196,6 +196,17 @@ class AvailabilityController extends Controller
                 'availability' => new AvailabilityResource($availability->fresh(['user'])),
                 'count' => $updatedCount
             ]);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return response()->json([
+                'message' => 'Authorization failed',
+                'error' => $e->getMessage(),
+                'debug' => [
+                    'user_id' => $request->user()->id,
+                    'user_role' => $request->user()->role,
+                    'availability_student_id' => $availability->student_id,
+                    'match' => $request->user()->id === $availability->student_id
+                ]
+            ], 403);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Availability Update Error: ' . $e->getMessage());
             return response()->json([
@@ -260,6 +271,17 @@ class AvailabilityController extends Controller
                 'message' => 'Availability deleted successfully',
                 'count' => $deletedCount
             ]);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return response()->json([
+                'message' => 'Authorization failed',
+                'error' => $e->getMessage(),
+                'debug' => [
+                    'user_id' => $request->user()->id,
+                    'user_role' => $request->user()->role,
+                    'availability_student_id' => $availability->student_id,
+                    'match' => $request->user()->id === $availability->student_id
+                ]
+            ], 403);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Availability Delete Error: ' . $e->getMessage());
             return response()->json([
