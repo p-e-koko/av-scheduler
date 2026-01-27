@@ -8,11 +8,19 @@ import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { getStoredUser, hasAnyRole } from '@/lib/api'
 import { getRoleBasedDashboardPath } from '@/lib/role-routing'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function Home() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [showContactIT, setShowContactIT] = useState(false)
 
   useEffect(() => {
     const currentUser = getStoredUser()
@@ -102,11 +110,13 @@ export default function Home() {
                 </Button>
               </Link>
 
-              <Link href="/register">
-                <Button variant="outline" className="w-full bg-white/80 backdrop-blur-xl border-gray-300/30 dark:bg-transparent dark:text-white dark:border-white dark:hover:bg-white/10">
-                  Create Account
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                className="w-full bg-white/80 backdrop-blur-xl border-gray-300/30 dark:bg-transparent dark:text-white dark:border-white dark:hover:bg-white/10"
+                onClick={() => setShowContactIT(true)}
+              >
+                Create Account
+              </Button>
             </>
           )}
         </div>
@@ -135,6 +145,22 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      <Dialog open={showContactIT} onOpenChange={setShowContactIT}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Account Creation</DialogTitle>
+            <DialogDescription>
+              Please contact the IT office to create a new account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end">
+            <Button onClick={() => setShowContactIT(false)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
