@@ -13,8 +13,8 @@ class AvailabilityPolicy
      */
     public function viewAny(User $user): bool
     {
-        // Supervisors and coordinators can view all availability
-        return in_array($user->role, ['supervisor', 'coordinator']);
+        // Supervisors, coordinators, and admins can view all availability
+        return $user->hasAnyRole(['supervisor', 'coordinator', 'admin']);
     }
 
     /**
@@ -22,17 +22,17 @@ class AvailabilityPolicy
      */
     public function view(User $user, Availability $availability): bool
     {
-        // Supervisors and coordinators can view all
-        if (in_array($user->role, ['supervisor', 'coordinator'])) {
+        // Supervisors, coordinators, and admins can view all
+        if ($user->hasAnyRole(['supervisor', 'coordinator', 'admin'])) {
             return true;
         }
 
         // Students can only view their own availability
-        if ($user->role === 'student') {
+        if ($user->hasRole('student')) {
             return $user->id === $availability->student_id;
         }
 
-        return false;
+        return $user->id === $availability->student_id;
     }
 
     /**
@@ -40,8 +40,8 @@ class AvailabilityPolicy
      */
     public function create(User $user): bool
     {
-        // Students and coordinators can create availability
-        return in_array($user->role, ['student', 'coordinator']);
+        // Students, coordinators, and admins can create availability
+        return $user->hasAnyRole(['student', 'coordinator', 'admin']);
     }
 
     /**
@@ -51,22 +51,18 @@ class AvailabilityPolicy
     {
         \Illuminate\Support\Facades\Log::info('AvailabilityPolicy update check', [
             'user_id' => $user->id,
-            'user_role' => $user->role,
+            'user_roles' => $user->getRoleNames(),
             'availability_student_id' => $availability->student_id,
             'match' => $user->id === $availability->student_id
         ]);
 
-        // Coordinators can update any availability
-        if ($user->role === 'coordinator') {
+        // Coordinators and admins can update any availability
+        if ($user->hasAnyRole(['coordinator', 'admin'])) {
             return true;
         }
 
-        // Students can only update their own availability
-        if ($user->role === 'student') {
-            return $user->id === $availability->student_id;
-        }
-
-        return false;
+        // Users can update their own availability
+        return $user->id === $availability->student_id;
     }
 
     /**
@@ -74,17 +70,13 @@ class AvailabilityPolicy
      */
     public function delete(User $user, Availability $availability): bool
     {
-        // Coordinators can delete any availability
-        if ($user->role === 'coordinator') {
+        // Coordinators and admins can delete any availability
+        if ($user->hasAnyRole(['coordinator', 'admin'])) {
             return true;
         }
 
-        // Students can only delete their own availability
-        if ($user->role === 'student') {
-            return $user->id === $availability->student_id;
-        }
-
-        return false;
+        // Users can delete their own availability
+        return $user->id === $availability->student_id;
     }
 
     /**
@@ -92,8 +84,8 @@ class AvailabilityPolicy
      */
     public function restore(User $user, Availability $availability): bool
     {
-        // Only coordinators can restore availability
-        return $user->role === 'coordinator';
+        // Only coordinators and admins can restore availability
+        return $user->hasAnyRole(['coordinator', 'admin']);
     }
 
     /**
@@ -101,7 +93,7 @@ class AvailabilityPolicy
      */
     public function forceDelete(User $user, Availability $availability): bool
     {
-        // Only coordinators can force delete availability
-        return $user->role === 'coordinator';
+        // Only coordinators and admins can force delete availability
+        return $user->hasAnyRole(['coordinator', 'admin']);
     }
 }
