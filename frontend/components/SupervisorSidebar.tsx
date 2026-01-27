@@ -28,8 +28,8 @@ import {
 } from "@/components/ui/dialog"
 
 interface SupervisorSidebarProps {
-  activeTab: "dashboard" | "student-schedules" | "assignment-schedules"
-  onTabChange: (tab: "dashboard" | "student-schedules" | "assignment-schedules") => void
+  activeTab: "dashboard" | "student-schedules" | "assignment-schedules" | "students"
+  onTabChange: (tab: "dashboard" | "student-schedules" | "assignment-schedules" | "students") => void
   isOpen?: boolean
   onClose?: () => void
 }
@@ -127,8 +127,8 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "dashboard"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "dashboard" ? 'border-primary/20' : 'border-transparent'
               }`}
           >
@@ -138,12 +138,27 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
 
           <div
             onClick={() => {
+              onTabChange("students")
+              if (isMobile && onClose) onClose()
+            }}
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "students"
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "students" ? 'border-primary/20' : 'border-transparent'
+              }`}
+          >
+            <Users className={`w-5 h-5 ${activeTab === "students" ? 'text-primary dark:text-white' : ''}`} />
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Students</span>}
+          </div>
+
+          <div
+            onClick={() => {
               onTabChange("student-schedules")
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "student-schedules"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "student-schedules" ? 'border-primary/20' : 'border-transparent'
               }`}
           >
@@ -157,8 +172,8 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "assignment-schedules"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "assignment-schedules" ? 'border-primary/20' : 'border-transparent'
               }`}
           >

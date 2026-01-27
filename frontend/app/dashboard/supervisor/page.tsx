@@ -11,6 +11,7 @@ import {
   LogOut,
   Clock,
   CheckCircle,
+  XCircle,
   AlertCircle,
   BarChart3,
   TrendingUp,
@@ -20,7 +21,9 @@ import {
   Filter,
   Menu,
   MoreHorizontal,
-  ChevronDown
+  ChevronDown,
+  Grid3X3,
+  List
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -55,11 +58,11 @@ function SupervisorDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<"dashboard" | "student-schedules" | "assignment-schedules">("dashboard")
+  const [activeTab, setActiveTab] = useState<"dashboard" | "student-schedules" | "assignment-schedules" | "students">("dashboard")
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab && ['dashboard', 'student-schedules', 'assignment-schedules'].includes(tab)) {
+    if (tab && ['dashboard', 'student-schedules', 'assignment-schedules', 'students'].includes(tab)) {
       setActiveTab(tab as any)
     }
   }, [searchParams])
@@ -282,33 +285,33 @@ function SupervisorDashboard() {
     if (!student) return { promised: 0, worked: 0, assigned: 0 };
 
     const promised = parseFloat(student.promised_hours_per_week || '0');
-    
+
     // Get current week range
     const now = getServerTime();
     const startOfWeek = new Date(now);
-    const day = now.getDay() || 7; 
-    startOfWeek.setHours(0,0,0,0);
+    const day = now.getDay() || 7;
+    startOfWeek.setHours(0, 0, 0, 0);
     if (day !== 1) startOfWeek.setDate(now.getDate() - (day - 1));
-    
+
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23,59,59,999);
+    endOfWeek.setHours(23, 59, 59, 999);
 
     let worked = 0;
     let assigned = 0;
 
     assignments.forEach(a => {
-        if (a.users?.some(u => u.id === studentId)) {
-            const startDate = new Date(a.event_start_datetime);
-            if (startDate >= startOfWeek && startDate <= endOfWeek) {
-                const duration = (new Date(a.event_end_datetime).getTime() - new Date(a.event_start_datetime).getTime()) / (1000 * 60 * 60);
-                if (a.status === 'complete') {
-                     worked += duration;
-                } else if (a.status === 'confirmed' || a.status === 'pending') {
-                     assigned += duration;
-                }
-            }
+      if (a.users?.some(u => u.id === studentId)) {
+        const startDate = new Date(a.event_start_datetime);
+        if (startDate >= startOfWeek && startDate <= endOfWeek) {
+          const duration = (new Date(a.event_end_datetime).getTime() - new Date(a.event_start_datetime).getTime()) / (1000 * 60 * 60);
+          if (a.status === 'complete') {
+            worked += duration;
+          } else if (a.status === 'confirmed' || a.status === 'pending') {
+            assigned += duration;
+          }
         }
+      }
     });
 
     return { promised, worked, assigned };
@@ -394,11 +397,13 @@ function SupervisorDashboard() {
               <div>
                 <h1 className="text-2xl font-semibold text-foreground">
                   {activeTab === "dashboard" && "Supervisor Dashboard"}
+                  {activeTab === "students" && "View Students"}
                   {activeTab === "student-schedules" && "Student Schedule"}
                   {activeTab === "assignment-schedules" && "Assignment Schedule"}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
                   {activeTab === "dashboard" && "Overview of student assignment hours and performance"}
+                  {activeTab === "students" && "View and manage student information"}
                   {activeTab === "student-schedules" && "View student availability and schedules"}
                   {activeTab === "assignment-schedules" && "View assignment timelines and schedules"}
                 </p>
@@ -410,6 +415,81 @@ function SupervisorDashboard() {
 
         {/* Content Area */}
         <main className="flex-1 overflow-auto p-4 md:p-6">
+          {/* Students Tab */}
+          {activeTab === "students" && (
+            <div className="space-y-6">
+              {/* Controls */}
+              <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+                {/* Search */}
+                <div className="flex items-center space-x-3 w-full md:w-auto">
+                  <div className="relative w-full md:w-64">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search students..."
+                      value={studentSearchQuery}
+                      onChange={(e) => setStudentSearchQuery(e.target.value)}
+                      className="pl-10 w-full bg-card/80 backdrop-blur-xl border-border focus:border-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">Loading students...</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredStudents.map((student) => (
+                    <Card
+                      key={student.id}
+                      className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10 transition-all cursor-pointer h-32"
+                      onClick={() => router.push(`/student/${student.id}`)}
+                    >
+                      <CardContent className="p-4 h-full">
+                        <div className="flex items-center space-x-4 h-full">
+                          <Avatar className="h-16 w-16 flex-shrink-0">
+                            <AvatarImage src={student.profile_picture || student.profile_picture_url || ""} />
+                            <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
+                              {getInitials(student.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div>
+                              <h3 className="font-semibold text-foreground text-sm truncate">{student.name}</h3>
+                              <p className="text-xs text-muted-foreground truncate">Student ID: {student.student_id || 'N/A'}</p>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={student.email}>{student.email}</p>
+                                {student.email_verified_at ? (
+                                  <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                ) : (
+                                  <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap mt-2">
+                              <Badge variant="secondary" className="text-xs px-2 py-0.5">Student</Badge>
+                              <Badge variant="outline" className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800">
+                                {Number(student.promised_hours_per_week || 0).toFixed(2)}h/week
+                              </Badge>
+                              <Badge variant="outline" className={`text-xs px-2 py-0.5 ${(Number(student.remaining_hours_this_week) || 0) > 0
+                                ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800'
+                                : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+                                }`}>
+                                {Number(student.remaining_hours_this_week || 0).toFixed(1)}h Remaining
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {filteredStudents.length === 0 && (
+                    <div className="col-span-full text-center py-8 text-muted-foreground">No students found matching your search.</div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Dashboard Tab */}
           {activeTab === "dashboard" && (
             <div className="space-y-6">
@@ -419,8 +499,8 @@ function SupervisorDashboard() {
                     <CardTitle>Student Hours Overview (Weekly)</CardTitle>
                     <div className="relative w-full md:w-64">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input 
-                        placeholder="Search students..." 
+                      <Input
+                        placeholder="Search students..."
                         value={studentSearchQuery}
                         onChange={(e) => setStudentSearchQuery(e.target.value)}
                         className="pl-10"
@@ -471,21 +551,21 @@ function SupervisorDashboard() {
                                   <div className="w-full max-w-xs space-y-1.5">
                                     <div className="flex justify-between text-xs">
                                       <span>
-                                          <span className="font-medium text-green-600 dark:text-green-400">{stats.worked.toFixed(1)}h</span> worked 
-                                          <span className="text-muted-foreground mx-1">•</span>
-                                          <span className="font-medium text-blue-600 dark:text-blue-400">{stats.assigned.toFixed(1)}h</span> assigned
+                                        <span className="font-medium text-green-600 dark:text-green-400">{stats.worked.toFixed(1)}h</span> worked
+                                        <span className="text-muted-foreground mx-1">•</span>
+                                        <span className="font-medium text-blue-600 dark:text-blue-400">{stats.assigned.toFixed(1)}h</span> assigned
                                       </span>
                                       <span className={isOverPromised ? "text-green-600 font-medium" : "text-muted-foreground"}>
                                         {Math.round(progress)}%
                                       </span>
                                     </div>
                                     <div className="h-2 w-full bg-secondary rounded-full overflow-hidden flex">
-                                      <div 
-                                        style={{ width: `${Math.min(100, workedPercent)}%` }} 
+                                      <div
+                                        style={{ width: `${Math.min(100, workedPercent)}%` }}
                                         className="h-full bg-green-500"
                                       />
-                                      <div 
-                                        style={{ width: `${Math.min(100 - Math.min(100, workedPercent), assignedPercent)}%` }} 
+                                      <div
+                                        style={{ width: `${Math.min(100 - Math.min(100, workedPercent), assignedPercent)}%` }}
                                         className="h-full bg-blue-500"
                                       />
                                     </div>
@@ -511,7 +591,7 @@ function SupervisorDashboard() {
                         const progress = stats.promised > 0 ? (totalProjected / stats.promised) * 100 : 0;
                         const workedPercent = stats.promised > 0 ? (stats.worked / stats.promised) * 100 : 0;
                         const assignedPercent = stats.promised > 0 ? (stats.assigned / stats.promised) * 100 : 0;
-                        
+
                         return (
                           <div key={student.id} className="bg-muted/50 p-4 rounded-lg space-y-3">
                             <div className="flex items-center justify-between">
@@ -529,7 +609,7 @@ function SupervisorDashboard() {
                                 <ChevronRight className="h-5 w-5 text-muted-foreground" />
                               </Button>
                             </div>
-                            
+
                             <div className="space-y-2">
                               <div className="flex justify-between text-sm">
                                 <div className="flex gap-2">
@@ -543,12 +623,12 @@ function SupervisorDashboard() {
                                 <span className="font-semibold text-sm">{Math.round(progress)}%</span>
                               </div>
                               <div className="h-2 w-full bg-secondary rounded-full overflow-hidden flex">
-                                <div 
-                                  style={{ width: `${Math.min(100, workedPercent)}%` }} 
+                                <div
+                                  style={{ width: `${Math.min(100, workedPercent)}%` }}
                                   className="h-full bg-green-500"
                                 />
-                                <div 
-                                  style={{ width: `${Math.min(100 - Math.min(100, workedPercent), assignedPercent)}%` }} 
+                                <div
+                                  style={{ width: `${Math.min(100 - Math.min(100, workedPercent), assignedPercent)}%` }}
                                   className="h-full bg-blue-500"
                                 />
                               </div>
@@ -557,7 +637,7 @@ function SupervisorDashboard() {
                         );
                       })}
                     </div>
-                    
+
                     {filteredStudents.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
                         No students found matching your search.
