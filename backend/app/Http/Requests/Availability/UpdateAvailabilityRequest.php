@@ -27,6 +27,7 @@ class UpdateAvailabilityRequest extends FormRequest
             'start_time' => 'sometimes|required|date_format:H:i:s',
             'end_time' => 'sometimes|required|date_format:H:i:s|after:start_time',
             'status' => 'sometimes|required|in:available,unavailable,class',
+            'title' => 'sometimes|required|string|max:255',
         ];
 
         // Only coordinators can update student_id

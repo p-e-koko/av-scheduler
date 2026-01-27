@@ -154,7 +154,8 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="w-full bg-background text-foreground border-input placeholder:text-muted-foreground"
-                    placeholder="Optional"
+                    placeholder="Required"
+                    required
                   />
                 </div>
               </div>

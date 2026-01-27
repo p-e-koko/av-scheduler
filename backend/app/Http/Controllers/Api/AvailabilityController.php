@@ -264,7 +264,7 @@ class AvailabilityController extends Controller
             'availability.*.start_time' => 'required|date_format:H:i:s',
             'availability.*.end_time' => 'required|date_format:H:i:s|after:availability.*.start_time',
             'availability.*.status' => 'required|in:available,unavailable,class',
-            'availability.*.title' => 'nullable|string|max:255',
+            'availability.*.title' => 'required|string|max:255',
             'availability.*.recurrence_id' => 'nullable|uuid',
         ]);
 

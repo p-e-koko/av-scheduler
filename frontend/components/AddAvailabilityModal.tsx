@@ -13,6 +13,18 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { availabilityAPI, type Availability } from "@/lib/api"
+// import { v4 as uuidv4 } from 'uuid'; // Removed as we use custom function
+
+// Simple UUID generator fallback
+function generateUUID() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 
 interface AddAvailabilityModalProps {
   isOpen: boolean
@@ -75,7 +87,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
         if (endDate < startDate) throw new Error("End date must be after start date.")
 
         const currentDate = new Date(startDate)
-        const recurrenceId = crypto.randomUUID()
+        const recurrenceId = generateUUID()
 
         while (currentDate <= endDate) {
           let shouldAdd = true
@@ -182,7 +194,8 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="w-full bg-background text-foreground border-input placeholder:text-muted-foreground"
-                  placeholder="Optional"
+                  placeholder="Required"
+                  required
                 />
               </div>
             </div>

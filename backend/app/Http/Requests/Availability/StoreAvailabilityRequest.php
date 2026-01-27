@@ -27,6 +27,8 @@ class StoreAvailabilityRequest extends FormRequest
             'start_time' => 'required|date_format:H:i:s',
             'end_time' => 'required|date_format:H:i:s|after:start_time',
             'status' => 'required|in:available,unavailable,class',
+            'title' => 'required|string|max:255',
+            'recurrence_id' => 'nullable|uuid',
         ];
 
         // Only coordinators can set student_id for other users
