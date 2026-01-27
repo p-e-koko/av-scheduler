@@ -1101,7 +1101,7 @@ export const availabilityAPI = {
   // Delete availability
   async deleteAvailability(id: number | string, isMyAvailability = false, mode: 'single' | 'future' | 'all' = 'single'): Promise<{ message: string }> {
     const endpoint = isMyAvailability ? `/my-availability/${id}` : `/availability/${id}`;
-    const url = mode === 'single' ? endpoint : `${endpoint} ? mode = ${mode}`;
+    const url = mode === 'single' ? endpoint : `${endpoint}?mode=${mode}`;
     return apiCall<{ message: string }>(url, {
       method: 'DELETE',
     });
