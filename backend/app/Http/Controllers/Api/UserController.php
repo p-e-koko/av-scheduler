@@ -21,42 +21,32 @@ class UserController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        try {
-            $this->authorize('viewAny', User::class);
+        $this->authorize('viewAny', User::class);
 
-            $query = User::query()->select('users.*');
+        $query = User::query()->select('users.*');
 
-            if ($request->has('role')) {
-                $role = $request->role;
-                $query->whereHas('roles', function ($q) use ($role) {
-                    $q->where('name', $role);
-                });
-            }
-
-            if ($request->has('search')) {
-                $search = $request->search;
-                $query->where(function ($q) use ($search) {
-                    $q->where('users.name', 'like', "%{$search}%")
-                      ->orWhere('users.email', 'like', "%{$search}%")
-                      ->orWhere('users.username', 'like', "%{$search}%")
-                      ->orWhere('users.student_id', 'like', "%{$search}%");
-                });
-            }
-
-            // Add pagination
-            $perPage = $request->get('per_page', 15);
-            $users = $query->orderBy('users.created_at', 'desc')->paginate($perPage);
-
-            return response()->json(new UserCollection($users));
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Server Error',
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ], 500);
+        if ($request->has('role')) {
+            $role = $request->role;
+            // Use whereRaw to force UUID casting for Postgres compatibility
+            // model_has_roles.model_id is varchar, users.id is uuid
+            $query->whereRaw("exists (select * from \"model_has_roles\" where \"model_has_roles\".\"model_id\"::uuid = \"users\".\"id\" and \"model_has_roles\".\"role_id\" in (select \"id\" from \"roles\" where \"name\" = ?))", [$role]);
         }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('users.name', 'like', "%{$search}%")
+                  ->orWhere('users.email', 'like', "%{$search}%")
+                  ->orWhere('users.username', 'like', "%{$search}%")
+                  ->orWhere('users.student_id', 'like', "%{$search}%");
+            });
+        }
+
+        // Add pagination
+        $perPage = $request->get('per_page', 15);
+        $users = $query->orderBy('users.created_at', 'desc')->paginate($perPage);
+
+        return response()->json(new UserCollection($users));
     }
 
     /**
