@@ -145,9 +145,15 @@ class AvailabilityController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateAvailabilityRequest $request, Availability $availability): JsonResponse
+    public function update(UpdateAvailabilityRequest $request, string $id): JsonResponse
     {
         try {
+            $availability = Availability::find($id);
+
+            if (!$availability) {
+                return response()->json(['message' => 'Availability not found'], 404);
+            }
+
             // Authorize access using policy
             $this->authorize('update', $availability);
 
@@ -203,50 +209,64 @@ class AvailabilityController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request, Availability $availability): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
-        // Authorize access using policy
-        $this->authorize('delete', $availability);
-
-        $mode = $request->query('mode', 'single'); // 'single', 'future', 'all'
-        $deletedCount = 0;
-
-        if ($mode === 'single') {
-            $availability->delete();
-            $deletedCount = 1;
-        } elseif ($mode === 'future' && $availability->recurrence_id) {
-            // Delete this and future events with same recurrence_id
-            $deletedCount = Availability::where('recurrence_id', $availability->recurrence_id)
-                ->where('date', '>=', $availability->date)
-                ->where('student_id', $availability->student_id)
-                ->delete();
-        } elseif ($mode === 'all' && $availability->recurrence_id) {
-            // Delete all events with same recurrence_id
-            $deletedCount = Availability::where('recurrence_id', $availability->recurrence_id)
-                ->where('student_id', $availability->student_id)
-                ->delete();
-        } else {
-            // Fallback (e.g. requested future/all but no recurrence_id)
-            $availability->delete();
-            $deletedCount = 1;
-        }
-
         try {
-            AuditLogger::log('Availability Deleted', [
-                'availability_id' => $availability->id,
-                'date' => $availability->date,
-                'student_id' => $availability->student_id,
-                'mode' => $mode,
+            $availability = Availability::find($id);
+
+            if (!$availability) {
+                return response()->json(['message' => 'Availability not found'], 404);
+            }
+
+            // Authorize access using policy
+            $this->authorize('delete', $availability);
+
+            $mode = $request->query('mode', 'single'); // 'single', 'future', 'all'
+            $deletedCount = 0;
+
+            if ($mode === 'single') {
+                $availability->delete();
+                $deletedCount = 1;
+            } elseif ($mode === 'future' && $availability->recurrence_id) {
+                // Delete this and future events with same recurrence_id
+                $deletedCount = Availability::where('recurrence_id', $availability->recurrence_id)
+                    ->where('date', '>=', $availability->date)
+                    ->where('student_id', $availability->student_id)
+                    ->delete();
+            } elseif ($mode === 'all' && $availability->recurrence_id) {
+                // Delete all events with same recurrence_id
+                $deletedCount = Availability::where('recurrence_id', $availability->recurrence_id)
+                    ->where('student_id', $availability->student_id)
+                    ->delete();
+            } else {
+                // Fallback (e.g. requested future/all but no recurrence_id)
+                $availability->delete();
+                $deletedCount = 1;
+            }
+
+            try {
+                AuditLogger::log('Availability Deleted', [
+                    'availability_id' => $availability->id,
+                    'date' => $availability->date,
+                    'student_id' => $availability->student_id,
+                    'mode' => $mode,
+                    'count' => $deletedCount
+                ]);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('AuditLogger Error: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'message' => 'Availability deleted successfully',
                 'count' => $deletedCount
             ]);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('AuditLogger Error: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Availability Delete Error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Failed to delete availability',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'message' => 'Availability deleted successfully',
-            'count' => $deletedCount
-        ]);
     }
 
     /**
