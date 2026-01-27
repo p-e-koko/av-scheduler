@@ -25,9 +25,8 @@ class UserController extends Controller
 
         $query = User::query();
 
-        // Add filtering
         if ($request->has('role')) {
-            $query->where('role', $request->role);
+            $query->role($request->role);
         }
 
         if ($request->has('search')) {
