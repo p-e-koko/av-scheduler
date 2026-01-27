@@ -23,7 +23,7 @@ class UserController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $query = User::query();
+        $query = User::query()->select('users.*');
 
         if ($request->has('role')) {
             $query->role($request->role);
