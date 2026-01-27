@@ -94,10 +94,10 @@ export interface Assignment {
 }
 
 export interface Availability {
-  id: number;
+  id: number | string;
   student_id: string;
   title?: string;
-  recurrence_id?: string;
+  recurrence_id?: string | null;
   date: string;
   start_time: string;
   end_time: string;
