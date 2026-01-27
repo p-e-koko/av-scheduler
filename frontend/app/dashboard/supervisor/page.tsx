@@ -703,19 +703,23 @@ function SupervisorDashboard() {
                         {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => { // 7 AM to 9 PM
                           const timeString = `${hour.toString().padStart(2, '0')}:00`;
 
-                          // Filter students available at this hour
-                          const availableStudents = availability.filter(a => {
-                            if (a.date !== selectedDate) return false;
-                            if (a.status !== 'available') return false;
+                          // Filter students who don't have a conflict
+                          const uniqueStudents = (students || []).filter(student => {
+                            // Check for conflicts
+                            const hasConflict = availability.some(a => {
+                              if (a.student_id !== student.id.toString() && a.student_id !== student.id) return false; // Handle potential string/number mismatch
+                              // We only care about blocking statuses
+                              if (a.status !== 'class' && a.status !== 'unavailable') return false;
 
-                            const startHour = parseInt(a.start_time.split(':')[0]);
-                            const endHour = parseInt(a.end_time.split(':')[0]);
+                              const startHour = parseInt(a.start_time.split(':')[0]);
+                              const endHour = parseInt(a.end_time.split(':')[0]);
 
-                            return hour >= startHour && hour < endHour;
+                              // Check if this hour falls within the blocked slot
+                              return hour >= startHour && hour < endHour;
+                            });
+
+                            return !hasConflict;
                           });
-
-                          // Remove duplicates and ensure user object exists
-                          const uniqueStudents = Array.from(new Map(availableStudents.map(item => [item.student_id, item.user])).values()).filter(Boolean);
 
                           return (
                             <div key={hour} className="flex flex-col sm:flex-row border-b border-border py-3 last:border-0 gap-2 sm:gap-0">
