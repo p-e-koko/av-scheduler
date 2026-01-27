@@ -26,7 +26,10 @@ class UserController extends Controller
         $query = User::query()->select('users.*');
 
         if ($request->has('role')) {
-            $query->role($request->role);
+            $role = $request->role;
+            $query->whereHas('roles', function ($q) use ($role) {
+                $q->where('name', $role);
+            });
         }
 
         if ($request->has('search')) {
@@ -41,7 +44,7 @@ class UserController extends Controller
 
         // Add pagination
         $perPage = $request->get('per_page', 15);
-        $users = $query->paginate($perPage);
+        $users = $query->orderBy('users.created_at', 'desc')->paginate($perPage);
 
         return response()->json(new UserCollection($users));
     }
