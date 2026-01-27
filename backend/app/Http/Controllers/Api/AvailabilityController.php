@@ -111,11 +111,15 @@ class AvailabilityController extends Controller
         $availability = Availability::create($availabilityData);
         $availability->load('user');
 
-        AuditLogger::log('Availability Created', [
-            'availability_id' => $availability->id,
-            'date' => $availability->date,
-            'student_id' => $availability->student_id
-        ]);
+        try {
+            AuditLogger::log('Availability Created', [
+                'availability_id' => $availability->id,
+                'date' => $availability->date,
+                'student_id' => $availability->student_id
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('AuditLogger Error: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Availability created successfully',
@@ -156,11 +160,15 @@ class AvailabilityController extends Controller
         $availability->update($availabilityData);
         $availability->load('user');
 
-        AuditLogger::log('Availability Updated', [
-            'availability_id' => $availability->id,
-            'date' => $availability->date,
-            'student_id' => $availability->student_id
-        ]);
+        try {
+            AuditLogger::log('Availability Updated', [
+                'availability_id' => $availability->id,
+                'date' => $availability->date,
+                'student_id' => $availability->student_id
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('AuditLogger Error: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Availability updated successfully',
@@ -199,13 +207,17 @@ class AvailabilityController extends Controller
             $deletedCount = 1;
         }
 
-        AuditLogger::log('Availability Deleted', [
-            'availability_id' => $availability->id,
-            'date' => $availability->date,
-            'student_id' => $availability->student_id,
-            'mode' => $mode,
-            'count' => $deletedCount
-        ]);
+        try {
+            AuditLogger::log('Availability Deleted', [
+                'availability_id' => $availability->id,
+                'date' => $availability->date,
+                'student_id' => $availability->student_id,
+                'mode' => $mode,
+                'count' => $deletedCount
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('AuditLogger Error: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Availability deleted successfully',
@@ -291,10 +303,14 @@ class AvailabilityController extends Controller
             $created[] = new AvailabilityResource($availability);
         }
 
-        AuditLogger::log('Availability Bulk Created', [
-            'count' => count($created),
-            'student_id' => $currentUser->id
-        ]);
+        try {
+            AuditLogger::log('Availability Bulk Created', [
+                'count' => count($created),
+                'student_id' => $currentUser->id
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('AuditLogger Error: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Availability slots created successfully',
@@ -326,11 +342,15 @@ class AvailabilityController extends Controller
         $count = $query->count();
         $query->delete();
 
-        AuditLogger::log('Availability Bulk Deleted', [
-            'count' => $count,
-            'student_id' => $user->id,
-            'status' => $request->status ?? 'all'
-        ]);
+        try {
+            AuditLogger::log('Availability Bulk Deleted', [
+                'count' => $count,
+                'student_id' => $user->id,
+                'status' => $request->status ?? 'all'
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('AuditLogger Error: ' . $e->getMessage());
+        }
 
         return response()->json([
             'message' => 'Availability slots deleted successfully',

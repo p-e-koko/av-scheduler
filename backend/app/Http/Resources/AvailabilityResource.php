@@ -17,6 +17,8 @@ class AvailabilityResource extends JsonResource
         return [
             'id' => $this->id,
             'student_id' => $this->student_id,
+            'title' => $this->title,
+            'recurrence_id' => $this->recurrence_id,
             'date' => $this->date,
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
