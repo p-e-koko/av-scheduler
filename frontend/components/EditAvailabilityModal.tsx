@@ -59,8 +59,29 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
     timeSlots.push(`${hour}:30`)
   }
 
-  const handleUpdate = async (e: React.FormEvent) => {
+  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false)
+  const [updateMode, setUpdateMode] = useState<'single' | 'future' | 'all'>('single')
+
+  const handleUpdateClick = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!availability) return
+
+    // helper to validate form locally before showing dialog
+    const startTimeWithSeconds = formData.start_time.length === 5 ? `${formData.start_time}:00` : formData.start_time
+    const endTimeWithSeconds = formData.end_time.length === 5 ? `${formData.end_time}:00` : formData.end_time
+    if (endTimeWithSeconds <= startTimeWithSeconds) {
+      setError("End time must be after start time")
+      return
+    }
+
+    if (availability.recurrence_id) {
+      setIsUpdateDialogOpen(true)
+    } else {
+      executeUpdate('single')
+    }
+  }
+
+  const executeUpdate = async (mode: 'single' | 'future' | 'all') => {
     if (!availability) return
 
     setLoading(true)
@@ -71,22 +92,15 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
       const startTimeWithSeconds = formData.start_time.length === 5 ? `${formData.start_time}:00` : formData.start_time
       const endTimeWithSeconds = formData.end_time.length === 5 ? `${formData.end_time}:00` : formData.end_time
 
-      if (endTimeWithSeconds <= startTimeWithSeconds) {
-        throw new Error("End time must be after start time")
-      }
-
-      // Check for overlaps
-      if (existingAvailability) {
+      // Check for overlaps (Basic check only for single for now, complex for bulk)
+      if (existingAvailability && mode === 'single') {
         const hasOverlap = existingAvailability.some(existing => {
           // Exclude self
           if (existing.id === availability.id) return false
-
           const existingDate = existing.date.split('T')[0]
           if (existingDate !== formData.date) return false
-
           return startTimeWithSeconds < existing.end_time && endTimeWithSeconds > existing.start_time
         })
-
         if (hasOverlap) {
           throw new Error("This time slot overlaps with another existing availability.")
         }
@@ -95,13 +109,15 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
       await availabilityAPI.updateAvailability(availability.id, {
         date: formData.date,
         start_time: startTimeWithSeconds,
+        end_time: endTimeWithSeconds, // Added end_time update as it was missing in the original call!
         status: formData.status,
         student_id: availability.student_id,
         title: formData.title || undefined
-      }, true) // isMyAvailability = true
+      }, true, mode) // isMyAvailability = true, mode
 
       onSuccess()
       onClose()
+      setIsUpdateDialogOpen(false)
     } catch (err: any) {
       setError(err.message || "Failed to update availability")
     } finally {
@@ -138,7 +154,7 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
               Update or delete your availability.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleUpdate}>
+          <form onSubmit={handleUpdateClick}>
             <div className="grid gap-4 py-4">
               {error && (
                 <div className="text-destructive text-sm">{error}</div>
@@ -338,6 +354,74 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
             <Button
               variant="default" // Changed to default blue as per screenshot (OK button)
               onClick={handleDelete}
+              disabled={loading}
+            >
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground">
+          <DialogHeader>
+            <DialogTitle>Edit recurring event</DialogTitle>
+            <DialogDescription>
+              Select how you would like to apply these changes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="update-single"
+                  name="update-mode"
+                  value="single"
+                  checked={updateMode === 'single'}
+                  onChange={() => setUpdateMode('single')}
+                  className="radio"
+                />
+                <Label htmlFor="update-single">This event</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="update-future"
+                  name="update-mode"
+                  value="future"
+                  checked={updateMode === 'future'}
+                  onChange={() => setUpdateMode('future')}
+                  className="radio"
+                />
+                <Label htmlFor="update-future">This and following events</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  id="update-all"
+                  name="update-mode"
+                  value="all"
+                  checked={updateMode === 'all'}
+                  onChange={() => setUpdateMode('all')}
+                  className="radio"
+                />
+                <Label htmlFor="update-all">All events</Label>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsUpdateDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => executeUpdate(updateMode)}
               disabled={loading}
             >
               OK

@@ -950,7 +950,7 @@ export const assignmentAPI = {
 
   // Update assignment (coordinator only)
   async updateAssignment(id: number, assignmentData: Partial<Assignment>, isMyAssignment = false): Promise<{ message: string; assignment: Assignment }> {
-    const endpoint = isMyAssignment ? `/ my - assignments / ${ id }` : ` / assignments / ${ id }`;
+    const endpoint = isMyAssignment ? `/ my - assignments / ${id}` : ` / assignments / ${id}`;
     return apiCall<{ message: string; assignment: Assignment }>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(assignmentData),
@@ -959,7 +959,7 @@ export const assignmentAPI = {
 
   // Delete assignment (coordinator only)
   async deleteAssignment(id: number, isMyAssignment = false): Promise<{ message: string }> {
-    const endpoint = isMyAssignment ? `/ my - assignments / ${ id }` : ` / assignments / ${ id }`;
+    const endpoint = isMyAssignment ? `/ my - assignments / ${id}` : ` / assignments / ${id}`;
     return apiCall<{ message: string }>(endpoint, {
       method: 'DELETE',
     });
@@ -967,14 +967,14 @@ export const assignmentAPI = {
 
   // Restore assignment (coordinator only)
   async restoreAssignment(id: number): Promise<{ message: string; assignment: Assignment }> {
-    return apiCall<{ message: string; assignment: Assignment }>(`/ assignments / ${ id } / restore`, {
+    return apiCall<{ message: string; assignment: Assignment }>(`/ assignments / ${id} / restore`, {
       method: 'POST',
     });
   },
 
   // Force delete assignment (coordinator only)
   async forceDeleteAssignment(id: number): Promise<{ message: string }> {
-    return apiCall<{ message: string }>(`/ assignments / ${ id } / force`, {
+    return apiCall<{ message: string }>(`/ assignments / ${id} / force`, {
       method: 'DELETE',
     });
   },
@@ -987,14 +987,14 @@ export const assignmentAPI = {
     if (params.search) queryParams.append('search', params.search);
 
     const queryString = queryParams.toString();
-    const endpoint = queryString ? `/ assignments / trashed ? ${ queryString }` : '/assignments/trashed';
+    const endpoint = queryString ? `/ assignments / trashed ? ${queryString}` : '/assignments/trashed';
 
     return apiCall<AssignmentsListResponse>(endpoint);
   },
 
   // Assign user to assignment (coordinator only)
   async assignUser(assignmentId: number, userId: string | number, data: { status?: string; position?: string } = {}): Promise<{ message: string }> {
-    return apiCall<{ message: string }>(`/ assignments / ${ assignmentId } / assign - user`, {
+    return apiCall<{ message: string }>(`/ assignments / ${assignmentId} / assign - user`, {
       method: 'POST',
       body: JSON.stringify({ user_id: userId, ...data }),
     });
@@ -1002,7 +1002,7 @@ export const assignmentAPI = {
 
   // Unassign user from assignment (coordinator only)
   async unassignUser(assignmentId: number, userId: string | number): Promise<{ message: string }> {
-    return apiCall<{ message: string }>(`/ assignments / ${ assignmentId } / unassign - user`, {
+    return apiCall<{ message: string }>(`/ assignments / ${assignmentId} / unassign - user`, {
       method: 'POST',
       body: JSON.stringify({ user_id: userId }),
     });
@@ -1010,7 +1010,7 @@ export const assignmentAPI = {
 
   // Update user position in assignment (coordinator only)
   async updateUserPosition(assignmentId: number, userId: string | number, position: string): Promise<{ message: string }> {
-    return apiCall<{ message: string }>(`/ assignments / ${ assignmentId } / update - user - position`, {
+    return apiCall<{ message: string }>(`/ assignments / ${assignmentId} / update - user - position`, {
       method: 'POST',
       body: JSON.stringify({ user_id: userId, position }),
     });
@@ -1019,8 +1019,8 @@ export const assignmentAPI = {
   // Check in user (students can check themselves in)
   async checkInUser(assignmentId: number, userId?: number): Promise<{ message: string }> {
     const endpoint = userId
-      ? `/ assignments / ${ assignmentId } / check -in -user`
-      : `/ assignments / ${ assignmentId } / check -in `;
+      ? `/ assignments / ${assignmentId} / check -in -user`
+      : `/ assignments / ${assignmentId} / check -in `;
 
     const body = userId ? { user_id: userId } : {};
 
@@ -1033,8 +1033,8 @@ export const assignmentAPI = {
   // Check out user (students can check themselves out)
   async checkOutUser(assignmentId: number, userId?: number): Promise<{ message: string }> {
     const endpoint = userId
-      ? `/ assignments / ${ assignmentId } / check - out - user`
-      : `/ assignments / ${ assignmentId } / check - out`;
+      ? `/ assignments / ${assignmentId} / check - out - user`
+      : `/ assignments / ${assignmentId} / check - out`;
 
     const body = userId ? { user_id: userId } : {};
 
@@ -1059,7 +1059,7 @@ export const availabilityAPI = {
     if (params.date) queryParams.append('date', params.date);
 
     const queryString = queryParams.toString();
-    const endpoint = queryString ? `/ availability ? ${ queryString }` : '/availability';
+    const endpoint = queryString ? `/ availability ? ${queryString}` : '/availability';
 
     return apiCall<AvailabilityListResponse>(endpoint);
   },
@@ -1075,7 +1075,7 @@ export const availabilityAPI = {
     if (params.date) queryParams.append('date', params.date);
 
     const queryString = queryParams.toString();
-    const endpoint = queryString ? `/ my - availability ? ${ queryString }` : '/my-availability';
+    const endpoint = queryString ? `/ my - availability ? ${queryString}` : '/my-availability';
 
     return apiCall<AvailabilityListResponse>(endpoint);
   },
@@ -1090,18 +1090,18 @@ export const availabilityAPI = {
   },
 
   // Update availability
-  async updateAvailability(id: number | string, availabilityData: Partial<Availability>, isMyAvailability = false): Promise<{ message: string; availability: Availability }> {
-    const endpoint = isMyAvailability ? `/ my - availability / ${ id }` : ` / availability / ${ id }`;
+  async updateAvailability(id: number | string, availabilityData: Partial<Availability>, isMyAvailability = false, mode: 'single' | 'future' | 'all' = 'single'): Promise<{ message: string; availability: Availability }> {
+    const endpoint = isMyAvailability ? `/my-availability/${id}` : `/availability/${id}`;
     return apiCall<{ message: string; availability: Availability }>(endpoint, {
       method: 'PUT',
-      body: JSON.stringify(availabilityData),
+      body: JSON.stringify({ ...availabilityData, mode }),
     });
   },
 
   // Delete availability
   async deleteAvailability(id: number | string, isMyAvailability = false, mode: 'single' | 'future' | 'all' = 'single'): Promise<{ message: string }> {
-    const endpoint = isMyAvailability ? `/ my - availability / ${ id }` : ` / availability / ${ id }`;
-    const url = mode === 'single' ? endpoint : `${ endpoint } ? mode = ${ mode }`;
+    const endpoint = isMyAvailability ? `/ my - availability / ${id}` : ` / availability / ${id}`;
+    const url = mode === 'single' ? endpoint : `${endpoint} ? mode = ${mode}`;
     return apiCall<{ message: string }>(url, {
       method: 'DELETE',
     });
@@ -1121,7 +1121,7 @@ export const availabilityAPI = {
     const queryParams = new URLSearchParams();
     if (status) queryParams.append('status', status);
 
-    const endpoint = `/ my - availability / bulk${ queryParams.toString() ? '?' + queryParams.toString() : '' }`;
+    const endpoint = `/ my - availability / bulk${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
 
     return apiCall<{ message: string; count: number }>(endpoint, {
       method: 'DELETE',
@@ -1143,7 +1143,7 @@ export const positionAPI = {
 
   // Get specific position
   async getPosition(id: string): Promise<{ position: Position }> {
-    return apiCall<{ position: Position }>(`/ positions / ${ id }`);
+    return apiCall<{ position: Position }>(`/ positions / ${id}`);
   },
 
   // Create new position (coordinator only)
@@ -1156,7 +1156,7 @@ export const positionAPI = {
 
   // Update position (coordinator only)
   async updatePosition(id: string, positionData: Partial<Position>): Promise<{ message: string; position: Position }> {
-    return apiCall<{ message: string; position: Position }>(`/ positions / ${ id }`, {
+    return apiCall<{ message: string; position: Position }>(`/ positions / ${id}`, {
       method: 'PUT',
       body: JSON.stringify(positionData),
     });
@@ -1164,7 +1164,7 @@ export const positionAPI = {
 
   // Delete position (coordinator only)
   async deletePosition(id: string): Promise<{ message: string }> {
-    return apiCall<{ message: string }>(`/ positions / ${ id }`, {
+    return apiCall<{ message: string }>(`/ positions / ${id}`, {
       method: 'DELETE',
     });
   }
@@ -1220,7 +1220,7 @@ export const auditLogAPI = {
     if (params.start_date) queryParams.append('start_date', params.start_date);
     if (params.end_date) queryParams.append('end_date', params.end_date);
 
-    return apiCall<AuditLogsResponse>(`/ audit - logs ? ${ queryParams.toString() }`);
+    return apiCall<AuditLogsResponse>(`/ audit - logs ? ${queryParams.toString()}`);
   },
 };
 
@@ -1263,10 +1263,10 @@ export interface NotificationResponse {
 
 export const notificationAPI = {
   getNotifications: async (page = 1): Promise<NotificationResponse> => {
-    return apiCall<NotificationResponse>(`/ notifications ? page = ${ page }`);
+    return apiCall<NotificationResponse>(`/ notifications ? page = ${page}`);
   },
   markAsRead: async (id: string): Promise<{ message: string }> => {
-    return apiCall<{ message: string }>(`/ notifications / ${ id } / read`, {
+    return apiCall<{ message: string }>(`/ notifications / ${id} / read`, {
       method: 'POST',
     });
   },

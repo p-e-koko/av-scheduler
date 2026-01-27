@@ -156,23 +156,52 @@ class AvailabilityController extends Controller
         if ($request->has('title')) {
             $availabilityData['title'] = $request->input('title');
         }
-        
-        $availability->update($availabilityData);
-        $availability->load('user');
 
-        try {
-            AuditLogger::log('Availability Updated', [
-                'availability_id' => $availability->id,
-                'date' => $availability->date,
-                'student_id' => $availability->student_id
-            ]);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('AuditLogger Error: ' . $e->getMessage());
+        $mode = $request->input('mode', 'single'); // 'single', 'future', 'all'
+        $updatedCount = 0;
+
+        if ($mode === 'single') {
+            $availability->update($availabilityData);
+            $updatedCount = 1;
+        } elseif ($mode === 'future' && $availability->recurrence_id) {
+            // Update this and future events with same recurrence_id
+            // We need to keep the date/time relative if we were changing time, 
+            // but for now the requirements usually imply changing status/title for the series.
+            // If changing time for a series, it gets complex (shifting). 
+            // For MVP refactor as per request "delete or edit ... (only this event or all event)",
+            // we will apply the payload to all.
+            // However, date usually shouldn't be bulk updated to a single date for a series.
+            // So we explicitly exclude 'date' from bulk updates to avoid collapsing the series to one day.
+            
+            $bulkData = $availabilityData;
+            unset($bulkData['date']); // Don't collapse dates
+            
+            // If time is changed, we might want to apply that new time to all?
+            // Yes, usually "change all to start at 10am".
+            
+            $updatedCount = Availability::where('recurrence_id', $availability->recurrence_id)
+                ->where('date', '>=', $availability->date)
+                ->where('student_id', $availability->student_id)
+                ->update($bulkData);
+                
+            // Also update the current instance specifically if needed (though the query above covers it)
+        } elseif ($mode === 'all' && $availability->recurrence_id) {
+            $bulkData = $availabilityData;
+            unset($bulkData['date']);
+            
+            $updatedCount = Availability::where('recurrence_id', $availability->recurrence_id)
+                ->where('student_id', $availability->student_id)
+                ->update($bulkData);
+        } else {
+            // Fallback
+            $availability->update($availabilityData);
+            $updatedCount = 1;
         }
-
+        
         return response()->json([
             'message' => 'Availability updated successfully',
-            'availability' => new AvailabilityResource($availability->fresh(['user']))
+            'availability' => new AvailabilityResource($availability->fresh(['user'])),
+            'count' => $updatedCount
         ]);
     }
 

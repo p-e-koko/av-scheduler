@@ -565,14 +565,17 @@ function StudentDashboard() {
       const endDateTime = new Date(`${dateStr}T${slot.end_time}`)
 
       let color = "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800"
-      let title = "Available"
+      let title = slot.title || "Available"
 
       if (slot.status === 'unavailable') {
         color = "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
-        title = "Unavailable"
+        if (!slot.title) title = "Unavailable"
       } else if (slot.status === 'class') {
         color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800"
-        title = "Class"
+        if (!slot.title) title = "Class"
+      } else {
+        // Available
+        if (!slot.title) title = "Available"
       }
 
       return {
