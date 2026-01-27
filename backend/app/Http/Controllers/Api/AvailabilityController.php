@@ -319,6 +319,11 @@ class AvailabilityController extends Controller
                 $data['student_id'] = $currentUser->id;
             }
 
+            // Ensure recurrence_id is null if empty
+            if (isset($data['recurrence_id']) && empty($data['recurrence_id'])) {
+                $data['recurrence_id'] = null;
+            }
+
             // If user is a student, ensure they can only create for themselves
             if ($currentUser->role === 'student' && $data['student_id'] !== $currentUser->id) {
                 return response()->json([
