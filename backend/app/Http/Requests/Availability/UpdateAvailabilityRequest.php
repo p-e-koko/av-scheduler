@@ -47,6 +47,18 @@ class UpdateAvailabilityRequest extends FormRequest
         $validator->after(function ($validator) {
             $user = $this->user();
             $availability = $this->route('availability');
+            
+            // Should be a Model from route binding, but if it's a string ID, find the model
+            if (!$availability instanceof \App\Models\Availability && is_string($availability)) {
+                $availability = \App\Models\Availability::find($availability);
+            }
+
+            if (!$availability) {
+                // If still not found (e.g. deleted or invalid ID), we can't validate overlap against it
+                // Logic flow should handle 404 elsewhere normally, but here we prevent crash
+                return;
+            }
+
             $studentId = $this->input('student_id') ?? $availability->student_id;
             $date = $this->input('date') ?? $availability->date;
             $startTime = $this->input('start_time') ?? $availability->start_time;
