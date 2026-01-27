@@ -32,8 +32,10 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
     date: "",
     start_time: "",
     end_time: "",
-    status: "available" as "available" | "unavailable" | "class"
+    status: "available" as "available" | "unavailable" | "class",
+    title: ""
   })
+  const [deleteMode, setDeleteMode] = useState<'single' | 'future' | 'all'>('single')
 
   useEffect(() => {
     if (availability) {
@@ -41,13 +43,16 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
         date: availability.date.split('T')[0],
         start_time: availability.start_time.substring(0, 5), // HH:MM
         end_time: availability.end_time.substring(0, 5), // HH:MM
-        status: availability.status
+        status: availability.status,
+        title: availability.title || ""
       })
+      // Reset delete mode
+      setDeleteMode('single')
     }
   }, [availability])
 
   // Generate time slots
-  const timeSlots = []
+  const timeSlots: string[] = []
   for (let i = 0; i <= 23; i++) {
     const hour = i.toString().padStart(2, '0')
     timeSlots.push(`${hour}:00`)
@@ -90,9 +95,9 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
       await availabilityAPI.updateAvailability(availability.id, {
         date: formData.date,
         start_time: startTimeWithSeconds,
-        end_time: endTimeWithSeconds,
         status: formData.status,
-        student_id: availability.student_id
+        student_id: availability.student_id,
+        title: formData.title || undefined
       }, true) // isMyAvailability = true
 
       onSuccess()
@@ -111,7 +116,7 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
     setError(null)
 
     try {
-      await availabilityAPI.deleteAvailability(availability.id, true) // isMyAvailability = true
+      await availabilityAPI.deleteAvailability(availability.id, true, deleteMode) // isMyAvailability = true
       onSuccess()
       onClose()
       setIsDeleteDialogOpen(false)
@@ -138,7 +143,22 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
               {error && (
                 <div className="text-destructive text-sm">{error}</div>
               )}
-              
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-title" className="text-right">
+                  Event Name
+                </Label>
+                <div className="col-span-3">
+                  <Input
+                    id="edit-title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full bg-background text-foreground border-input placeholder:text-muted-foreground"
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-date" className="text-right">
                   Date
@@ -174,9 +194,9 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
                       </option>
                     ))}
                   </select>
-                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                     </svg>
                   </div>
                 </div>
@@ -201,9 +221,9 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
                       </option>
                     ))}
                   </select>
-                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                     </svg>
                   </div>
                 </div>
@@ -224,18 +244,18 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
                     <option value="class">Class</option>
                     <option value="unavailable">Unavailable</option>
                   </select>
-                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                     <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                     </svg>
                   </div>
                 </div>
               </div>
             </div>
             <DialogFooter className="flex justify-between sm:justify-between">
-               <Button 
-                type="button" 
-                variant="destructive" 
+              <Button
+                type="button"
+                variant="destructive"
                 onClick={() => setIsDeleteDialogOpen(true)}
                 disabled={loading}
               >
@@ -254,16 +274,76 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
           </form>
         </DialogContent>
       </Dialog>
-      
-      <ConfirmationDialog 
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleDelete}
-        title="Delete Availability"
-        description="Are you sure you want to delete this availability slot? This action cannot be undone."
-        confirmText="Delete"
-        variant="destructive"
-      />
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground">
+          <DialogHeader>
+            <DialogTitle>Delete recurring event</DialogTitle>
+            <DialogDescription>
+              {availability?.recurrence_id ? "Select how you would like to delete this event." : "Are you sure you want to delete this event?"}
+            </DialogDescription>
+          </DialogHeader>
+
+          {availability?.recurrence_id ? (
+            <div className="grid gap-4 py-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="delete-single"
+                    name="delete-mode"
+                    value="single"
+                    checked={deleteMode === 'single'}
+                    onChange={() => setDeleteMode('single')}
+                    className="radio"
+                  />
+                  <Label htmlFor="delete-single">This event</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="delete-future"
+                    name="delete-mode"
+                    value="future"
+                    checked={deleteMode === 'future'}
+                    onChange={() => setDeleteMode('future')}
+                    className="radio"
+                  />
+                  <Label htmlFor="delete-future">This and following events</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="delete-all"
+                    name="delete-mode"
+                    value="all"
+                    checked={deleteMode === 'all'}
+                    onChange={() => setDeleteMode('all')}
+                    className="radio"
+                  />
+                  <Label htmlFor="delete-all">All events</Label>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="default" // Changed to default blue as per screenshot (OK button)
+              onClick={handleDelete}
+              disabled={loading}
+            >
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

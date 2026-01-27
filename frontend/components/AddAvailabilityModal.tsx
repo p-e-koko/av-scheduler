@@ -28,7 +28,8 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
     date: "",
     start_time: "",
     end_time: "",
-    status: "available" as "available" | "unavailable" | "class"
+    status: "available" as "available" | "unavailable" | "class",
+    title: ""
   })
   const [repeatType, setRepeatType] = useState<"none" | "daily" | "weekly" | "weekday">("none")
   const [endsOn, setEndsOn] = useState("")
@@ -56,27 +57,29 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
       }
 
       const availabilities = []
-      
+
       if (repeatType === "none") {
         availabilities.push({
           date: formData.date,
           start_time: startTimeWithSeconds,
           end_time: endTimeWithSeconds,
-          status: formData.status
+          status: formData.status,
+          title: formData.title || undefined
         })
       } else {
         if (!endsOn) throw new Error("Please select an end date for the recurring availability.")
-        
+
         const startDate = new Date(formData.date)
         const endDate = new Date(endsOn)
-        
+
         if (endDate < startDate) throw new Error("End date must be after start date.")
 
         const currentDate = new Date(startDate)
+        const recurrenceId = crypto.randomUUID()
 
         while (currentDate <= endDate) {
           let shouldAdd = true
-          
+
           if (repeatType === "weekday") {
             const day = currentDate.getDay()
             if (day === 0 || day === 6) shouldAdd = false // 0 is Sunday, 6 is Saturday
@@ -87,7 +90,9 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
               date: currentDate.toISOString().split('T')[0],
               start_time: startTimeWithSeconds,
               end_time: endTimeWithSeconds,
-              status: formData.status
+              status: formData.status,
+              title: formData.title || undefined,
+              recurrence_id: recurrenceId
             })
           }
 
@@ -101,32 +106,32 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
       }
 
       if (availabilities.length === 0) {
-          throw new Error("No valid dates generated with the selected options.")
+        throw new Error("No valid dates generated with the selected options.")
       }
 
       // Check for overlaps
       if (existingAvailability) {
         for (const newSlot of availabilities) {
-           const newStart = newSlot.start_time
-           const newEnd = newSlot.end_time
-           
-           const hasOverlap = existingAvailability.some(existing => {
-             // Only check same date
-             // backend format might be YYYY-MM-DD or with time. Assume YYYY-MM-DD for date part comparison.
-             const existingDate = existing.date.split('T')[0]
-             if (existingDate !== newSlot.date) return false
-             
-             // Compare times
-             // Ensure we are comparing comparable strings (both HH:MM:SS or HH:MM)
-             // API usually returns HH:MM:SS. We handle inputs by ensuring HH:MM:00
-             
-             // Simple string comparison works for ISO formatted times
-             return newStart < existing.end_time && newEnd > existing.start_time
-           })
+          const newStart = newSlot.start_time
+          const newEnd = newSlot.end_time
 
-           if (hasOverlap) {
-             throw new Error(`Time slot ${newSlot.start_time} - ${newSlot.end_time} on ${newSlot.date} overlaps with an existing availability.`)
-           }
+          const hasOverlap = existingAvailability.some(existing => {
+            // Only check same date
+            // backend format might be YYYY-MM-DD or with time. Assume YYYY-MM-DD for date part comparison.
+            const existingDate = existing.date.split('T')[0]
+            if (existingDate !== newSlot.date) return false
+
+            // Compare times
+            // Ensure we are comparing comparable strings (both HH:MM:SS or HH:MM)
+            // API usually returns HH:MM:SS. We handle inputs by ensuring HH:MM:00
+
+            // Simple string comparison works for ISO formatted times
+            return newStart < existing.end_time && newEnd > existing.start_time
+          })
+
+          if (hasOverlap) {
+            throw new Error(`Time slot ${newSlot.start_time} - ${newSlot.end_time} on ${newSlot.date} overlaps with an existing availability.`)
+          }
         }
       }
 
@@ -140,7 +145,8 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
         date: "",
         start_time: "",
         end_time: "",
-        status: "available"
+        status: "available",
+        title: ""
       })
       setRepeatType("none")
       setEndsOn("")
@@ -165,7 +171,22 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
             {error && (
               <div className="text-destructive text-sm">{error}</div>
             )}
-            
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="title" className="text-right">
+                Event Name
+              </Label>
+              <div className="col-span-3">
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full bg-background text-foreground border-input placeholder:text-muted-foreground"
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="date" className="text-right">
                 Date
@@ -200,7 +221,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                   </svg>
                 </div>
               </div>
@@ -246,7 +267,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                   </svg>
                 </div>
               </div>
@@ -273,7 +294,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                   </svg>
                 </div>
               </div>
@@ -296,7 +317,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                   </svg>
                 </div>
               </div>

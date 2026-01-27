@@ -23,6 +23,8 @@ class Availability extends Model
      */
     protected $fillable = [
         'student_id',
+        'title',
+        'recurrence_id',
         'date',
         'start_time',
         'end_time',

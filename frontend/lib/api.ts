@@ -96,6 +96,8 @@ export interface Assignment {
 export interface Availability {
   id: number;
   student_id: string;
+  title?: string;
+  recurrence_id?: string;
   date: string;
   start_time: string;
   end_time: string;
@@ -568,13 +570,13 @@ export const hasRole = (role: string): boolean => {
 export const hasAnyRole = (roles: string[]): boolean => {
   const user = getStoredUser();
   if (!user || (!user.role && (!user.roles || user.roles.length === 0))) return false;
-  
+
   const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
-  
+
   // Normalize both user roles and requested roles to lowercase for comparison
   const normalizedUserRoles = userRoles.map(r => r.toLowerCase());
   const normalizedRequestedRoles = roles.map(r => r.toLowerCase());
-  
+
   return normalizedRequestedRoles.some(role => normalizedUserRoles.includes(role));
 };
 
@@ -1094,9 +1096,10 @@ export const availabilityAPI = {
   },
 
   // Delete availability
-  async deleteAvailability(id: number, isMyAvailability = false): Promise<{ message: string }> {
+  async deleteAvailability(id: number, isMyAvailability = false, mode: 'single' | 'future' | 'all' = 'single'): Promise<{ message: string }> {
     const endpoint = isMyAvailability ? `/my-availability/${id}` : `/availability/${id}`;
-    return apiCall<{ message: string }>(endpoint, {
+    const url = mode === 'single' ? endpoint : `${endpoint}?mode=${mode}`;
+    return apiCall<{ message: string }>(url, {
       method: 'DELETE',
     });
   },
@@ -1114,9 +1117,9 @@ export const availabilityAPI = {
   async bulkDeleteAvailability(status?: 'available' | 'unavailable' | 'class'): Promise<{ message: string; count: number }> {
     const queryParams = new URLSearchParams();
     if (status) queryParams.append('status', status);
-    
+
     const endpoint = `/my-availability/bulk${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    
+
     return apiCall<{ message: string; count: number }>(endpoint, {
       method: 'DELETE',
     });
