@@ -950,7 +950,7 @@ export const assignmentAPI = {
 
   // Update assignment (coordinator only)
   async updateAssignment(id: number, assignmentData: Partial<Assignment>, isMyAssignment = false): Promise<{ message: string; assignment: Assignment }> {
-    const endpoint = isMyAssignment ? `/ my - assignments / ${id}` : ` / assignments / ${id}`;
+    const endpoint = isMyAssignment ? `/my-assignments/${id}` : `/assignments/${id}`;
     return apiCall<{ message: string; assignment: Assignment }>(endpoint, {
       method: 'PUT',
       body: JSON.stringify(assignmentData),
@@ -959,7 +959,7 @@ export const assignmentAPI = {
 
   // Delete assignment (coordinator only)
   async deleteAssignment(id: number, isMyAssignment = false): Promise<{ message: string }> {
-    const endpoint = isMyAssignment ? `/ my - assignments / ${id}` : ` / assignments / ${id}`;
+    const endpoint = isMyAssignment ? `/my-assignments/${id}` : `/assignments/${id}`;
     return apiCall<{ message: string }>(endpoint, {
       method: 'DELETE',
     });
