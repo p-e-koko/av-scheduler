@@ -16,8 +16,7 @@ import {
   Trash2,
   UserX,
   FileText,
-  CheckCircle,
-  XCircle
+  CheckCircle
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -321,10 +320,8 @@ export default function AccountRecovery() {
                             <p className="text-xs text-muted-foreground truncate">{user.student_id || 'No Student ID'}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={user.email}>{user.email}</p>
-                              {user.email_verified_at ? (
+                              {user.email_verified_at && (
                                 <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
-                              ) : (
-                                <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
                               )}
                             </div>
                           </div>
@@ -410,10 +407,8 @@ export default function AccountRecovery() {
                                 <div className="text-sm text-muted-foreground">{user.student_id || 'No Student ID'}</div>
                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                   {user.email}
-                                  {user.email_verified_at ? (
+                                  {user.email_verified_at && (
                                     <CheckCircle className="w-3 h-3 text-green-500" />
-                                  ) : (
-                                    <XCircle className="w-3 h-3 text-red-500" />
                                   )}
                                 </div>
                               </div>

@@ -545,10 +545,8 @@ function SupervisorDashboard() {
                                   <p className="text-xs text-muted-foreground truncate">Student ID: {student.student_id || 'N/A'}</p>
                                   <div className="flex items-center gap-1.5 mt-0.5">
                                     <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={student.email}>{student.email}</p>
-                                    {student.email_verified_at ? (
+                                    {student.email_verified_at && (
                                       <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
-                                    ) : (
-                                      <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
                                     )}
                                   </div>
                                 </div>
@@ -635,10 +633,8 @@ function SupervisorDashboard() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                                   <div className="flex items-center gap-2">
                                     {student.email}
-                                    {student.email_verified_at ? (
+                                    {student.email_verified_at && (
                                       <CheckCircle className="w-4 h-4 text-green-500" />
-                                    ) : (
-                                      <XCircle className="w-4 h-4 text-red-500" />
                                     )}
                                   </div>
                                 </td>

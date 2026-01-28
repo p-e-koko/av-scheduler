@@ -21,8 +21,7 @@ import {
   X,
   UserX,
   FileText,
-  CheckCircle,
-  XCircle
+  CheckCircle
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -342,10 +341,8 @@ function AdminDashboard() {
                             <p className="text-xs text-muted-foreground truncate">{user.student_id || 'No Student ID'}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={user.email}>{user.email}</p>
-                              {user.email_verified_at ? (
+                              {user.email_verified_at && (
                                 <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
-                              ) : (
-                                <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
                               )}
                             </div>
                           </div>
@@ -442,10 +439,8 @@ function AdminDashboard() {
                                 <div className="text-sm text-muted-foreground group-hover:text-primary-foreground/80">{user.student_id || 'No Student ID'}</div>
                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground group-hover:text-primary-foreground/70">
                                   {user.email}
-                                  {user.email_verified_at ? (
+                                  {user.email_verified_at && (
                                     <CheckCircle className="w-3 h-3 text-green-500 group-hover:text-green-300" />
-                                  ) : (
-                                    <XCircle className="w-3 h-3 text-red-500 group-hover:text-red-300" />
                                   )}
                                 </div>
                               </div>
