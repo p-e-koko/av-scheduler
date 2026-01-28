@@ -102,6 +102,11 @@ function SupervisorDashboard() {
   const [studentSearchQuery, setStudentSearchQuery] = useState("")
   const [isMobile, setIsMobile] = useState(false)
 
+  // Student View State
+  const [viewMode, setViewMode] = useState<"card" | "list">("card")
+  const [studentPagination, setStudentPagination] = useState<any>(null)
+  const [studentCurrentPage, setStudentCurrentPage] = useState(1)
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -155,52 +160,71 @@ function SupervisorDashboard() {
         setLoading(true)
         setError(null)
 
-        // Always fetch students and assignments as they are used across tabs or for stats
-        const [studentsResponse, assignmentsResponse] = await Promise.all([
-          userAPI.getUsers({ role: 'student', per_page: 100 }),
-          assignmentAPI.getAssignments({ per_page: 100 })
-        ]);
+        // Dependent on tab, we fetch different data strategies
+        if (activeTab === 'students') {
+          // Pagination Strategy
+          const [studentsResponse] = await Promise.all([
+            userAPI.getUsers({
+              role: 'student',
+              per_page: 10,
+              page: studentCurrentPage,
+              search: studentSearchQuery || undefined
+            })
+          ]);
+          setStudents(studentsResponse.data)
+          setStudentPagination(studentsResponse.meta)
+        } else {
+          // Load All Strategy for Dashboard/Schedules (Need all data for stats/grids)
+          // We only fetch if we are in a tab that needs it. 
+          // To avoid re-fetching too often, we might check if we already have data, 
+          // but for simplicity and correctness (refreshing data) let's fetch.
 
-        setStudents(studentsResponse.data)
-        setAssignments(assignmentsResponse.data)
+          const [studentsResponse, assignmentsResponse] = await Promise.all([
+            userAPI.getUsers({ role: 'student', per_page: 100 }), // Get all for stats
+            assignmentAPI.getAssignments({ per_page: 100 })
+          ]);
 
-        // Calculate Dashboard Stats
-        const totalHours = studentsResponse.data.reduce((acc, student) =>
-          acc + (student.hours_worked_this_week || 0), 0)
-        const avgHours = studentsResponse.data.length > 0 ?
-          totalHours / studentsResponse.data.length : 0
-        const completionSum = studentsResponse.data.reduce((acc, student) =>
-          acc + (student.hours_completion_percentage || 0), 0)
-        const avgCompletion = studentsResponse.data.length > 0 ?
-          completionSum / studentsResponse.data.length : 0
+          setStudents(studentsResponse.data)
+          setAssignments(assignmentsResponse.data)
 
-        setStats({
-          totalStudents: studentsResponse.data.length,
-          monthlyHours: totalHours * 4, // Approximate monthly hours
-          averageHours: avgHours,
-          completionRate: avgCompletion
-        })
+          // Calculate Dashboard Stats
+          const totalHours = studentsResponse.data.reduce((acc, student) =>
+            acc + (student.hours_worked_this_week || 0), 0)
+          const avgHours = studentsResponse.data.length > 0 ?
+            totalHours / studentsResponse.data.length : 0
+          const completionSum = studentsResponse.data.reduce((acc, student) =>
+            acc + (student.hours_completion_percentage || 0), 0)
+          const avgCompletion = studentsResponse.data.length > 0 ?
+            completionSum / studentsResponse.data.length : 0
 
-        // Calculate Assignment Stats
-        const today = getServerTime()
-        today.setHours(0, 0, 0, 0)
+          setStats({
+            totalStudents: studentsResponse.data.length,
+            monthlyHours: totalHours * 4, // Approximate monthly hours
+            averageHours: avgHours,
+            completionRate: avgCompletion
+          })
 
-        const assignmentStatsCalc = assignmentsResponse.data.reduce((acc, assignment) => {
-          const startDate = new Date(assignment.event_start_datetime)
+          // Calculate Assignment Stats
+          const today = getServerTime()
+          today.setHours(0, 0, 0, 0)
 
-          if (assignment.status === 'confirmed' || assignment.status === 'pending') acc.active++
+          const assignmentStatsCalc = assignmentsResponse.data.reduce((acc, assignment) => {
+            const startDate = new Date(assignment.event_start_datetime)
 
-          if (assignment.status === 'complete' &&
-            startDate >= today && startDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)) {
-            acc.completedToday++
-          }
+            if (assignment.status === 'confirmed' || assignment.status === 'pending') acc.active++
 
-          if (startDate > getServerTime()) acc.upcoming++
+            if (assignment.status === 'complete' &&
+              startDate >= today && startDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)) {
+              acc.completedToday++
+            }
 
-          return acc
-        }, { active: 0, completedToday: 0, upcoming: 0 })
+            if (startDate > getServerTime()) acc.upcoming++
 
-        setAssignmentStats(assignmentStatsCalc)
+            return acc
+          }, { active: 0, completedToday: 0, upcoming: 0 })
+
+          setAssignmentStats(assignmentStatsCalc)
+        }
 
       } catch (err) {
         setError(formatAPIError(err))
@@ -210,7 +234,37 @@ function SupervisorDashboard() {
     }
 
     fetchData()
-  }, [currentUser]) // Fetch once on load/user change, not on tab change to avoid flickering
+  }, [currentUser, activeTab, studentCurrentPage]) // Trigger on tab change or page change
+
+  // Debounced search effect
+  useEffect(() => {
+    if (activeTab === 'students') {
+      const timeout = setTimeout(() => {
+        if (studentCurrentPage !== 1) {
+          setStudentCurrentPage(1)
+        } else {
+          // Manually trigger fetch if page is already 1, or rely on dependency
+          // But we need to call fetchData. 
+          // Since fetchData behaves differently based on tab, we can't easily call it directly 
+          // if it's inside the other useEffect. 
+          // Actually, adding studentSearchQuery to the main useEffect dependencies is better.
+        }
+      }, 300)
+      return () => clearTimeout(timeout)
+    }
+  }, [studentSearchQuery])
+
+  // Add studentSearchQuery to main useEffect dependent
+  useEffect(() => {
+    if (activeTab === 'students') {
+      // This is handled by the debounce effect updating page or the main effect
+      // We will add studentSearchQuery to the main effect dependencies 
+      // BUT we need to be careful about not fetching twice.
+      // The debounce effect sets page to 1.
+      // If page is already 1, we still want to fetch.
+    }
+  }, [])
+
 
   // Fetch availability when date changes
   useEffect(() => {
@@ -318,10 +372,17 @@ function SupervisorDashboard() {
   };
 
   // Filter students
-  const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
-    student.email.toLowerCase().includes(studentSearchQuery.toLowerCase())
-  );
+  // When in 'students' tab, we rely on server-side search, so no client-side filtering needed for the main list.
+  // However, for other tabs (dashboard stats), we might still use client side filtering if we wanted search there?
+  // The original code used `filteredStudents` for the dashboard list too. 
+  // We will keep `filteredStudents` logic BUT make it just return `students` if we are in 'students' tab 
+  // (since `students` is already filtered from server).
+  const filteredStudents = activeTab === 'students'
+    ? students
+    : students.filter(student =>
+      student.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
+      student.email.toLowerCase().includes(studentSearchQuery.toLowerCase())
+    );
 
   // Helper to get student assignments count
   const getStudentAssignmentCount = (studentId: string) => {
@@ -420,6 +481,30 @@ function SupervisorDashboard() {
             <div className="space-y-6">
               {/* Controls */}
               <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+                {/* View Toggle */}
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
+                    <Button
+                      variant={viewMode === "card" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setViewMode("card")}
+                      className={viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                    >
+                      <Grid3X3 className="w-4 h-4 mr-1" />
+                      Cards
+                    </Button>
+                    <Button
+                      variant={viewMode === "list" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setViewMode("list")}
+                      className={viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                    >
+                      <List className="w-4 h-4 mr-1" />
+                      List
+                    </Button>
+                  </div>
+                </div>
+
                 {/* Search */}
                 <div className="flex items-center space-x-3 w-full md:w-auto">
                   <div className="relative w-full md:w-64">
@@ -485,6 +570,111 @@ function SupervisorDashboard() {
                   {filteredStudents.length === 0 && (
                     <div className="col-span-full text-center py-8 text-muted-foreground">No students found matching your search.</div>
                   )}
+                </div>
+              ) : (
+              <div className="bg-card/80 backdrop-blur-xl rounded-lg border border-border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Student
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Role
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Hours
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          Email
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {(filteredStudents || []).map((student) => (
+                        <tr
+                          key={student.id}
+                          className="hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => router.push(`/student/${student.id}`)}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={student.profile_picture_url || ""} />
+                                <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                                  {getInitials(student.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-foreground">{student.name}</div>
+                                <div className="text-sm text-muted-foreground">{student.student_id || 'No Student ID'}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Badge variant="secondary" className="text-xs">
+                              Student
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-col gap-1">
+                              <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800">
+                                {student.promised_hours_per_week || '0'}h Promised
+                              </Badge>
+                              <Badge variant="outline" className={`text-xs w-fit ${(Number(student.remaining_hours_this_week) || 0) > 0
+                                ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800'
+                                : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+                                }`}>
+                                {student.remaining_hours_this_week ? Number(student.remaining_hours_this_week).toFixed(1) : '0'}h Remaining
+                              </Badge>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              {student.email}
+                              {student.email_verified_at ? (
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <XCircle className="w-4 h-4 text-red-500" />
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              )}
+
+              {/* Pagination */}
+              {studentPagination && studentPagination.last_page > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+                  <div className="text-sm text-gray-500">
+                    Showing {studentPagination.from} to {studentPagination.to} of {studentPagination.total} results
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStudentCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={studentCurrentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <div className="text-sm font-medium">
+                      Page {studentCurrentPage} of {studentPagination.last_page}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStudentCurrentPage(p => Math.min(studentPagination.last_page, p + 1))}
+                      disabled={studentCurrentPage === studentPagination.last_page}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
