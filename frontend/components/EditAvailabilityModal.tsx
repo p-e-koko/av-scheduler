@@ -32,7 +32,7 @@ export function EditAvailabilityModal({ isOpen, onClose, onSuccess, availability
     date: "",
     start_time: "",
     end_time: "",
-    status: "available" as "available" | "unavailable" | "class",
+    status: "class" as "available" | "unavailable" | "class",
     title: ""
   })
   const [deleteMode, setDeleteMode] = useState<'single' | 'future' | 'all'>('single')

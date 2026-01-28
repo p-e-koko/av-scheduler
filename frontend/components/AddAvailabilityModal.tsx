@@ -160,7 +160,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
         date: "",
         start_time: "",
         end_time: "",
-        status: "available",
+        status: "class",
         title: ""
       })
       setRepeatType("none")

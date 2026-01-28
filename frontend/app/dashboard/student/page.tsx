@@ -558,36 +558,38 @@ function StudentDashboard() {
   }, [currentUser, myAssignments])
 
   const calendarEvents = React.useMemo(() => {
-    return availability.map(slot => {
-      // Parse date and time
-      const dateStr = slot.date.split('T')[0] // Ensure we have YYYY-MM-DD
-      const startDateTime = new Date(`${dateStr}T${slot.start_time}`)
-      const endDateTime = new Date(`${dateStr}T${slot.end_time}`)
+    return availability
+      .filter(slot => slot.status !== 'available') // Filter out "available" slots
+      .map(slot => {
+        // Parse date and time
+        const dateStr = slot.date.split('T')[0] // Ensure we have YYYY-MM-DD
+        const startDateTime = new Date(`${dateStr}T${slot.start_time}`)
+        const endDateTime = new Date(`${dateStr}T${slot.end_time}`)
 
-      let color = "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800"
-      let title = slot.title || "Available"
+        let color = "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800"
+        let title = slot.title || "Available"
 
-      if (slot.status === 'unavailable') {
-        color = "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
-        if (!slot.title) title = "Unavailable"
-      } else if (slot.status === 'class') {
-        color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800"
-        if (!slot.title) title = "Class"
-      } else {
-        // Available
-        if (!slot.title) title = "Available"
-      }
+        if (slot.status === 'unavailable') {
+          color = "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800"
+          if (!slot.title) title = "Unavailable"
+        } else if (slot.status === 'class') {
+          color = "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800"
+          if (!slot.title) title = "Class"
+        } else {
+          // Available
+          if (!slot.title) title = "Available"
+        }
 
-      return {
-        id: slot.id.toString(),
-        title: title,
-        start: startDateTime,
-        end: endDateTime,
-        type: slot.status,
-        color: color,
-        description: `${slot.start_time} - ${slot.end_time}`
-      } as CalendarEvent
-    })
+        return {
+          id: slot.id.toString(),
+          title: title,
+          start: startDateTime,
+          end: endDateTime,
+          type: slot.status,
+          color: color,
+          description: `${slot.start_time} - ${slot.end_time}`
+        } as CalendarEvent
+      })
   }, [availability])
 
   const getStatusColor = (status: string) => {
