@@ -369,7 +369,16 @@ class AvailabilityController extends Controller
                 ], 403);
             }
 
-            $availability = Availability::create($data);
+            // Use updateOrCreate to handle overwriting existing availability (e.g. changing 'available' to 'class')
+            // The unique constraint is on [student_id, date, start_time]
+            $availability = Availability::updateOrCreate(
+                [
+                    'student_id' => $data['student_id'],
+                    'date' => $data['date'],
+                    'start_time' => $data['start_time'],
+                ],
+                $data
+            );
             $availability->load('user');
             $created[] = new AvailabilityResource($availability);
         }
