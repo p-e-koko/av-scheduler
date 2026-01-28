@@ -522,160 +522,164 @@ function SupervisorDashboard() {
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground">Loading students...</div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredStudents.map((student) => (
-                    <Card
-                      key={student.id}
-                      className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10 transition-all cursor-pointer h-32"
-                      onClick={() => router.push(`/student/${student.id}`)}
-                    >
-                      <CardContent className="p-4 h-full">
-                        <div className="flex items-center space-x-4 h-full">
-                          <Avatar className="h-16 w-16 flex-shrink-0">
-                            <AvatarImage src={student.profile_picture || student.profile_picture_url || ""} />
-                            <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
-                              {getInitials(student.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <div>
-                              <h3 className="font-semibold text-foreground text-sm truncate">{student.name}</h3>
-                              <p className="text-xs text-muted-foreground truncate">Student ID: {student.student_id || 'N/A'}</p>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={student.email}>{student.email}</p>
-                                {student.email_verified_at ? (
-                                  <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
-                                ) : (
-                                  <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap mt-2">
-                              <Badge variant="secondary" className="text-xs px-2 py-0.5">Student</Badge>
-                              <Badge variant="outline" className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800">
-                                {Number(student.promised_hours_per_week || 0).toFixed(2)}h/week
-                              </Badge>
-                              <Badge variant="outline" className={`text-xs px-2 py-0.5 ${(Number(student.remaining_hours_this_week) || 0) > 0
-                                ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800'
-                                : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
-                                }`}>
-                                {Number(student.remaining_hours_this_week || 0).toFixed(1)}h Remaining
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  {filteredStudents.length === 0 && (
-                    <div className="col-span-full text-center py-8 text-muted-foreground">No students found matching your search.</div>
-                  )}
-                </div>
-              ) : (
-              <div className="bg-card/80 backdrop-blur-xl rounded-lg border border-border overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Student
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Role
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Hours
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                          Email
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {(filteredStudents || []).map((student) => (
-                        <tr
+                <>
+                  {viewMode === "card" ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredStudents.map((student) => (
+                        <Card
                           key={student.id}
-                          className="hover:bg-muted/30 transition-colors cursor-pointer"
+                          className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10 transition-all cursor-pointer h-32"
                           onClick={() => router.push(`/student/${student.id}`)}
                         >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage src={student.profile_picture_url || ""} />
-                                <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                          <CardContent className="p-4 h-full">
+                            <div className="flex items-center space-x-4 h-full">
+                              <Avatar className="h-16 w-16 flex-shrink-0">
+                                <AvatarImage src={student.profile_picture || student.profile_picture_url || ""} />
+                                <AvatarFallback className="bg-primary text-primary-foreground font-semibold text-lg">
                                   {getInitials(student.name)}
                                 </AvatarFallback>
                               </Avatar>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-foreground">{student.name}</div>
-                                <div className="text-sm text-muted-foreground">{student.student_id || 'No Student ID'}</div>
+                              <div className="flex-1 min-w-0 space-y-1">
+                                <div>
+                                  <h3 className="font-semibold text-foreground text-sm truncate">{student.name}</h3>
+                                  <p className="text-xs text-muted-foreground truncate">Student ID: {student.student_id || 'N/A'}</p>
+                                  <div className="flex items-center gap-1.5 mt-0.5">
+                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]" title={student.email}>{student.email}</p>
+                                    {student.email_verified_at ? (
+                                      <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                                    ) : (
+                                      <XCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap mt-2">
+                                  <Badge variant="secondary" className="text-xs px-2 py-0.5">Student</Badge>
+                                  <Badge variant="outline" className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800">
+                                    {Number(student.promised_hours_per_week || 0).toFixed(2)}h/week
+                                  </Badge>
+                                  <Badge variant="outline" className={`text-xs px-2 py-0.5 ${(Number(student.remaining_hours_this_week) || 0) > 0
+                                    ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800'
+                                    : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+                                    }`}>
+                                    {Number(student.remaining_hours_this_week || 0).toFixed(1)}h Remaining
+                                  </Badge>
+                                </div>
                               </div>
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Badge variant="secondary" className="text-xs">
-                              Student
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-col gap-1">
-                              <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800">
-                                {student.promised_hours_per_week || '0'}h Promised
-                              </Badge>
-                              <Badge variant="outline" className={`text-xs w-fit ${(Number(student.remaining_hours_this_week) || 0) > 0
-                                ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800'
-                                : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
-                                }`}>
-                                {student.remaining_hours_this_week ? Number(student.remaining_hours_this_week).toFixed(1) : '0'}h Remaining
-                              </Badge>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                              {student.email}
-                              {student.email_verified_at ? (
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-red-500" />
-                              )}
-                            </div>
-                          </td>
-                        </tr>
+                          </CardContent>
+                        </Card>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              )}
-
-              {/* Pagination */}
-              {studentPagination && studentPagination.last_page > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
-                  <div className="text-sm text-gray-500">
-                    Showing {studentPagination.from} to {studentPagination.to} of {studentPagination.total} results
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setStudentCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={studentCurrentPage === 1}
-                    >
-                      Previous
-                    </Button>
-                    <div className="text-sm font-medium">
-                      Page {studentCurrentPage} of {studentPagination.last_page}
+                      {filteredStudents.length === 0 && (
+                        <div className="col-span-full text-center py-8 text-muted-foreground">No students found matching your search.</div>
+                      )}
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setStudentCurrentPage(p => Math.min(studentPagination.last_page, p + 1))}
-                      disabled={studentCurrentPage === studentPagination.last_page}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
+                  ) : (
+                    <div className="bg-card/80 backdrop-blur-xl rounded-lg border border-border overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                Student
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                Role
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                Hours
+                              </th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                Email
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {(filteredStudents || []).map((student) => (
+                              <tr
+                                key={student.id}
+                                className="hover:bg-muted/30 transition-colors cursor-pointer"
+                                onClick={() => router.push(`/student/${student.id}`)}
+                              >
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex items-center">
+                                    <Avatar className="h-10 w-10">
+                                      <AvatarImage src={student.profile_picture_url || ""} />
+                                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                                        {getInitials(student.name)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="ml-4">
+                                      <div className="text-sm font-medium text-foreground">{student.name}</div>
+                                      <div className="text-sm text-muted-foreground">{student.student_id || 'No Student ID'}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <Badge variant="secondary" className="text-xs">
+                                    Student
+                                  </Badge>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="flex flex-col gap-1">
+                                    <Badge variant="outline" className="text-xs w-fit bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-white dark:border-blue-800">
+                                      {student.promised_hours_per_week || '0'}h Promised
+                                    </Badge>
+                                    <Badge variant="outline" className={`text-xs w-fit ${(Number(student.remaining_hours_this_week) || 0) > 0
+                                      ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800'
+                                      : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+                                      }`}>
+                                      {student.remaining_hours_this_week ? Number(student.remaining_hours_this_week).toFixed(1) : '0'}h Remaining
+                                    </Badge>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-2">
+                                    {student.email}
+                                    {student.email_verified_at ? (
+                                      <CheckCircle className="w-4 h-4 text-green-500" />
+                                    ) : (
+                                      <XCircle className="w-4 h-4 text-red-500" />
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pagination */}
+                  {studentPagination && studentPagination.last_page > 1 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+                      <div className="text-sm text-gray-500">
+                        Showing {studentPagination.from} to {studentPagination.to} of {studentPagination.total} results
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setStudentCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={studentCurrentPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <div className="text-sm font-medium">
+                          Page {studentCurrentPage} of {studentPagination.last_page}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setStudentCurrentPage(p => Math.min(studentPagination.last_page, p + 1))}
+                          disabled={studentCurrentPage === studentPagination.last_page}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -1040,13 +1044,13 @@ function SupervisorDashboard() {
             </div>
           )}
         </main>
-      </div>
+      </div >
       <AssignmentDetailModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         assignment={selectedAssignment}
       />
-    </div>
+    </div >
   )
 }
 
