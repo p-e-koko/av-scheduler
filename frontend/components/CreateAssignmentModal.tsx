@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect, useRef } from "react"
-import { Calendar, MapPin, FileText, Clock, Type, Plus, Trash2, UserPlus, AlertCircle, ChevronDown, Check } from "lucide-react"
+import { Calendar, MapPin, FileText, Clock, Type, Plus, Trash2, UserPlus, AlertCircle, ChevronDown, Check, Search } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -62,6 +62,7 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
   const [availabilities, setAvailabilities] = useState<Availability[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState<string>("")
   const [selectedPosition, setSelectedPosition] = useState<string>("")
+  const [studentSearchQuery, setStudentSearchQuery] = useState("")
   const [isStudentDropdownOpen, setIsStudentDropdownOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState<'top' | 'bottom'>('bottom')
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -79,6 +80,13 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
       } else {
         setDropdownPosition('bottom')
       }
+    }
+  }, [isStudentDropdownOpen])
+
+  // Reset search when dropdown closes
+  useEffect(() => {
+    if (!isStudentDropdownOpen) {
+      setStudentSearchQuery("")
     }
   }, [isStudentDropdownOpen])
 
@@ -310,9 +318,15 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
     }
   }
 
-  // Group students by availability
-  const availableStudents = students.filter(s => isStudentAvailable(s.id))
-  const unavailableStudents = students.filter(s => !isStudentAvailable(s.id))
+  // Group students by availability and filter by search
+  const filteredStudents = students.filter(s =>
+    studentSearchQuery === "" ||
+    s.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
+    s.email.toLowerCase().includes(studentSearchQuery.toLowerCase())
+  )
+
+  const availableStudents = filteredStudents.filter(s => isStudentAvailable(s.id))
+  const unavailableStudents = filteredStudents.filter(s => !isStudentAvailable(s.id))
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -489,6 +503,21 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
                       className={`absolute z-20 w-full overflow-auto rounded-md border border-border bg-card/90 backdrop-blur-xl py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm max-h-60 ${dropdownPosition === 'top' ? 'bottom-full mb-1' : 'mt-1'
                         }`}
                     >
+                      <div className="p-2 sticky top-0 bg-card z-10 border-b border-border">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                          <Input
+                            placeholder="Search student..."
+                            value={studentSearchQuery}
+                            onChange={(e) => setStudentSearchQuery(e.target.value)}
+                            className="h-8 pl-8 text-xs bg-muted/50"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            autoFocus
+                          />
+                        </div>
+                      </div>
+
                       {availableStudents.length > 0 && (
                         <>
                           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">Available</div>
