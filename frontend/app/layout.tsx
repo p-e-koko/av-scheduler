@@ -37,6 +37,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <div className="fixed bottom-2 right-4 text-xs text-muted-foreground opacity-50 z-50 pointer-events-none select-none">
+            &copy;p-e-koko
+          </div>
         </ThemeProvider>
       </body>
     </html>
