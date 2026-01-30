@@ -17,8 +17,10 @@ export interface CalendarEvent {
 export interface CalendarComponentProps {
   events?: CalendarEvent[]
   view?: "month" | "week" | "day"
+  date?: Date
   onViewChange?: (view: "month" | "week" | "day") => void
   onEventClick?: (event: CalendarEvent) => void
+  onDateChange?: (date: Date) => void
   onDateClick?: (date: Date) => void
   className?: string
   isMobile?: boolean
@@ -27,13 +29,26 @@ export interface CalendarComponentProps {
 export function CalendarComponent({
   events = [],
   view = "month",
+  date,
   onViewChange,
   onEventClick,
+  onDateChange,
   onDateClick,
   className,
   isMobile = false
 }: CalendarComponentProps) {
-  const [currentDate, setCurrentDate] = React.useState(new Date())
+  const [internalDate, setInternalDate] = React.useState(new Date())
+
+  // Use controlled date if provided, otherwise internal state
+  const currentDate = date || internalDate
+
+  const handleDateChange = (newDate: Date) => {
+    if (onDateChange) {
+      onDateChange(newDate)
+    } else {
+      setInternalDate(newDate)
+    }
+  }
 
   const navigateMonth = (direction: "prev" | "next") => {
     const newDate = new Date(currentDate)
@@ -42,7 +57,7 @@ export function CalendarComponent({
     } else {
       newDate.setMonth(newDate.getMonth() + 1)
     }
-    setCurrentDate(newDate)
+    handleDateChange(newDate)
   }
 
   const navigateWeek = (direction: "prev" | "next") => {
@@ -52,7 +67,7 @@ export function CalendarComponent({
     } else {
       newDate.setDate(newDate.getDate() + 7)
     }
-    setCurrentDate(newDate)
+    handleDateChange(newDate)
   }
 
   const navigateDay = (direction: "prev" | "next") => {
@@ -62,7 +77,7 @@ export function CalendarComponent({
     } else {
       newDate.setDate(newDate.getDate() + 1)
     }
-    setCurrentDate(newDate)
+    handleDateChange(newDate)
   }
 
   const getNavigationHandler = () => {
@@ -89,13 +104,13 @@ export function CalendarComponent({
 
     const days = []
     const current = new Date(startDate)
-    
+
     // Generate 42 days (6 weeks) to ensure consistent height
     for (let i = 0; i < 42; i++) {
       days.push(new Date(current))
       current.setDate(current.getDate() + 1)
     }
-    
+
     return days
   }
 
@@ -105,14 +120,14 @@ export function CalendarComponent({
     const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
     startOfWeek.setDate(diff)
     startOfWeek.setHours(0, 0, 0, 0)
-    
+
     const days = []
     for (let i = 0; i < 7; i++) {
       const day = new Date(startOfWeek)
       day.setDate(startOfWeek.getDate() + i)
       days.push(day)
     }
-    
+
     return days
   }
 
@@ -128,7 +143,7 @@ export function CalendarComponent({
       year: 'numeric',
       month: 'long'
     }
-    
+
     if (view === "day") {
       return currentDate.toLocaleDateString('en-US', {
         weekday: 'long',
@@ -137,18 +152,18 @@ export function CalendarComponent({
         day: 'numeric'
       })
     }
-    
+
     if (view === "week") {
       const days = getWeekDays()
       const start = days[0]
       const end = days[6]
-      
+
       if (start.getMonth() === end.getMonth()) {
         return `${start.toLocaleDateString('en-US', { month: 'long' })} ${start.getFullYear()}`
       }
       return `${start.toLocaleDateString('en-US', { month: 'short' })} - ${end.toLocaleDateString('en-US', { month: 'short' })} ${end.getFullYear()}`
     }
-    
+
     return currentDate.toLocaleDateString('en-US', options)
   }
 
@@ -166,14 +181,14 @@ export function CalendarComponent({
             </div>
           ))}
         </div>
-        
+
         {/* Calendar grid */}
         <div className="grid grid-cols-7 grid-rows-6 flex-1 border-l border-border">
           {days.map((day, index) => {
             const dayEvents = getEventsForDate(day)
             const isCurrentMonth = day.getMonth() === currentDate.getMonth()
             const isToday = day.toDateString() === new Date().toDateString()
-            
+
             return (
               <div
                 key={index}
@@ -191,7 +206,7 @@ export function CalendarComponent({
                     {day.getDate()}
                   </span>
                 </div>
-                
+
                 <div className="space-y-1 overflow-hidden">
                   {dayEvents.slice(0, 4).map(event => (
                     <div
@@ -225,7 +240,7 @@ export function CalendarComponent({
 
   const renderTimeGrid = (days: Date[]) => {
     const hours = Array.from({ length: 24 }, (_, i) => i)
-    
+
     return (
       <div className="flex flex-col h-full overflow-y-auto relative scrollbar-hide">
         <div className="flex min-w-full">
@@ -274,7 +289,7 @@ export function CalendarComponent({
                       const startMin = event.start.getMinutes()
                       const endHour = event.end.getHours()
                       const endMin = event.end.getMinutes()
-                      
+
                       const top = (startHour * 48) + (startMin * 48 / 60) // 48px per hour (h-12 = 3rem = 48px)
                       const durationMinutes = ((endHour * 60) + endMin) - ((startHour * 60) + startMin)
                       const height = (durationMinutes * 48 / 60)
@@ -297,8 +312,8 @@ export function CalendarComponent({
                         >
                           <div className="font-semibold truncate">{event.title}</div>
                           <div className="text-[10px] opacity-90 truncate">
-                            {event.start.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})} - 
-                            {event.end.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})}
+                            {event.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} -
+                            {event.end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                           </div>
                         </div>
                       )
@@ -321,7 +336,7 @@ export function CalendarComponent({
   const renderDayView = () => {
     const dayEvents = getEventsForDate(currentDate)
     dayEvents.sort((a, b) => a.start.getTime() - b.start.getTime())
-    
+
     const getEventColor = (event: CalendarEvent) => {
       if (event.type === 'unavailable') return "bg-red-500"
       if (event.type === 'class') return "bg-yellow-500"
@@ -332,23 +347,23 @@ export function CalendarComponent({
       <div className="flex flex-col h-full overflow-y-auto bg-card">
         <div className="p-4">
           <div className="mb-6 flex items-center">
-             {currentDate.toDateString() === new Date().toDateString() && (
+            {currentDate.toDateString() === new Date().toDateString() && (
               <span className="px-2 py-1 rounded bg-primary text-xs font-medium text-primary-foreground mr-2">
                 Today
               </span>
-             )}
-             <span className="font-semibold text-foreground">
-               {currentDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
-             </span>
+            )}
+            <span className="font-semibold text-foreground">
+              {currentDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}
+            </span>
           </div>
 
           <div className="space-y-1">
             {dayEvents.length === 0 ? (
-               <div className="text-center text-muted-foreground py-12">No events scheduled</div>
+              <div className="text-center text-muted-foreground py-12">No events scheduled</div>
             ) : (
               dayEvents.map(event => (
-                <div 
-                  key={event.id} 
+                <div
+                  key={event.id}
                   className="flex group cursor-pointer hover:bg-muted/50 rounded-lg p-3 -mx-3 transition-colors"
                   onClick={() => onEventClick?.(event)}
                 >
@@ -363,11 +378,11 @@ export function CalendarComponent({
                   <div className="flex-1 flex gap-3 relative">
                     {/* Vertical Color Bar */}
                     <div className={cn("w-1 rounded-full flex-shrink-0", getEventColor(event))} />
-                    
+
                     <div className="pb-1">
                       <h4 className="text-base font-medium text-foreground leading-tight">{event.title}</h4>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {event.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })} - 
+                        {event.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })} -
                         {event.end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}
                       </p>
                     </div>
@@ -400,7 +415,7 @@ export function CalendarComponent({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setCurrentDate(new Date())}
+                onClick={() => handleDateChange(new Date())}
                 className="h-7 px-3 text-xs font-medium hover:bg-card text-foreground rounded-md"
               >
                 Today
@@ -418,7 +433,7 @@ export function CalendarComponent({
               {formatDateHeader()}
             </CardTitle>
           </div>
-          
+
           {onViewChange && (
             <div className="flex items-center bg-muted rounded-lg p-1">
               <Button
@@ -458,7 +473,7 @@ export function CalendarComponent({
           )}
         </div>
       </CardHeader>
-      
+
       <CardContent className="p-0 flex-1 overflow-hidden">
         {view === "month" && renderMonthView()}
         {view === "week" && renderWeekView()}

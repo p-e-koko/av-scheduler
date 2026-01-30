@@ -133,6 +133,49 @@ function StudentDashboard() {
   // Mobile responsiveness
   const [isMobile, setIsMobile] = useState(false)
   const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month")
+  const [currentDate, setCurrentDate] = useState(new Date())
+
+  // Helper to fetch availability for range
+  const fetchAvailabilityForRange = async (date: Date, view: "month" | "week" | "day") => {
+    try {
+      setLoading(true)
+      let dateFrom = new Date(date)
+      let dateTo = new Date(date)
+
+      if (view === 'month') {
+        // Get start of month - 7 days buffer
+        dateFrom = new Date(date.getFullYear(), date.getMonth(), 1)
+        dateFrom.setDate(dateFrom.getDate() - 7)
+
+        // Get end of month + 7 days buffer
+        dateTo = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+        dateTo.setDate(dateTo.getDate() + 7)
+      } else if (view === 'week') {
+        const day = date.getDay()
+        const diff = date.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
+        dateFrom.setDate(diff)
+        dateTo.setDate(diff + 6)
+      } else {
+        // Day view - just the day
+        // But maybe fetch a week for smoother day navigation? Let's stick to day for now or maybe +/- 1 day
+        // Actually, fetching month data is safest for caching if we implemented it, but for now just fetch specific range
+        dateFrom.setHours(0, 0, 0, 0)
+        dateTo.setHours(23, 59, 59, 999)
+      }
+
+      const response = await availabilityAPI.getMyAvailability({
+        per_page: 1000, // Fetch large amount to avoid truncation within the view
+        date_from: dateFrom.toISOString().split('T')[0],
+        date_to: dateTo.toISOString().split('T')[0]
+      })
+      setAvailability(response.data)
+    } catch (err) {
+      console.error("Failed to fetch availability range", err)
+      setError(formatAPIError(err))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -310,8 +353,7 @@ function StudentDashboard() {
             break
 
           case 'schedule':
-            const availabilityResponse = await availabilityAPI.getMyAvailability({ per_page: 100 })
-            setAvailability(availabilityResponse.data)
+            await fetchAvailabilityForRange(currentDate, calendarView)
             break
         }
       } catch (err) {
@@ -322,7 +364,7 @@ function StudentDashboard() {
     }
 
     fetchData()
-  }, [currentUser, activeTab, assignmentCurrentPage, assignmentFilter])
+  }, [currentUser, activeTab, assignmentCurrentPage, assignmentFilter, currentDate, calendarView])
 
   const refreshAssignments = async () => {
     try {
@@ -624,8 +666,7 @@ function StudentDashboard() {
 
   const handleAvailabilityAdded = async () => {
     try {
-      const response = await availabilityAPI.getMyAvailability({ per_page: 100 })
-      setAvailability(response.data)
+      await fetchAvailabilityForRange(currentDate, calendarView)
     } catch (error) {
       console.error("Failed to refresh availability:", error)
     }
@@ -872,6 +913,8 @@ function StudentDashboard() {
                       events={calendarEvents}
                       view={calendarView}
                       onViewChange={setCalendarView}
+                      date={currentDate}
+                      onDateChange={setCurrentDate}
                       className="border-0 shadow-none min-h-[600px]"
                       isMobile={isMobile}
                     />
@@ -1252,6 +1295,8 @@ function StudentDashboard() {
                 view={calendarView}
                 onViewChange={setCalendarView}
                 onEventClick={handleEventClick}
+                date={currentDate}
+                onDateChange={setCurrentDate}
                 isMobile={isMobile}
                 className="min-h-[600px]"
               />
