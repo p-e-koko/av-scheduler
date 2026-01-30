@@ -48,9 +48,52 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
   const [error, setError] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
   const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month")
+  const [currentDate, setCurrentDate] = useState(new Date())
 
   const [isEditingPhone, setIsEditingPhone] = useState(false)
   const [phoneNumberInput, setPhoneNumberInput] = useState("")
+
+  const fetchAvailabilityForRange = async (date: Date, view: "month" | "week" | "day") => {
+    if (!studentId) return
+
+    try {
+      // Don't set global loading here to avoid full page spinner on calendar nav
+      // But maybe we want a local loading indicator? For now, let's just fetch.
+      // Or use the global loading if it's the first load?
+      // let's use global loading if access is fast, or maybe separate loading state? 
+      // Existing code uses `loading`. If I use it, it hides the whole profile.
+      // Better to strictly use it only for initial load.
+
+      let dateFrom = new Date(date)
+      let dateTo = new Date(date)
+
+      if (view === 'month') {
+        dateFrom = new Date(date.getFullYear(), date.getMonth(), 1)
+        dateFrom.setDate(dateFrom.getDate() - 7)
+        dateTo = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+        dateTo.setDate(dateTo.getDate() + 7)
+      } else if (view === 'week') {
+        const day = date.getDay()
+        const diff = date.getDate() - day + (day === 0 ? -6 : 1)
+        dateFrom.setDate(diff)
+        dateTo.setDate(diff + 6)
+      } else {
+        dateFrom.setHours(0, 0, 0, 0)
+        dateTo.setHours(23, 59, 59, 999)
+      }
+
+      const response = await availabilityAPI.getAvailability({
+        student_id: studentId,
+        per_page: 1000,
+        date_from: dateFrom.toISOString().split('T')[0],
+        date_to: dateTo.toISOString().split('T')[0]
+      })
+      setAvailability(response.data)
+    } catch (err) {
+      console.error("Failed to fetch availability range", err)
+      // Optional: show error toast/dialog instead of blocking page
+    }
+  }
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -59,18 +102,16 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Fetch student data
+  // Fetch student data and initial assignments
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
         setLoading(true)
         setError(null)
 
-        // Fetch all data in parallel for better performance
-        const [studentResponse, assignmentsResponse, availabilityResponse] = await Promise.all([
+        const [studentResponse, assignmentsResponse] = await Promise.all([
           userAPI.getUser(studentId),
-          assignmentAPI.getAssignments({ per_page: 50 }),
-          availabilityAPI.getAvailability({ student_id: studentId, per_page: 50 })
+          assignmentAPI.getAssignments({ per_page: 50 })
         ])
 
         if (studentResponse.user.role !== 'student') {
@@ -81,12 +122,10 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
         setStudent(studentResponse.user)
         setPhoneNumberInput(studentResponse.user.phone_number || "")
 
-        // Filter assignments for this specific student
         const studentAssignments = assignmentsResponse.data.filter(assignment =>
           assignment.users?.some(user => user.id === studentId)
         )
         setAssignments(studentAssignments)
-        setAvailability(availabilityResponse.data)
 
       } catch (err) {
         setError(formatAPIError(err))
@@ -99,6 +138,11 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
       fetchStudentData()
     }
   }, [studentId])
+
+  // Fetch availability when date/view/studentId changes
+  useEffect(() => {
+    fetchAvailabilityForRange(currentDate, calendarView)
+  }, [currentDate, calendarView, studentId])
 
   const handleUpdatePhoneNumber = async () => {
     if (!student) return
@@ -406,6 +450,8 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                   events={calendarEvents}
                   view={calendarView}
                   onViewChange={setCalendarView}
+                  date={currentDate}
+                  onDateChange={setCurrentDate}
                   className="border-0 shadow-none min-h-[600px]"
                   isMobile={isMobile}
                 />
