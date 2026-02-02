@@ -84,6 +84,14 @@ function StudentDashboard() {
       setActiveTab(tab as any)
     }
   }, [searchParams])
+
+  const handleTabChange = (tab: "profile" | "assignments" | "schedule") => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', tab)
+    router.push(`/dashboard/student?${params.toString()}`)
+    setActiveTab(tab)
+  }
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -728,7 +736,7 @@ function StudentDashboard() {
     <div className="flex h-screen bg-background">
       <StudentSidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />

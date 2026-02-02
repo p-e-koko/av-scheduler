@@ -72,6 +72,14 @@ function CoordinatorDashboard() {
       setActiveTab(tab as any)
     }
   }, [searchParams])
+
+  const handleTabChange = (tab: "assignments" | "students" | "schedules" | "positions" | "recycle-bin") => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', tab)
+    router.push(`/dashboard/coordinator?${params.toString()}`)
+    setActiveTab(tab)
+  }
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -211,12 +219,10 @@ function CoordinatorDashboard() {
         case 'students':
           const studentsResponse = await userAPI.getUsers({
             role: 'student',
-            per_page: 10,
-            page: studentCurrentPage,
-            search: studentSearchQuery || undefined
+            per_page: 1000
           })
           setStudents(studentsResponse.data)
-          setStudentPagination(studentsResponse.meta)
+          // setStudentPagination is not needed for client-side
           break
 
         case 'schedules':
@@ -401,6 +407,32 @@ function CoordinatorDashboard() {
     }
   }, [recycleBinCurrentPage])
 
+  // Client-side Filter and Sort for Students
+  const filteredStudents = React.useMemo(() => {
+    let result = [...students];
+
+    if (studentSearchQuery) {
+      const query = studentSearchQuery.toLowerCase();
+      result = result.filter(student =>
+        student.name.toLowerCase().includes(query) ||
+        student.email.toLowerCase().includes(query)
+      );
+    }
+
+    result.sort((a, b) => a.name.localeCompare(b.name));
+
+    return result;
+  }, [students, studentSearchQuery]);
+
+  const itemsPerPage = 10;
+  const paginatedStudents = React.useMemo(() => {
+    const start = (studentCurrentPage - 1) * itemsPerPage;
+    return filteredStudents.slice(start, start + itemsPerPage);
+  }, [filteredStudents, studentCurrentPage]);
+
+  // Reset page when search changes is handled by useEffect at line 363 (but we need to verify it logic)
+  // Existing debounce logic sets page to 1. Which is fine.
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -418,7 +450,7 @@ function CoordinatorDashboard() {
     <div className="flex h-screen bg-background">
       <CoordinatorSidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         user={currentUser}
@@ -780,7 +812,7 @@ function CoordinatorDashboard() {
                 <>
                   {viewMode === "card" ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {(students || []).map((student) => (
+                      {paginatedStudents.map((student) => (
                         <Card
                           key={student.id}
                           className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10 transition-all cursor-pointer h-32"
@@ -844,7 +876,7 @@ function CoordinatorDashboard() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border">
-                            {(students || []).map((student) => (
+                            {paginatedStudents.map((student) => (
                               <tr
                                 key={student.id}
                                 className="hover:bg-muted/30 transition-colors cursor-pointer"
@@ -899,10 +931,11 @@ function CoordinatorDashboard() {
                   )}
 
                   {/* Pagination */}
-                  {studentPagination && studentPagination.last_page > 1 && (
+                  {/* Pagination */}
+                  {filteredStudents.length > itemsPerPage && (
                     <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
                       <div className="text-sm text-gray-500">
-                        Showing {studentPagination.from} to {studentPagination.to} of {studentPagination.total} results
+                        Showing {(studentCurrentPage - 1) * itemsPerPage + 1} to {Math.min(studentCurrentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length} results
                       </div>
                       <div className="flex items-center space-x-2">
                         <Button
@@ -914,13 +947,13 @@ function CoordinatorDashboard() {
                           Previous
                         </Button>
                         <div className="text-sm font-medium">
-                          Page {studentCurrentPage} of {studentPagination.last_page}
+                          Page {studentCurrentPage} of {Math.ceil(filteredStudents.length / itemsPerPage)}
                         </div>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setStudentCurrentPage(p => Math.min(studentPagination.last_page, p + 1))}
-                          disabled={studentCurrentPage === studentPagination.last_page}
+                          onClick={() => setStudentCurrentPage(p => Math.min(Math.ceil(filteredStudents.length / itemsPerPage), p + 1))}
+                          disabled={studentCurrentPage === Math.ceil(filteredStudents.length / itemsPerPage)}
                         >
                           Next
                         </Button>

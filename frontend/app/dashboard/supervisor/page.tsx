@@ -66,6 +66,14 @@ function SupervisorDashboard() {
       setActiveTab(tab as any)
     }
   }, [searchParams])
+
+  const handleTabChange = (tab: "dashboard" | "student-schedules" | "assignment-schedules" | "students") => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', tab)
+    router.push(`/dashboard/supervisor?${params.toString()}`)
+    setActiveTab(tab)
+  }
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -162,17 +170,15 @@ function SupervisorDashboard() {
 
         // Dependent on tab, we fetch different data strategies
         if (activeTab === 'students') {
-          // Pagination Strategy
+          // Client-side Strategy
           const [studentsResponse] = await Promise.all([
             userAPI.getUsers({
               role: 'student',
-              per_page: 10,
-              page: studentCurrentPage,
-              search: studentSearchQuery || undefined
+              per_page: 1000,
             })
           ]);
           setStudents(studentsResponse.data)
-          setStudentPagination(studentsResponse.meta)
+          // setStudentPagination is not needed for client-side
         } else {
           // Load All Strategy for Dashboard/Schedules (Need all data for stats/grids)
           // We only fetch if we are in a tab that needs it. 
@@ -377,12 +383,34 @@ function SupervisorDashboard() {
   // The original code used `filteredStudents` for the dashboard list too. 
   // We will keep `filteredStudents` logic BUT make it just return `students` if we are in 'students' tab 
   // (since `students` is already filtered from server).
-  const filteredStudents = activeTab === 'students'
-    ? students
-    : students.filter(student =>
-      student.name.toLowerCase().includes(studentSearchQuery.toLowerCase()) ||
-      student.email.toLowerCase().includes(studentSearchQuery.toLowerCase())
-    );
+  // Client-side Filter and Sort
+  const filteredStudents = React.useMemo(() => {
+    let result = [...students];
+
+    // Search (Apply for all tabs where search is active)
+    if (studentSearchQuery) {
+      const query = studentSearchQuery.toLowerCase();
+      result = result.filter(student =>
+        student.name.toLowerCase().includes(query) ||
+        student.email.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort Alphabetically
+    result.sort((a, b) => a.name.localeCompare(b.name));
+
+    return result;
+  }, [students, studentSearchQuery]);
+
+  // Client-side Pagination
+  const itemsPerPage = 10;
+  const paginatedStudents = React.useMemo(() => {
+    // Only paginate for 'students' tab if viewMode is card/list
+    if (activeTab === 'dashboard') return filteredStudents;
+
+    const startIndex = (studentCurrentPage - 1) * itemsPerPage;
+    return filteredStudents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredStudents, studentCurrentPage, activeTab]);
 
   // Helper to get student assignments count
   const getStudentAssignmentCount = (studentId: string) => {
@@ -436,7 +464,7 @@ function SupervisorDashboard() {
     <div className="flex h-screen bg-background">
       <SupervisorSidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
@@ -525,7 +553,7 @@ function SupervisorDashboard() {
                 <>
                   {viewMode === "card" ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredStudents.map((student) => (
+                      {paginatedStudents.map((student) => (
                         <Card
                           key={student.id}
                           className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10 transition-all cursor-pointer h-32"
@@ -592,7 +620,7 @@ function SupervisorDashboard() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border">
-                            {(filteredStudents || []).map((student) => (
+                            {(paginatedStudents || []).map((student) => (
                               <tr
                                 key={student.id}
                                 className="hover:bg-muted/30 transition-colors cursor-pointer"
@@ -647,10 +675,11 @@ function SupervisorDashboard() {
                   )}
 
                   {/* Pagination */}
-                  {studentPagination && studentPagination.last_page > 1 && (
+                  {/* Pagination */}
+                  {filteredStudents.length > itemsPerPage && (
                     <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
                       <div className="text-sm text-gray-500">
-                        Showing {studentPagination.from} to {studentPagination.to} of {studentPagination.total} results
+                        Showing {(studentCurrentPage - 1) * itemsPerPage + 1} to {Math.min(studentCurrentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length} results
                       </div>
                       <div className="flex items-center space-x-2">
                         <Button
@@ -662,13 +691,13 @@ function SupervisorDashboard() {
                           Previous
                         </Button>
                         <div className="text-sm font-medium">
-                          Page {studentCurrentPage} of {studentPagination.last_page}
+                          Page {studentCurrentPage} of {Math.ceil(filteredStudents.length / itemsPerPage)}
                         </div>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setStudentCurrentPage(p => Math.min(studentPagination.last_page, p + 1))}
-                          disabled={studentCurrentPage === studentPagination.last_page}
+                          onClick={() => setStudentCurrentPage(p => Math.min(Math.ceil(filteredStudents.length / itemsPerPage), p + 1))}
+                          disabled={studentCurrentPage === Math.ceil(filteredStudents.length / itemsPerPage)}
                         >
                           Next
                         </Button>

@@ -53,44 +53,18 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
   const [isEditingPhone, setIsEditingPhone] = useState(false)
   const [phoneNumberInput, setPhoneNumberInput] = useState("")
 
-  const fetchAvailabilityForRange = async (date: Date, view: "month" | "week" | "day") => {
+  const fetchAllAvailability = async () => {
     if (!studentId) return
 
     try {
-      // Don't set global loading here to avoid full page spinner on calendar nav
-      // But maybe we want a local loading indicator? For now, let's just fetch.
-      // Or use the global loading if it's the first load?
-      // let's use global loading if access is fast, or maybe separate loading state? 
-      // Existing code uses `loading`. If I use it, it hides the whole profile.
-      // Better to strictly use it only for initial load.
-
-      let dateFrom = new Date(date)
-      let dateTo = new Date(date)
-
-      if (view === 'month') {
-        dateFrom = new Date(date.getFullYear(), date.getMonth(), 1)
-        dateFrom.setDate(dateFrom.getDate() - 7)
-        dateTo = new Date(date.getFullYear(), date.getMonth() + 1, 0)
-        dateTo.setDate(dateTo.getDate() + 7)
-      } else if (view === 'week') {
-        const day = date.getDay()
-        const diff = date.getDate() - day + (day === 0 ? -6 : 1)
-        dateFrom.setDate(diff)
-        dateTo.setDate(diff + 6)
-      } else {
-        dateFrom.setHours(0, 0, 0, 0)
-        dateTo.setHours(23, 59, 59, 999)
-      }
-
+      // Fetch all availability without date range limits
       const response = await availabilityAPI.getAvailability({
         student_id: studentId,
-        per_page: 1000,
-        date_from: dateFrom.toISOString().split('T')[0],
-        date_to: dateTo.toISOString().split('T')[0]
+        per_page: 10000
       })
       setAvailability(response.data)
     } catch (err) {
-      console.error("Failed to fetch availability range", err)
+      console.error("Failed to fetch availability", err)
       // Optional: show error toast/dialog instead of blocking page
     }
   }
@@ -139,10 +113,10 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
     }
   }, [studentId])
 
-  // Fetch availability when date/view/studentId changes
+  // Fetch availability when studentId changes
   useEffect(() => {
-    fetchAvailabilityForRange(currentDate, calendarView)
-  }, [currentDate, calendarView, studentId])
+    fetchAllAvailability()
+  }, [studentId])
 
   const handleUpdatePhoneNumber = async () => {
     if (!student) return

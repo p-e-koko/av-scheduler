@@ -52,14 +52,30 @@ function AdminDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [viewMode, setViewMode] = useState<"card" | "list">("card")
-  const [searchQuery, setSearchQuery] = useState("")
+
+  // URL initialized state
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "")
+  const [selectedRole, setSelectedRole] = useState<string>(searchParams.get("role") || "")
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get("page") || "1"))
+
   const [users, setUsers] = useState<User[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [pagination, setPagination] = useState<any>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [selectedRole, setSelectedRole] = useState<string>("")
+  // pagination removed
+
+  // Sync state to URL
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (searchQuery) params.set("search", searchQuery)
+    if (selectedRole) params.set("role", selectedRole)
+    if (currentPage > 1) params.set("page", currentPage.toString())
+
+    const newUrl = `/dashboard/admin?${params.toString()}`;
+    if (window.location.search !== `?${params.toString()}`) {
+      router.replace(newUrl)
+    }
+  }, [searchQuery, selectedRole, currentPage])
   const [showAddUserModal, setShowAddUserModal] = useState(false)
   const [showEditUserModal, setShowEditUserModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
@@ -94,11 +110,9 @@ function AdminDashboard() {
       setLoading(true)
       setError(null)
 
+      // Fetch ALL users
       const response = await userAPI.getUsers({
-        page: currentPage,
-        per_page: 10,
-        search: searchQuery || undefined,
-        role: selectedRole || undefined
+        per_page: 2000
       })
 
       // Temporary debug: Log Derek's user data
@@ -112,7 +126,6 @@ function AdminDashboard() {
       }
 
       setUsers(response.data)
-      setPagination(response.meta)
     } catch (err) {
       console.error('Failed to fetch users:', err)
       setError(formatAPIError(err))
@@ -126,7 +139,7 @@ function AdminDashboard() {
     if (currentUser) {
       fetchUsers()
     }
-  }, [currentUser, currentPage, searchQuery, selectedRole])
+  }, [currentUser])
 
   // Debounce search
   useEffect(() => {
@@ -140,6 +153,38 @@ function AdminDashboard() {
 
     return () => clearTimeout(timeout)
   }, [searchQuery])
+
+  // Client-side Filter and Sort
+  const filteredUsers = React.useMemo(() => {
+    let result = [...users];
+
+    // Filter by Role
+    if (selectedRole) {
+      result = result.filter(user =>
+        user.role === selectedRole || (user.roles && user.roles.includes(selectedRole))
+      );
+    }
+
+    // Filter by Search
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(user =>
+        user.name.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort Alphabetically
+    result.sort((a, b) => a.name.localeCompare(b.name));
+
+    return result;
+  }, [users, searchQuery, selectedRole]);
+
+  const itemsPerPage = 10;
+  const paginatedUsers = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredUsers, currentPage]);
 
   const getInitials = (name: string) => {
     return name
@@ -180,13 +225,7 @@ function AdminDashboard() {
       await userAPI.deleteUser(userId)
 
       // Update pagination if needed
-      if (pagination && pagination.total > 0) {
-        setPagination((prev: any) => ({
-          ...prev,
-          total: prev.total - 1,
-          to: Math.max(prev.to - 1, 0)
-        }))
-      }
+      // (Pagination is now client-side derived from users array, so no separate state needed)
     } catch (err) {
       // Revert optimistic update on error
       fetchUsers()
@@ -319,7 +358,7 @@ function AdminDashboard() {
             {viewMode === "card" ? (
               /* Card View */
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {users.map((user) => (
+                {paginatedUsers.map((user) => (
                   <Card
                     key={user.id}
                     className="bg-card/90 backdrop-blur-xl border-0 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all hover:scale-[1.01] h-auto min-h-[8rem]"
@@ -421,7 +460,7 @@ function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {users.map((user) => (
+                      {paginatedUsers.map((user) => (
                         <tr
                           key={user.id}
                           className="group bg-card hover:bg-primary transition-colors duration-200"
@@ -510,10 +549,10 @@ function AdminDashboard() {
             )}
 
             {/* Pagination */}
-            {pagination && pagination.last_page > 1 && (
+            {filteredUsers.length > itemsPerPage && (
               <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4 sm:gap-0">
                 <div className="text-sm text-gray-500">
-                  Showing {pagination.from} to {pagination.to} of {pagination.total} results
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} results
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -525,13 +564,13 @@ function AdminDashboard() {
                     Previous
                   </Button>
                   <div className="text-sm font-medium">
-                    Page {currentPage} of {pagination.last_page}
+                    Page {currentPage} of {Math.ceil(filteredUsers.length / itemsPerPage)}
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(pagination.last_page, p + 1))}
-                    disabled={currentPage === pagination.last_page}
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredUsers.length / itemsPerPage), p + 1))}
+                    disabled={currentPage === Math.ceil(filteredUsers.length / itemsPerPage)}
                   >
                     Next
                   </Button>
