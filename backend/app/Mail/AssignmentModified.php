@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Mail;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+
+class AssignmentModified extends Mailable implements ShouldQueue
+{
+    use Queueable, SerializesModels;
+
+    public $assignment;
+    public $user;
+
+    /**
+     * Create a new message instance.
+     */
+    public function __construct($assignment, $user)
+    {
+        $this->assignment = $assignment;
+        $this->user = $user;
+    }
+
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: 'Assignment Modified: ' . $this->assignment->assignment_name,
+        );
+    }
+
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.assignment_modified',
+        );
+    }
+
+    /**
+     * Get the attachments for the message.
+     *
+     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     */
+    public function attachments(): array
+    {
+        return [];
+    }
+}

@@ -139,6 +139,7 @@ class AssignmentController extends Controller
         // Reset all users status to pending
         foreach ($assignment->users as $user) {
             $assignment->updateUserStatus($user, 'pending');
+            $user->notify(new \App\Notifications\AssignmentModifiedNotification($assignment));
         }
 
         // Load relationships for response
