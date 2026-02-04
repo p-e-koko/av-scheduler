@@ -156,6 +156,11 @@ class AssignmentController extends Controller
      */
     public function destroy(Assignment $assignment): JsonResponse
     {
+        // Notify assigned users before deletion
+        foreach ($assignment->users as $user) {
+            $user->notify(new \App\Notifications\AssignmentDeletedNotification($assignment));
+        }
+
         $assignment->delete();
 
         AuditLogger::log('Assignment Deleted (Soft)', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
