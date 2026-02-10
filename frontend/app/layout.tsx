@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { FeedbackButton } from "@/components/FeedbackButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
           <div className="fixed bottom-2 right-4 text-xs text-muted-foreground opacity-50 z-50 pointer-events-none select-none">
             &copy;p-e-koko
           </div>
+          <FeedbackButton />
         </ThemeProvider>
       </body>
     </html>

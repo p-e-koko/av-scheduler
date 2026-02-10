@@ -23,6 +23,8 @@ use Illuminate\Support\Str;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+    // Feedback Route
+    Route::post('/feedback', [\App\Http\Controllers\Api\FeedbackController::class, 'store']);
 
 // Health Check
 Route::get('/health', function () {
@@ -191,8 +193,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
 });
 
-// Health Check Route
-Route::get('/health', function () {
+// Feedback Route (Accessible to authenticated users, or public if needed? Requirement implies user feedback, so likely auth)
+    // The requirement "user feedback so that they can write when ever they have issue" implies logged in users.
+    // However, the controller handles $request->user(), which might be null if not auth.
+    // Let's place it in a group that allows both or just protected.
+    // Given the context of "user", I'll put it in the protected group for now, or maybe a general group.
+    // Actually, let's put it in the main protected group to capture the user easily.
+    Route::post('/feedback', [\App\Http\Controllers\Api\FeedbackController::class, 'store']);
+
+    // Health Check Route
+    Route::get('/health', function () {
     return response()->json([
         'status' => 'ok',
         'timestamp' => now()->toISOString(),
