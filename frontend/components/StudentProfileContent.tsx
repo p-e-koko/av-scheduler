@@ -88,7 +88,11 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
           assignmentAPI.getAssignments({ per_page: 50 })
         ])
 
-        if (studentResponse.user.role !== 'student') {
+        // Check if user has student role (either as primary role or in roles array)
+        const hasStudentRole = studentResponse.user.role === 'student' ||
+          (studentResponse.user.roles && studentResponse.user.roles.includes('student'));
+
+        if (!hasStudentRole) {
           setError('User is not a student')
           return
         }
