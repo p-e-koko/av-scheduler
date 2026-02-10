@@ -75,7 +75,7 @@ export function FeedbackButton() {
         <>
             <Button
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg z-50 p-0 bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg z-50 p-0 bg-blue-600 hover:bg-blue-700 text-white"
                 size="icon"
             >
                 {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6" />}
