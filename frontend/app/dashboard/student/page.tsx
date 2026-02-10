@@ -145,10 +145,12 @@ function StudentDashboard() {
 
   useEffect(() => {
     // Filter assignments that are modified
-    const modified = myAssignments.filter(a => a.pivot?.is_modified && a.pivot.status !== 'rejected')
-    if (modified.length > 0) {
-      setModifiedAssignments(modified)
-      setIsModifiedModalOpen(true)
+    if (myAssignments.length > 0) {
+      const modified = myAssignments.filter(a => a.pivot?.is_modified && a.pivot.status !== 'rejected')
+      if (modified.length > 0) {
+        setModifiedAssignments(modified)
+        setIsModifiedModalOpen(true)
+      }
     }
   }, [myAssignments])
 
