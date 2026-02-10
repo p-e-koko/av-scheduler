@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Mail\FeedbackReceived;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\FeedbackSubmittedNotification;
 
 class FeedbackController extends Controller
 {
@@ -30,7 +30,8 @@ class FeedbackController extends Controller
                return response()->json(['message' => 'Feedback configuration error.'], 500);
             }
 
-            Mail::to($recruitEmail)->send(new FeedbackReceived($validated, $user));
+            Notification::route('mail', $recruitEmail)
+                ->notify(new FeedbackSubmittedNotification($validated, $user));
 
             return response()->json(['message' => 'Feedback sent successfully.']);
         } catch (\Exception $e) {
