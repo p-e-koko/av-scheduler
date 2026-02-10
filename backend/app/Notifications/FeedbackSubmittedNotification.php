@@ -3,11 +3,10 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use App\Mail\FeedbackReceived; // Import the existing mailable
 
-class FeedbackSubmittedNotification extends Notification implements ShouldQueue
+class FeedbackSubmittedNotification extends Notification
 {
     use Queueable;
 
