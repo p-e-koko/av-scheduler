@@ -49,4 +49,8 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'feedback' => [
+        'recipient_email' => env('FEEDBACK_RECIPIENT_EMAIL'),
+    ],
+
 ];

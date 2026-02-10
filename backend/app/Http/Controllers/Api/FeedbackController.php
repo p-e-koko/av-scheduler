@@ -23,7 +23,7 @@ class FeedbackController extends Controller
         $user = $request->user(); // Get authenticated user if available
 
         try {
-            $recruitEmail = env('FEEDBACK_RECIPIENT_EMAIL');
+            $recruitEmail = config('services.feedback.recipient_email');
             
             if (!$recruitEmail) {
                Log::error('FEEDBACK_RECIPIENT_EMAIL is not configured.');
