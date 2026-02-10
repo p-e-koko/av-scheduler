@@ -139,6 +139,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/assignments/{assignment}/remove-from-calendar', [AssignmentController::class, 'removeFromCalendar']);
         Route::post('/assignments/{assignment}/add-to-outlook-calendar', [AssignmentController::class, 'addToOutlookCalendar']);
         Route::post('/assignments/{assignment}/remove-from-outlook-calendar', [AssignmentController::class, 'removeFromOutlookCalendar']);
+        Route::post('/assignments/{assignment}/acknowledge-modification', [AssignmentController::class, 'acknowledgeModification']);
     });
 
     // Availability Management Routes - Role-Based Access Control

@@ -89,6 +89,7 @@ export interface Assignment {
     checked_in: number;
     position?: string;
     rejection_reason?: string;
+    is_modified?: boolean;
     microsoft_event_id?: string;
   };
 }
@@ -884,6 +885,13 @@ export const assignmentAPI = {
     const endpoint = queryString ? `/assignments?${queryString}` : '/assignments';
 
     return apiCall<AssignmentsListResponse>(endpoint);
+  },
+
+  // Acknowledge assignment modification
+  async acknowledgeModification(id: number): Promise<ApiResponse> {
+    return apiCall<ApiResponse>(`/assignments/${id}/acknowledge-modification`, {
+      method: 'POST',
+    });
   },
 
   // Get my assignments (for students)

@@ -74,6 +74,7 @@ class AssignmentResource extends JsonResource
                             'status' => $user->pivot->status,
                             'checked_in' => $user->pivot->checked_in,
                             'position' => $user->pivot->position,
+                            'is_modified' => $user->pivot->is_modified,
                             'google_event_id' => $user->pivot->google_event_id,
                             'created_at' => $user->pivot->created_at?->toISOString(),
                             'updated_at' => $user->pivot->updated_at?->toISOString(),
@@ -91,6 +92,7 @@ class AssignmentResource extends JsonResource
                     'status' => $this->pivot->status,
                     'checked_in' => $this->pivot->checked_in,
                     'position' => $this->pivot->position,
+                    'is_modified' => $this->pivot->is_modified,
                     'rejection_reason' => $this->pivot->rejection_reason ?? null,
                     'google_event_id' => $this->pivot->google_event_id,
                 ];
@@ -183,6 +185,7 @@ class AssignmentResource extends JsonResource
             'status' => $assignedUser->pivot->status,
             'checked_in' => $assignedUser->pivot->checked_in,
             'position' => $assignedUser->pivot->position,
+            'is_modified' => $assignedUser->pivot->is_modified,
             'assigned_at' => $assignedUser->pivot->created_at?->toISOString(),
             'can_check_in' => $this->isOngoing() && !$assignedUser->pivot->checked_in,
             'can_check_out' => $this->isOngoing() && $assignedUser->pivot->checked_in,

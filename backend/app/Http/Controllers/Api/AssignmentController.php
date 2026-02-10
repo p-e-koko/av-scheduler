@@ -136,9 +136,9 @@ class AssignmentController extends Controller
 
         AuditLogger::log('Assignment Updated', ['assignment_id' => $assignment->id, 'name' => $assignment->assignment_name]);
 
-        // Reset all users status to pending
+        // Set is_modified flag for all users
         foreach ($assignment->users as $user) {
-            $assignment->updateUserStatus($user, 'pending');
+            $assignment->users()->updateExistingPivot($user->id, ['is_modified' => true]);
             $user->notify(new \App\Notifications\AssignmentModifiedNotification($assignment));
         }
 
@@ -148,6 +148,27 @@ class AssignmentController extends Controller
         return response()->json([
             'message' => 'Assignment updated successfully',
             'assignment' => new AssignmentResource($assignment->fresh(['creator', 'users']))
+        ]);
+    }
+
+    /**
+     * Acknowledge assignment modification.
+     */
+    public function acknowledgeModification(Request $request, Assignment $assignment): JsonResponse
+    {
+        $user = auth()->user();
+
+        // Check if user is assigned
+        if (!$assignment->users()->where('user_id', $user->id)->exists()) {
+            return response()->json([
+                'message' => 'You are not assigned to this assignment'
+            ], 422);
+        }
+
+        $assignment->users()->updateExistingPivot($user->id, ['is_modified' => false]);
+
+        return response()->json([
+            'message' => 'Modification acknowledged successfully'
         ]);
     }
 

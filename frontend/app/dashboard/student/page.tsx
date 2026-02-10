@@ -71,6 +71,7 @@ import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { LoadingDialog } from "@/components/LoadingDialog"
 import { StatusDialog } from "@/components/StatusDialog"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
+import { ModifiedAssignmentModal } from "@/components/ModifiedAssignmentModal"
 
 function StudentDashboard() {
   const router = useRouter()
@@ -137,6 +138,41 @@ function StudentDashboard() {
     inProgress: 0,
     pending: 0
   })
+
+  // Modified assignments logic
+  const [modifiedAssignments, setModifiedAssignments] = useState<Assignment[]>([])
+  const [isModifiedModalOpen, setIsModifiedModalOpen] = useState(false)
+
+  useEffect(() => {
+    // Filter assignments that are modified
+    const modified = myAssignments.filter(a => a.pivot?.is_modified && a.pivot.status !== 'rejected')
+    if (modified.length > 0) {
+      setModifiedAssignments(modified)
+      setIsModifiedModalOpen(true)
+    }
+  }, [myAssignments])
+
+  const handleAcknowledgeModification = async (assignmentId: number) => {
+    try {
+      await assignmentAPI.acknowledgeModification(assignmentId)
+      // Update local state to remove the acknowledged assignment
+      setModifiedAssignments(prev => prev.filter(a => a.id !== assignmentId))
+      setMyAssignments(prev => prev.map(a =>
+        a.id === assignmentId ? { ...a, pivot: { ...a.pivot!, is_modified: false } } : a
+      ))
+      if (modifiedAssignments.length <= 1) {
+        setIsModifiedModalOpen(false)
+      }
+    } catch (err: any) {
+      console.error("Failed to acknowledge modification", err)
+      setStatusDialog({
+        isOpen: true,
+        title: "Error",
+        description: "Failed to acknowledge modification",
+        type: "error"
+      })
+    }
+  }
 
   // Mobile responsiveness
   const [isMobile, setIsMobile] = useState(false)
@@ -1311,56 +1347,66 @@ function StudentDashboard() {
             </div>
           )}
         </main>
-      </div >
-      <AddAvailabilityModal
-        isOpen={isAddAvailabilityModalOpen}
-        onClose={() => setIsAddAvailabilityModalOpen(false)}
-        onSuccess={handleAvailabilityAdded}
-        existingAvailability={availability}
-      />
-      <EditAvailabilityModal
-        isOpen={isEditAvailabilityModalOpen}
-        onClose={() => setIsEditAvailabilityModalOpen(false)}
-        onSuccess={handleAvailabilityAdded}
-        availability={selectedAvailability}
-        existingAvailability={availability}
-      />
-      <AssignmentDetailModal
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        assignment={selectedAssignment}
-      />
-      {
-        selectedAssignmentForRejection && (
-          <RejectAssignmentModal
-            isOpen={isRejectModalOpen}
-            onClose={() => setIsRejectModalOpen(false)}
-            onConfirm={confirmRejectAssignment}
-            assignmentName={selectedAssignmentForRejection.assignment_name}
-          />
-        )
-      }
-      <ConfirmationDialog
-        isOpen={isAcceptModalOpen}
-        onClose={() => setIsAcceptModalOpen(false)}
-        onConfirm={confirmAcceptAssignment}
-        title="Accept Assignment"
-        description={`Are you sure you want to accept the assignment "${selectedAssignmentForAcceptance?.assignment_name}"?`}
-        confirmText="Accept"
-      />
-      <LoadingDialog
-        isOpen={isProcessing}
-        title={loadingTitle}
-        description={loadingDescription}
-      />
-      <StatusDialog
-        isOpen={statusDialog.isOpen}
-        onClose={() => setStatusDialog(prev => ({ ...prev, isOpen: false }))}
-        title={statusDialog.title}
-        description={statusDialog.description}
-        type={statusDialog.type}
-      />
-    </div >
+        {/* Modals */}
+        <AddAvailabilityModal
+          isOpen={isAddAvailabilityModalOpen}
+          onClose={() => setIsAddAvailabilityModalOpen(false)}
+          onSuccess={handleAvailabilityAdded}
+        />
+
+        <EditAvailabilityModal
+          isOpen={isEditAvailabilityModalOpen}
+          onClose={() => setIsEditAvailabilityModalOpen(false)}
+          availability={selectedAvailability}
+          onSuccess={handleAvailabilityAdded}
+        />
+
+        <RejectAssignmentModal
+          isOpen={isRejectModalOpen}
+          onClose={() => setIsRejectModalOpen(false)}
+          onConfirm={confirmRejectAssignment}
+          assignmentName={selectedAssignmentForRejection?.assignment_name || ''}
+        />
+
+        <ConfirmationDialog
+          isOpen={isAcceptModalOpen}
+          onClose={() => setIsAcceptModalOpen(false)}
+          onConfirm={confirmAcceptAssignment}
+          title="Accept Assignment"
+          description={`Are you sure you want to accept "${selectedAssignmentForAcceptance?.assignment_name}"? This will deduct ${selectedAssignmentForAcceptance ? (Math.abs(new Date(selectedAssignmentForAcceptance.event_end_datetime).getTime() - new Date(selectedAssignmentForAcceptance.event_start_datetime).getTime()) / 3600000).toFixed(1) : 0} hours from your remaining hours this week.`}
+          confirmText="Accept"
+          cancelText="Cancel"
+          variant="default"
+        />
+
+        <AssignmentDetailModal
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+          assignment={selectedAssignment}
+        />
+
+        <ModifiedAssignmentModal
+          isOpen={isModifiedModalOpen}
+          onClose={() => setIsModifiedModalOpen(false)}
+          assignments={modifiedAssignments}
+          onAcknowledge={handleAcknowledgeModification}
+        />
+
+        <LoadingDialog
+          isOpen={isProcessing}
+          title={loadingTitle}
+          description={loadingDescription}
+        />
+
+        <StatusDialog
+          isOpen={statusDialog.isOpen}
+          onClose={() => setStatusDialog(prev => ({ ...prev, isOpen: false }))}
+          title={statusDialog.title}
+          description={statusDialog.description}
+          type={statusDialog.type}
+        />
+      </div>
+    </div>
   )
 }
 
