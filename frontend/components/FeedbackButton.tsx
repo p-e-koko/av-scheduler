@@ -13,6 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { StatusDialog } from "@/components/StatusDialog";
+import { api } from "@/lib/api";
 
 export function FeedbackButton() {
     const [isOpen, setIsOpen] = useState(false);
