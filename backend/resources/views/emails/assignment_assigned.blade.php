@@ -7,7 +7,7 @@
     <h1>Hello {{ $user->name }},</h1>
     <p>You have been assigned a new task: <strong>{{ $assignment->assignment_name }}</strong>.</p>
     <p>Description: {{ $assignment->description }}</p>
-    <p>Please log in to your dashboard to accept or reject this assignment: <a href="https://www.av.apiu.edu">https://www.av.apiu.edu</a></p>
+    <p>Please log in to your dashboard to accept or reject this assignment: <a href="https://av.apiu.edu">Click here to log in</a></p>
     <p>Thank you.</p>
 </body>
 </html>
