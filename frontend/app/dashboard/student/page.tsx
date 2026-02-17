@@ -312,12 +312,11 @@ function StudentDashboard() {
         switch (activeTab) {
           case 'profile':
             // Fetch assignments and availability for profile view
-            const [profileAssignmentsResponse, profileAvailabilityResponse] = await Promise.all([
+            const [profileAssignmentsResponse] = await Promise.all([
               assignmentAPI.getMyAssignments({ per_page: 50 }),
-              availabilityAPI.getMyAvailability({ per_page: 50 })
+              fetchAvailabilityForRange(currentDate, calendarView)
             ])
             setMyAssignments(profileAssignmentsResponse.data)
-            setAvailability(profileAvailabilityResponse.data)
             break
 
           case 'assignments':

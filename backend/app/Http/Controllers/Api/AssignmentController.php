@@ -80,8 +80,8 @@ class AssignmentController extends Controller
         }
 
         // Add sorting
-        $sortBy = $request->get('sort_by', 'event_start_datetime');
-        $sortOrder = $request->get('sort_order', 'asc');
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
         // Add pagination
@@ -572,8 +572,8 @@ class AssignmentController extends Controller
         }
 
         // Add sorting
-        $sortBy = $request->get('sort_by', 'event_start_datetime');
-        $sortOrder = $request->get('sort_order', 'asc');
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
         // Add pagination
