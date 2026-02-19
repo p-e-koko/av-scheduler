@@ -239,7 +239,7 @@ export function CalendarComponent({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <div
-                          className="text-[10px] text-muted-foreground pl-1 font-medium hover:text-primary hover:underline mt-0.5 w-fit cursor-pointer"
+                          className="text-[10px] text-muted-foreground dark:text-gray-400 pl-1 font-medium hover:text-primary dark:hover:text-white hover:underline mt-0.5 w-fit cursor-pointer transition-colors"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {hiddenEventsCount} more...
