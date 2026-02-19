@@ -80,7 +80,7 @@ class AssignmentController extends Controller
         }
 
         // Add sorting
-        $sortBy = $request->get('sort_by', 'created_at');
+        $sortBy = $request->get('sort_by', 'event_start_datetime');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
@@ -572,7 +572,7 @@ class AssignmentController extends Controller
         }
 
         // Add sorting
-        $sortBy = $request->get('sort_by', 'created_at');
+        $sortBy = $request->get('sort_by', 'event_start_datetime');
         $sortOrder = $request->get('sort_order', 'desc');
         $query->orderBy($sortBy, $sortOrder);
 
