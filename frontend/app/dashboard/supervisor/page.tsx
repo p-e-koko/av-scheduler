@@ -96,6 +96,7 @@ function SupervisorDashboard() {
 
   // Calendar state
   const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month")
+  const [assignmentDate, setAssignmentDate] = useState<Date>(new Date())
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
@@ -139,6 +140,7 @@ function SupervisorDashboard() {
 
       if (serverToday !== clientToday) {
         setSelectedDate(serverToday);
+        setAssignmentDate(new Date(serverToday));
       }
 
       const user = getStoredUser()
@@ -1061,7 +1063,13 @@ function SupervisorDashboard() {
                 <CalendarComponent
                   events={calendarEvents}
                   view={calendarView}
+                  date={assignmentDate}
                   onViewChange={setCalendarView}
+                  onDateChange={setAssignmentDate}
+                  onDateClick={(date) => {
+                    setAssignmentDate(date)
+                    setCalendarView("day")
+                  }}
                   onEventClick={handleEventClick}
                   isMobile={isMobile}
                 />

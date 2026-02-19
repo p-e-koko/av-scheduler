@@ -194,7 +194,7 @@ export function CalendarComponent({
                 key={index}
                 onClick={() => onDateClick?.(day)}
                 className={cn(
-                  "min-h-[100px] border-b border-r border-border p-1 transition-colors hover:bg-muted/50 cursor-pointer relative",
+                  "min-h-[85px] border-b border-r border-border p-1 transition-colors hover:bg-muted/50 cursor-pointer relative",
                   !isCurrentMonth && "bg-muted/30 text-muted-foreground"
                 )}
               >
@@ -225,7 +225,7 @@ export function CalendarComponent({
                     </div>
                   ))}
                   {dayEvents.length > 4 && (
-                    <div className="text-[10px] text-gray-500 pl-1">
+                    <div className="text-[10px] text-muted-foreground pl-1 font-medium hover:text-primary hover:underline mt-0.5">
                       {dayEvents.length - 4} more...
                     </div>
                   )}
