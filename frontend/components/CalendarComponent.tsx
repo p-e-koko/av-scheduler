@@ -2,7 +2,15 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Clock } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu"
 
 export interface CalendarEvent {
   id: string
@@ -189,16 +197,19 @@ export function CalendarComponent({
             const isCurrentMonth = day.getMonth() === currentDate.getMonth()
             const isToday = day.toDateString() === new Date().toDateString()
 
+            const MAX_VISIBLE_EVENTS = 3;
+            const hiddenEventsCount = dayEvents.length - MAX_VISIBLE_EVENTS;
+
             return (
               <div
                 key={index}
                 onClick={() => onDateClick?.(day)}
                 className={cn(
-                  "min-h-[85px] border-b border-r border-border p-1 transition-colors hover:bg-muted/50 cursor-pointer relative",
+                  "h-[120px] border-b border-r border-border p-1 transition-colors hover:bg-muted/50 cursor-pointer relative flex flex-col gap-1",
                   !isCurrentMonth && "bg-muted/30 text-muted-foreground"
                 )}
               >
-                <div className="flex justify-center mb-1">
+                <div className="flex justify-center mb-0.5 flex-shrink-0">
                   <span className={cn(
                     "text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full",
                     isToday ? "bg-primary text-primary-foreground" : "text-foreground"
@@ -207,8 +218,8 @@ export function CalendarComponent({
                   </span>
                 </div>
 
-                <div className="space-y-1 overflow-hidden">
-                  {dayEvents.slice(0, 4).map(event => (
+                <div className="space-y-1 overflow-hidden flex-1">
+                  {dayEvents.slice(0, MAX_VISIBLE_EVENTS).map(event => (
                     <div
                       key={event.id}
                       onClick={(e) => {
@@ -224,10 +235,46 @@ export function CalendarComponent({
                       {event.title}
                     </div>
                   ))}
-                  {dayEvents.length > 4 && (
-                    <div className="text-[10px] text-muted-foreground pl-1 font-medium hover:text-primary hover:underline mt-0.5">
-                      {dayEvents.length - 4} more...
-                    </div>
+                  {dayEvents.length > MAX_VISIBLE_EVENTS && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <div
+                          className="text-[10px] text-muted-foreground pl-1 font-medium hover:text-primary hover:underline mt-0.5 w-fit cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {hiddenEventsCount} more...
+                        </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-64 z-50 p-2" align="start">
+                        <DropdownMenuLabel className="text-xs font-bold text-muted-foreground uppercase flex items-center justify-between">
+                          <span>{day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                          <span className="text-[10px] font-normal border border-border px-1.5 py-0.5 rounded bg-muted/50">{dayEvents.length} Events</span>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <div className="max-h-[300px] overflow-y-auto space-y-1 pt-1 pr-1">
+                          {dayEvents.map(event => (
+                            <DropdownMenuItem
+                              key={event.id}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEventClick?.(event)
+                              }}
+                              className={cn(
+                                "flex flex-col items-start gap-0.5 cursor-pointer py-2 focus:bg-accent",
+                              )}
+                            >
+                              <div className="flex items-center gap-2 w-full">
+                                <div className={cn("w-2 h-2 rounded-full flex-shrink-0", event.type === 'unavailable' ? 'bg-red-500' : event.type === 'class' ? 'bg-yellow-500' : 'bg-blue-500')} />
+                                <span className="font-semibold text-xs truncate flex-1">{event.title}</span>
+                              </div>
+                              <div className="text-[10px] text-muted-foreground pl-4">
+                                {event.start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - {event.end.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                              </div>
+                            </DropdownMenuItem>
+                          ))}
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 </div>
               </div>
