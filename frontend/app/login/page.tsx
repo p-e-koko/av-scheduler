@@ -6,11 +6,17 @@ import { useRouter } from "next/navigation"
 
 import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
-import { testConnection, removeAuthToken, API_BASE_URL } from "@/lib/api"
+import { authAPI, testConnection, removeAuthToken, API_BASE_URL, formatAPIError } from "@/lib/api"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [localLoading, setLocalLoading] = useState(false)
   const [error, setError] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showLocalLogin, setShowLocalLogin] = useState(false)
   const router = useRouter()
 
   // Test connection on component mount
@@ -23,7 +29,7 @@ export default function LoginPage() {
       // Clear any existing session/cookies on load to prevent conflicts
       removeAuthToken();
     };
-    
+
     checkConnection();
   }, []);
 
@@ -32,6 +38,35 @@ export default function LoginPage() {
     // Clean base URL to ensure we point to the API route correctly
     const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
     window.location.href = `${baseUrl}/login/microsoft/redirect`;
+  };
+
+  const handleLocalLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
+
+    setLocalLoading(true);
+    setError("");
+
+    try {
+      const response = await authAPI.login({ email, password });
+
+      // Based on user role, redirect to appropriate dashboard
+      const user = response.user;
+      if (user) {
+        const role = user.role;
+        if (role === 'admin') router.push('/dashboard/admin');
+        else if (role === 'coordinator') router.push('/dashboard/coordinator');
+        else if (role === 'supervisor') router.push('/dashboard/supervisor');
+        else router.push('/dashboard/student');
+      }
+    } catch (err) {
+      setError(formatAPIError(err));
+    } finally {
+      setLocalLoading(false);
+    }
   };
 
   return (
@@ -54,29 +89,98 @@ export default function LoginPage() {
         <div className="space-y-6">
           {/* Error Message */}
           {error && (
-            <div className="p-4 rounded-xl bg-destructive/10">
-              <p className="text-sm text-destructive font-medium">{error}</p>
+            <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20 animate-in fade-in slide-in-from-top-2 duration-300">
+              <p className="text-sm text-destructive font-medium text-center">{error}</p>
             </div>
           )}
 
-          <Button
-            type="button"
-            className="w-full h-12 text-white font-semibold rounded-xl bg-gradient-to-r from-primary via-primary-medium to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
-            onClick={handleMicrosoftLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Redirecting...</span>
+          {!showLocalLogin ? (
+            <div className="space-y-4">
+              <Button
+                type="button"
+                className="w-full h-12 text-white font-semibold rounded-xl bg-gradient-to-r from-primary via-primary-medium to-primary shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
+                onClick={handleMicrosoftLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Redirecting...</span>
+                  </div>
+                ) : (
+                  <>
+                    <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="microsoft" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M0 32h214.6v214.6H0V32zm233.4 0H448v214.6H233.4V32zM0 265.4h214.6V480H0V265.4zm233.4 0H448V480H233.4V265.4z"></path></svg>
+                    Sign in with Microsoft
+                  </>
+                )}
+              </Button>
+
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or</span>
+                </div>
               </div>
-            ) : (
-              <>
-                <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="microsoft" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path fill="currentColor" d="M0 32h214.6v214.6H0V32zm233.4 0H448v214.6H233.4V32zM0 265.4h214.6V480H0V265.4zm233.4 0H448V480H233.4V265.4z"></path></svg>
-                Sign in with Microsoft
-              </>
-            )}
-          </Button>
+
+              <Button
+                variant="outline"
+                className="w-full h-12 rounded-xl border-border hover:bg-muted/50 transition-all font-medium"
+                onClick={() => setShowLocalLogin(true)}
+              >
+                Use Email & Password
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleLocalLogin} className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email or ID</Label>
+                <Input
+                  id="email"
+                  type="text"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-11 rounded-xl bg-muted/50 border-border focus:ring-2 focus:ring-primary/20"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="h-11 rounded-xl bg-muted/50 border-border focus:ring-2 focus:ring-primary/20"
+                  required
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full h-12 text-white font-semibold rounded-xl bg-gradient-to-r from-primary to-primary-medium shadow-lg shadow-primary/20 hover:scale-[1.01] transition-all"
+                disabled={localLoading}
+              >
+                {localLoading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Signing in...</span>
+                  </div>
+                ) : "Sign In"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full h-10 text-muted-foreground hover:text-foreground text-sm"
+                onClick={() => setShowLocalLogin(false)}
+              >
+                Back to Microsoft Sign In
+              </Button>
+            </form>
+          )}
         </div>
       </div>
     </div>

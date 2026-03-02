@@ -1059,7 +1059,7 @@ function SupervisorDashboard() {
               </Card>
 
               {/* Calendar View */}
-              <div className="h-[500px] sm:h-[700px]">
+              <div className="h-[650px] sm:h-[700px]">
                 <CalendarComponent
                   events={calendarEvents}
                   view={calendarView}
