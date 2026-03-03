@@ -191,7 +191,7 @@ export function CalendarComponent({
         </div>
 
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 grid-rows-6 flex-1 border-l border-border">
+        <div className="grid grid-cols-7 flex-1 border-l border-border">
           {days.map((day, index) => {
             const dayEvents = getEventsForDate(day)
             const isCurrentMonth = day.getMonth() === currentDate.getMonth()
@@ -205,7 +205,7 @@ export function CalendarComponent({
                 key={index}
                 onClick={() => onDateClick?.(day)}
                 className={cn(
-                  "h-[120px] border-b border-r border-border p-1 transition-colors hover:bg-muted/50 cursor-pointer relative flex flex-col gap-1",
+                  "min-h-[100px] sm:min-h-[120px] border-b border-r border-border p-1 transition-colors hover:bg-muted/50 cursor-pointer relative flex flex-col gap-1",
                   !isCurrentMonth && "bg-muted/30 text-muted-foreground"
                 )}
               >
@@ -446,7 +446,7 @@ export function CalendarComponent({
   const navigate = getNavigationHandler()
 
   return (
-    <Card className={cn("bg-card border shadow-sm overflow-hidden flex flex-col h-full", className)}>
+    <Card className={cn("bg-card border shadow-sm flex flex-col h-full", className)}>
       <CardHeader className="border-b border-border px-4 py-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
@@ -521,7 +521,7 @@ export function CalendarComponent({
         </div>
       </CardHeader>
 
-      <CardContent className="p-0 flex-1 overflow-hidden">
+      <CardContent className="p-0 flex-1">
         {view === "month" && renderMonthView()}
         {view === "week" && renderWeekView()}
         {view === "day" && renderDayView()}
