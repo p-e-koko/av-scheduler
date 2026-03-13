@@ -145,10 +145,10 @@ export function DailyAvailabilityView({
                                                     return (
                                                         <div
                                                             key={student.id}
-                                                            className="flex items-center gap-3 bg-[#1E1E21]/50 border border-[#2A2A2E] rounded-xl pl-2.5 pr-4 py-2 hover:bg-[#2A2A2E] hover:border-[#3A3A3E] hover:scale-[1.02] transition-all duration-200 cursor-pointer shadow-sm group/card"
+                                                            className="flex items-center gap-3 bg-[#1E1E21]/50 rounded-xl pl-2.5 pr-4 py-2 hover:bg-[#2A2A2E] hover:scale-[1.02] transition-all duration-200 cursor-pointer shadow-sm group/card"
                                                             onClick={() => window.location.href = `/student/${student.id}`}
                                                         >
-                                                            <Avatar className={cn("h-8 w-8 ring-2 ring-offset-2 ring-offset-[#121214]", style.border)}>
+                                                            <Avatar className="h-8 w-8">
                                                                 <AvatarImage src={student.profile_picture_url || ""} />
                                                                 <AvatarFallback className={cn("text-[10px] font-black text-white", style.bg)}>
                                                                     {getInitials(student.name)}
