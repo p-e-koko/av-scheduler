@@ -59,6 +59,7 @@ import {
 } from "@/lib/api"
 import { ModeToggle } from "@/components/mode-toggle"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
+import { DailyAvailabilityView } from "@/components/DailyAvailabilityView"
 
 function CoordinatorDashboard() {
   const router = useRouter()
@@ -969,142 +970,15 @@ function CoordinatorDashboard() {
             </div>
           )}
 
-          {/* Schedules Tab */}
           {activeTab === "schedules" && (
             <div className="space-y-6">
-              <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
-                <CardHeader className="flex flex-col md:flex-row items-center justify-between pb-2 gap-4">
-                  <CardTitle className="text-foreground font-bold">Daily Availability View</CardTitle>
-                  <div className="flex items-center bg-card rounded-lg border border-border shadow-sm p-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
-                      onClick={() => {
-                        const date = new Date(selectedDate)
-                        date.setDate(date.getDate() - 1)
-                        setSelectedDate(date.toISOString().split('T')[0])
-                      }}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-
-                    <div className="flex items-center px-2">
-                      <Label htmlFor="date-picker" className="sr-only">Select Date</Label>
-                      <Input
-                        id="date-picker"
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-auto border-0 focus-visible:ring-0 h-8 font-medium text-foreground bg-transparent p-0"
-                      />
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:bg-muted rounded-md text-muted-foreground"
-                      onClick={() => {
-                        const date = new Date(selectedDate)
-                        date.setDate(date.getDate() + 1)
-                        setSelectedDate(date.toISOString().split('T')[0])
-                      }}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {loading ? (
-                      <div className="text-center py-8 text-muted-foreground">Loading availability...</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => { // 7 AM to 9 PM
-                          const timeString = `${hour.toString().padStart(2, '0')}:00`;
-
-                          // Filter students who don't have a conflict
-                          const uniqueStudents = (students || []).filter(student => {
-                            // Check for conflicts
-                            const hasConflict = availability.some(a => {
-                              if (a.student_id !== student.id.toString() && a.student_id !== student.id) return false; // Handle potential string/number mismatch
-                              // We only care about blocking statuses
-                              if (a.status !== 'class' && a.status !== 'unavailable') return false;
-
-                              const startHour = parseInt(a.start_time.split(':')[0]);
-                              const endHour = parseInt(a.end_time.split(':')[0]);
-
-                              // Check if this hour falls within the blocked slot
-                              return hour >= startHour && hour < endHour;
-                            });
-
-                            return !hasConflict;
-                          });
-
-                          return (
-                            <div key={hour} className="flex border-b border-border py-3 last:border-0">
-                              <div className="w-20 flex-shrink-0 font-medium text-muted-foreground pt-2">
-                                {timeString}
-                              </div>
-                              <div className="flex-1">
-                                {uniqueStudents.length > 0 ? (
-                                  <div className="flex flex-wrap gap-2">
-                                    {uniqueStudents.map((student: any) => {
-                                      // Pen Hex Colors Reference - Darker Shades
-                                      const colors = [
-                                        // Blue
-                                        { border: 'border-[#2874A6]', bg: 'bg-[#2874A6]' },
-                                        // Red
-                                        { border: 'border-[#910100]', bg: 'bg-[#910100]' },
-                                        // Purple
-                                        { border: 'border-[#7B4384]', bg: 'bg-[#7B4384]' },
-                                        // Yellow
-                                        { border: 'border-[#FAA300]', bg: 'bg-[#FAA300]' },
-                                      ];
-                                      const colorIndex = student.id.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) % colors.length;
-                                      const style = colors[colorIndex];
-
-                                      return (
-                                        <div
-                                          key={student.id}
-                                          className={`
-                                            flex items-center space-x-2 
-                                            bg-card border-l-[3px] ${style.border}
-                                            rounded-r-lg rounded-l-[2px]
-                                            pl-2 pr-3 py-1.5 
-                                            cursor-pointer 
-                                            transition-all duration-300 
-                                            hover:scale-105 shadow-sm hover:shadow-md hover:bg-muted
-                                            border-y border-r border-border
-                                            group
-                                          `}
-                                          onClick={() => router.push(`/student/${student.id}`)}
-                                        >
-                                          <Avatar className={`h-6 w-6 border ${style.border}`}>
-                                            <AvatarImage src={student.profile_picture_url || ""} />
-                                            <AvatarFallback className={`text-[9px] ${style.bg} text-white font-bold`}>
-                                              {getInitials(student.name)}
-                                            </AvatarFallback>
-                                          </Avatar>
-                                          <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors tracking-wide">
-                                            {student.name}
-                                          </span>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                ) : (
-                                  <div className="text-sm text-muted-foreground italic pt-2">No students available</div>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+              <DailyAvailabilityView
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+                students={students}
+                availability={availability}
+                loading={loading}
+              />
             </div>
           )}
 
