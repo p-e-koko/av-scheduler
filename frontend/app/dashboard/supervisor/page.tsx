@@ -23,14 +23,14 @@ import {
   MoreHorizontal,
   ChevronDown,
   Grid3X3,
-  List
+  List,
+  UserX
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
@@ -118,6 +118,7 @@ function SupervisorDashboard() {
   const [studentPagination, setStudentPagination] = useState<any>(null)
   const [studentCurrentPage, setStudentCurrentPage] = useState(1)
   const [showPendingOnly, setShowPendingOnly] = useState(false)
+  const [processingStudents, setProcessingStudents] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const checkMobile = () => {
@@ -439,6 +440,27 @@ function SupervisorDashboard() {
     }
   }
 
+  const handleApproveStudent = async (student: User) => {
+    if (student.is_approved || processingStudents.has(student.id)) return
+
+    setProcessingStudents(prev => new Set(prev).add(student.id))
+    try {
+      await userAPI.updateUser(student.id, { is_approved: true })
+
+      setStudents(prev => prev.map(s =>
+        s.id === student.id ? { ...s, is_approved: true } : s
+      ))
+    } catch (err) {
+      setError(formatAPIError(err))
+    } finally {
+      setProcessingStudents(prev => {
+        const next = new Set(prev)
+        next.delete(student.id)
+        return next
+      })
+    }
+  }
+
   // Prepare calendar events
   const calendarEvents: CalendarEvent[] = assignments.map(assignment => {
     let colorClass = "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-500";
@@ -515,7 +537,7 @@ function SupervisorDashboard() {
             <div className="space-y-6">
               {/* Controls */}
               <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-                {/* View Toggle */}
+                {/* View Toggle & Pending Filter */}
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border">
                     <Button
@@ -536,10 +558,19 @@ function SupervisorDashboard() {
                       <List className="w-4 h-4 mr-1" />
                       List
                     </Button>
+                    <Button
+                      variant={showPendingOnly ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setShowPendingOnly(prev => !prev)}
+                      className={showPendingOnly ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                    >
+                      <UserX className="w-4 h-4 mr-1" />
+                      Pending
+                    </Button>
                   </div>
                 </div>
 
-                {/* Search and Pending Filter */}
+                {/* Search */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full md:w-auto">
                   <div className="relative w-full md:w-64">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -549,17 +580,6 @@ function SupervisorDashboard() {
                       onChange={(e) => setStudentSearchQuery(e.target.value)}
                       className="pl-10 w-full bg-card/80 backdrop-blur-xl border-border focus:border-primary"
                     />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="pending-students-toggle"
-                      checked={showPendingOnly}
-                      onCheckedChange={(checked) => setShowPendingOnly(!!checked)}
-                    />
-                    <Label htmlFor="pending-students-toggle" className="text-xs sm:text-sm text-muted-foreground cursor-pointer">
-                      Show pending approvals only
-                    </Label>
                   </div>
                 </div>
               </div>
@@ -606,6 +626,11 @@ function SupervisorDashboard() {
                                     }`}>
                                     {Number(student.remaining_hours_this_week || 0).toFixed(1)}h Remaining
                                   </Badge>
+                                  {student.is_approved === false && (
+                                    <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                                      Pending approval
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -640,8 +665,7 @@ function SupervisorDashboard() {
                             {(paginatedStudents || []).map((student) => (
                               <tr
                                 key={student.id}
-                                className="hover:bg-muted/30 transition-colors cursor-pointer"
-                                onClick={() => router.push(`/student/${student.id}`)}
+                                className="hover:bg-muted/30 transition-colors"
                               >
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex items-center">
@@ -661,6 +685,13 @@ function SupervisorDashboard() {
                                   <Badge variant="secondary" className="text-xs">
                                     Student
                                   </Badge>
+                                  {student.is_approved === false && (
+                                    <span className="ml-2">
+                                      <Badge variant="destructive" className="text-xs">
+                                        Pending
+                                      </Badge>
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="flex flex-col gap-1">
@@ -680,6 +711,29 @@ function SupervisorDashboard() {
                                     {student.email}
                                     {student.email_verified_at && (
                                       <CheckCircle className="w-4 h-4 text-green-500" />
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => router.push(`/student/${student.id}`)}
+                                    >
+                                      View
+                                    </Button>
+                                    {student.is_approved === false && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-emerald-500 hover:text-emerald-50 hover:bg-emerald-600/80"
+                                        onClick={() => handleApproveStudent(student)}
+                                        disabled={processingStudents.has(student.id)}
+                                      >
+                                        <CheckCircle className={`w-4 h-4 mr-1 ${processingStudents.has(student.id) ? 'animate-pulse' : ''}`} />
+                                        {processingStudents.has(student.id) ? 'Approving...' : 'Approve'}
+                                      </Button>
                                     )}
                                   </div>
                                 </td>
