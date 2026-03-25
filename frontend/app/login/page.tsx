@@ -1,7 +1,7 @@
 ﻿"use client"
 
 import * as React from "react"
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { useRouter } from "next/navigation"
 
 import { ModeToggle } from "@/components/mode-toggle"
@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button"
 import { authAPI, testConnection, removeAuthToken, API_BASE_URL, formatAPIError } from "@/lib/api"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useSearchParams } from "next/navigation"
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [localLoading, setLocalLoading] = useState(false)
   const [error, setError] = useState("")
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showLocalLogin, setShowLocalLogin] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Test connection on component mount
   React.useEffect(() => {
@@ -32,6 +34,14 @@ export default function LoginPage() {
 
     checkConnection();
   }, []);
+
+  // Read error from query string (e.g. pending approval from Microsoft login)
+  React.useEffect(() => {
+    const errorFromQuery = searchParams.get("error");
+    if (errorFromQuery) {
+      setError(errorFromQuery);
+    }
+  }, [searchParams]);
 
   const handleMicrosoftLogin = () => {
     setIsLoading(true);
@@ -184,5 +194,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    }>
+      <LoginPageContent />
+    </Suspense>
   )
 }

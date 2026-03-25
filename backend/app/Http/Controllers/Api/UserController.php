@@ -42,6 +42,13 @@ class UserController extends Controller
             });
         }
 
+        if ($request->has('is_approved')) {
+            $isApproved = filter_var($request->input('is_approved'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if (!is_null($isApproved)) {
+                $query->where('is_approved', $isApproved);
+            }
+        }
+
         // Add pagination
         $perPage = $request->get('per_page', 15);
         $users = $query->orderBy('users.created_at', 'desc')->paginate($perPage);

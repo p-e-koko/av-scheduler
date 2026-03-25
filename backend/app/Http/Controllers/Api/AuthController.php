@@ -340,7 +340,9 @@ class AuthController extends Controller
             return redirect(config('app.frontend_url') . '/login?error=Unable to login with ' . $provider . ': ' . $errorMessage);
         }
 
-        $user = User::withTrashed()->where('email', $socialUser->getEmail())->first();
+    $user = User::withTrashed()->where('email', $socialUser->getEmail())->first();
+
+    $isNewUser = !$user;
 
         $updateData = [
             'provider' => $provider,
@@ -354,7 +356,7 @@ class AuthController extends Controller
             $updateData['microsoft_token_expires_at'] = now()->addSeconds($socialUser->expiresIn);
         }
 
-        if ($user) {
+           if ($user) {
             if ($user->trashed()) {
                  $user->restore();
             }
@@ -372,10 +374,21 @@ class AuthController extends Controller
                 'password' => null,
                 'role' => 'student',
                 'email_verified_at' => now(),
+                'is_approved' => false,
             ], $updateData);
 
             $user = User::create($createData);
             AuditLogger::log('User Registered (Microsoft)', ['email' => $user->email, 'role' => $user->role]);
+        }
+
+        // Require admin approval for new Microsoft accounts
+        if ($isNewUser && !$user->is_approved) {
+            return redirect(config('app.frontend_url') . '/login?error=' . urlencode('Your account has been created and is pending admin approval.'));
+        }
+
+        // Block login for unapproved existing users
+        if (!$user->is_approved) {
+            return redirect(config('app.frontend_url') . '/login?error=' . urlencode('Your account is pending admin approval.'));
         }
 
         Auth::login($user, true);

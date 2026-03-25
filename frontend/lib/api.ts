@@ -52,6 +52,7 @@ export interface User {
   phone_number?: string | null;
   role: 'admin' | 'supervisor' | 'coordinator' | 'student';
   roles?: string[];
+  is_approved?: boolean;
   permissions?: string[];
   profile_picture?: string;
   profile_picture_url?: string;
@@ -661,6 +662,7 @@ export interface UsersQueryParams {
   per_page?: number;
   role?: string;
   search?: string;
+   is_approved?: boolean;
 }
 
 export interface AssignmentsQueryParams {
@@ -695,6 +697,7 @@ export const userAPI = {
     if (params.per_page) queryParams.append('per_page', params.per_page.toString());
     if (params.role) queryParams.append('role', params.role);
     if (params.search) queryParams.append('search', params.search);
+    if (params.is_approved !== undefined) queryParams.append('is_approved', String(params.is_approved));
 
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/users?${queryString}` : '/users';

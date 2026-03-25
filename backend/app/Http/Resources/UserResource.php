@@ -23,6 +23,7 @@ class UserResource extends JsonResource
             'phone_number' => $this->phone_number,
             'role' => $this->role,
             'roles' => $this->getRoleNames(),
+            'is_approved' => $this->is_approved,
             'profile_picture' => $this->profile_picture,
             'profile_picture_url' => $this->getProfilePictureUrlAttribute(),
             'promised_hours_per_week' => $this->promised_hours_per_week,

@@ -62,6 +62,7 @@ function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showPendingOnly, setShowPendingOnly] = useState(false)
   // pagination removed
 
   // Sync state to URL
@@ -110,9 +111,10 @@ function AdminDashboard() {
       setLoading(true)
       setError(null)
 
-      // Fetch ALL users
+      // Fetch ALL users, optionally filtered by approval status
       const response = await userAPI.getUsers({
-        per_page: 2000
+        per_page: 2000,
+        is_approved: showPendingOnly ? false : undefined,
       })
 
       // Temporary debug: Log Derek's user data
@@ -139,7 +141,7 @@ function AdminDashboard() {
     if (currentUser) {
       fetchUsers()
     }
-  }, [currentUser])
+  }, [currentUser, showPendingOnly])
 
   // Debounce search
   useEffect(() => {
@@ -335,6 +337,17 @@ function AdminDashboard() {
               <option value="coordinator">Coordinator</option>
               <option value="student">Student</option>
             </select>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="pending-toggle"
+                checked={showPendingOnly}
+                onCheckedChange={(checked) => setShowPendingOnly(!!checked)}
+              />
+              <Label htmlFor="pending-toggle" className="text-xs sm:text-sm text-muted-foreground cursor-pointer">
+                Show pending approvals only
+              </Label>
+            </div>
           </div>
         </div>
 

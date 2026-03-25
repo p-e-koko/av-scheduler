@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
@@ -116,6 +117,7 @@ function SupervisorDashboard() {
   const [viewMode, setViewMode] = useState<"card" | "list">("card")
   const [studentPagination, setStudentPagination] = useState<any>(null)
   const [studentCurrentPage, setStudentCurrentPage] = useState(1)
+  const [showPendingOnly, setShowPendingOnly] = useState(false)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -178,6 +180,7 @@ function SupervisorDashboard() {
             userAPI.getUsers({
               role: 'student',
               per_page: 1000,
+              is_approved: showPendingOnly ? false : undefined,
             })
           ]);
           setStudents(studentsResponse.data)
@@ -189,7 +192,7 @@ function SupervisorDashboard() {
           // but for simplicity and correctness (refreshing data) let's fetch.
 
           const [studentsResponse, assignmentsResponse] = await Promise.all([
-            userAPI.getUsers({ role: 'student', per_page: 100 }), // Get all for stats
+            userAPI.getUsers({ role: 'student', per_page: 100 }), // Get all for stats (approved and pending)
             assignmentAPI.getAssignments({ per_page: 100 })
           ]);
 
@@ -243,7 +246,7 @@ function SupervisorDashboard() {
     }
 
     fetchData()
-  }, [currentUser, activeTab, studentCurrentPage]) // Trigger on tab change or page change
+  }, [currentUser, activeTab, studentCurrentPage, showPendingOnly]) // Trigger on tab change, page change, or pending filter
 
   // Debounced search effect
   useEffect(() => {
@@ -536,8 +539,8 @@ function SupervisorDashboard() {
                   </div>
                 </div>
 
-                {/* Search */}
-                <div className="flex items-center space-x-3 w-full md:w-auto">
+                {/* Search and Pending Filter */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full md:w-auto">
                   <div className="relative w-full md:w-64">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -546,6 +549,17 @@ function SupervisorDashboard() {
                       onChange={(e) => setStudentSearchQuery(e.target.value)}
                       className="pl-10 w-full bg-card/80 backdrop-blur-xl border-border focus:border-primary"
                     />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="pending-students-toggle"
+                      checked={showPendingOnly}
+                      onCheckedChange={(checked) => setShowPendingOnly(!!checked)}
+                    />
+                    <Label htmlFor="pending-students-toggle" className="text-xs sm:text-sm text-muted-foreground cursor-pointer">
+                      Show pending approvals only
+                    </Label>
                   </div>
                 </div>
               </div>

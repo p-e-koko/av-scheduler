@@ -46,6 +46,7 @@ class UpdateUserRequest extends FormRequest
                     }
                 }
             ],
+            'is_approved' => 'sometimes|boolean',
         ];
 
         // Make promised_hours_per_week required for students when role is being updated

@@ -33,6 +33,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'provider_id',
         'avatar',
         'role',
+        'is_approved',
         'profile_picture',
         'promised_hours_per_week',
         'remaining_hours_this_week',
@@ -73,6 +74,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'promised_hours_per_week' => 'decimal:2',
             'remaining_hours_this_week' => 'decimal:2',
+            'is_approved' => 'boolean',
             'microsoft_token_expires_at' => 'datetime',
         ];
     }
