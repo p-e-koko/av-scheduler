@@ -1,22 +1,25 @@
 // API configuration and utilities
-export let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pann.khazifire.com/api';
+// Prefer environment variable; fall back to same-origin /api instead of a hard-coded domain
+export let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-// Handle Mixed Content issues automatically
-// Handle Mixed Content and Port issues automatically
+// Normalize and handle Mixed Content / port issues automatically in the browser
 if (typeof window !== 'undefined') {
-  if (window.location.protocol === 'https:') {
-    // Force HTTPS
-    if (API_BASE_URL.startsWith('http:')) {
-      API_BASE_URL = API_BASE_URL.replace('http:', 'https:');
-    }
-    // Remove port 8080 (Railway internal port) from public URL
-    if (API_BASE_URL.includes(':8080')) {
-      API_BASE_URL = API_BASE_URL.replace(':8080', '');
+  // If using an absolute URL, normalize protocol/port
+  if (API_BASE_URL.startsWith('http')) {
+    if (window.location.protocol === 'https:') {
+      // Force HTTPS for absolute URLs
+      if (API_BASE_URL.startsWith('http:')) {
+        API_BASE_URL = API_BASE_URL.replace('http:', 'https:');
+      }
+      // Remove internal ports (e.g. :8080) from public URLs
+      if (API_BASE_URL.includes(':8080')) {
+        API_BASE_URL = API_BASE_URL.replace(':8080', '');
+      }
     }
   }
 }
 
-console.log('Configured API_BASE_URL:', API_BASE_URL);
+console.log('Configured API_BASE_URL (from NEXT_PUBLIC_API_URL or /api):', API_BASE_URL);
 
 // Custom error class for API errors
 export class APIError extends Error {
