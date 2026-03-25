@@ -27,7 +27,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -207,6 +206,38 @@ function AdminDashboard() {
     }
   }
 
+  const handleApproveUser = (user: User) => {
+    if (user.is_approved) return
+
+    setConfirmDialog({
+      isOpen: true,
+      title: "Approve User Account",
+      description: `Are you sure you want to approve ${user.name}'s account so they can access the system?`,
+      action: () => performApproveUser(user.id),
+      variant: "default"
+    })
+  }
+
+  const performApproveUser = async (userId: string) => {
+    setProcessingUsers(prev => new Set(prev).add(userId))
+
+    try {
+      await userAPI.updateUser(userId, { is_approved: true })
+
+      setUsers(prev => prev.map(user =>
+        user.id === userId ? { ...user, is_approved: true } : user
+      ))
+    } catch (err) {
+      setError(formatAPIError(err))
+    } finally {
+      setProcessingUsers(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(userId)
+        return newSet
+      })
+    }
+  }
+
   const handleDeleteUser = (userId: string, userName: string) => {
     setConfirmDialog({
       isOpen: true,
@@ -291,7 +322,7 @@ function AdminDashboard() {
       <main className="flex-1 overflow-auto p-4 sm:p-6">
         {/* Controls */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
-          {/* View Toggle */}
+          {/* View Toggle & Pending Filter */}
           <div className="flex items-center space-x-4 w-full md:w-auto">
             <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-xl rounded-lg p-1 border border-border w-full md:w-auto">
               <Button
@@ -311,6 +342,15 @@ function AdminDashboard() {
               >
                 <List className="w-4 h-4 mr-1" />
                 List
+              </Button>
+              <Button
+                variant={showPendingOnly ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setShowPendingOnly(prev => !prev)}
+                className={`flex-1 md:flex-none ${showPendingOnly ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <UserX className="w-4 h-4 mr-1" />
+                Pending
               </Button>
             </div>
           </div>
@@ -338,16 +378,6 @@ function AdminDashboard() {
               <option value="student">Student</option>
             </select>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="pending-toggle"
-                checked={showPendingOnly}
-                onCheckedChange={(checked) => setShowPendingOnly(!!checked)}
-              />
-              <Label htmlFor="pending-toggle" className="text-xs sm:text-sm text-muted-foreground cursor-pointer">
-                Show pending approvals only
-              </Label>
-            </div>
           </div>
         </div>
 
@@ -414,10 +444,27 @@ function AdminDashboard() {
                             <Badge variant="hours" className="text-xs px-2 py-0.5">
                               {user.promised_hours_per_week || '0'}h
                             </Badge>
+                            {user.is_approved === false && (
+                              <Badge variant="destructive" className="text-xs px-2 py-0.5">
+                                Pending approval
+                              </Badge>
+                            )}
                           </div>
 
                           {hasAnyRole(['admin']) && (
                             <div className="flex gap-1 pt-1">
+                              {user.is_approved === false && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs text-emerald-500 hover:text-white hover:bg-emerald-600/80"
+                                  onClick={() => handleApproveUser(user)}
+                                  disabled={processingUsers.has(user.id)}
+                                >
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  {processingUsers.has(user.id) ? 'Approving...' : 'Approve'}
+                                </Button>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -531,6 +578,18 @@ function AdminDashboard() {
                           {hasAnyRole(['admin']) && (
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                               <div className="flex space-x-2">
+                                {user.is_approved === false && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-emerald-500 hover:text-emerald-50 hover:bg-emerald-600/80 group-hover:text-primary-foreground/80"
+                                    onClick={() => handleApproveUser(user)}
+                                    disabled={processingUsers.has(user.id)}
+                                    title={processingUsers.has(user.id) ? 'Approving...' : 'Approve user'}
+                                  >
+                                    <CheckCircle className={`w-4 h-4 ${processingUsers.has(user.id) ? 'animate-pulse' : ''}`} />
+                                  </Button>
+                                )}
                                 <Button
                                   variant="ghost"
                                   size="sm"
