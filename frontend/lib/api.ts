@@ -662,7 +662,7 @@ export interface UsersQueryParams {
   per_page?: number;
   role?: string;
   search?: string;
-   is_approved?: boolean;
+  is_approved?: boolean;
 }
 
 export interface AssignmentsQueryParams {
@@ -1291,3 +1291,117 @@ export const notificationAPI = {
   },
 };
 
+
+// -------------------------------------------------------------------------
+// Equipment Inventory Types & API
+// -------------------------------------------------------------------------
+
+export interface Equipment {
+  id: string;
+  name: string;
+  category: string;
+  barcode: string;
+  location: string;
+  purchase_date?: string | null;
+  condition: 'good' | 'fair' | 'poor';
+  status: 'available' | 'checked_out' | 'maintenance';
+  current_checkout?: EquipmentCheckout | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface EquipmentCheckout {
+  id: string;
+  equipment_id: string;
+  user_id: string;
+  event_note: string;
+  checked_out_at: string;
+  returned_at?: string | null;
+  return_note?: string | null;
+  equipment?: Equipment;
+  user?: User;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface EquipmentListResponse {
+  data: Equipment[];
+  meta: { total: number; per_page: number; current_page: number; last_page: number; };
+}
+
+export interface CheckoutListResponse {
+  data: EquipmentCheckout[];
+  meta: { total: number; per_page: number; current_page: number; last_page: number; };
+}
+
+export const equipmentAPI = {
+  async list(params: Record<string, string | number> = {}): Promise<EquipmentListResponse> {
+    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
+    return apiCall<EquipmentListResponse>('/equipment' + (qs ? '?' + qs : ''));
+  },
+  async get(id: string): Promise<{ equipment: Equipment }> {
+    return apiCall<{ equipment: Equipment }>('/equipment/' + id);
+  },
+  async scan(barcode: string): Promise<{ equipment: Equipment }> {
+    return apiCall<{ equipment: Equipment }>('/equipment/scan/' + encodeURIComponent(barcode));
+  },
+  async create(data: { name: string; category: string; location: string; purchase_date?: string; condition?: string; }): Promise<{ message: string; equipment: Equipment }> {
+    return apiCall<{ message: string; equipment: Equipment }>('/equipment', { method: 'POST', body: JSON.stringify(data) });
+  },
+  async update(id: string, data: Partial<Equipment>): Promise<{ message: string; equipment: Equipment }> {
+    return apiCall<{ message: string; equipment: Equipment }>('/equipment/' + id, { method: 'PUT', body: JSON.stringify(data) });
+  },
+  async delete(id: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>('/equipment/' + id, { method: 'DELETE' });
+  },
+  async forceDelete(id: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>('/equipment/' + id + '/force', { method: 'DELETE' });
+  },
+  async restore(id: string): Promise<{ message: string; equipment: Equipment }> {
+    return apiCall<{ message: string; equipment: Equipment }>('/equipment/' + id + '/restore', { method: 'POST' });
+  },
+  async trashed(params: Record<string, string | number> = {}): Promise<EquipmentListResponse> {
+    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
+    return apiCall<EquipmentListResponse>('/equipment/trashed' + (qs ? '?' + qs : ''));
+  },
+  async checkout(barcode: string, event_note: string): Promise<{ message: string; checkout: EquipmentCheckout }> {
+    return apiCall<{ message: string; checkout: EquipmentCheckout }>('/equipment/scan/' + encodeURIComponent(barcode) + '/checkout', { method: 'POST', body: JSON.stringify({ event_note }) });
+  },
+  async return(barcode: string, return_note?: string): Promise<{ message: string; checkout: EquipmentCheckout }> {
+    return apiCall<{ message: string; checkout: EquipmentCheckout }>('/equipment/scan/' + encodeURIComponent(barcode) + '/return', { method: 'POST', body: JSON.stringify({ return_note: return_note ?? null }) });
+  },
+  async history(id: string): Promise<{ equipment: Equipment; history: EquipmentCheckout[] }> {
+    return apiCall<{ equipment: Equipment; history: EquipmentCheckout[] }>('/equipment/' + id + '/history');
+  },
+  async myEquipment(): Promise<{ checkouts: EquipmentCheckout[] }> {
+    return apiCall<{ checkouts: EquipmentCheckout[] }>('/equipment/my');
+  },
+};
+
+export const checkoutAPI = {
+  async list(params: Record<string, string | number> = {}): Promise<CheckoutListResponse> {
+    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
+    return apiCall<CheckoutListResponse>('/equipment-checkouts' + (qs ? '?' + qs : ''));
+  },
+  async get(id: string): Promise<{ checkout: EquipmentCheckout }> {
+    return apiCall<{ checkout: EquipmentCheckout }>('/equipment-checkouts/' + id);
+  },
+  async update(id: string, data: Partial<EquipmentCheckout>): Promise<{ message: string; checkout: EquipmentCheckout }> {
+    return apiCall<{ message: string; checkout: EquipmentCheckout }>('/equipment-checkouts/' + id, { method: 'PUT', body: JSON.stringify(data) });
+  },
+  async delete(id: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>('/equipment-checkouts/' + id, { method: 'DELETE' });
+  },
+  async forceDelete(id: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>('/equipment-checkouts/' + id + '/force', { method: 'DELETE' });
+  },
+  async restore(id: string): Promise<{ message: string; checkout: EquipmentCheckout }> {
+    return apiCall<{ message: string; checkout: EquipmentCheckout }>('/equipment-checkouts/' + id + '/restore', { method: 'POST' });
+  },
+  async trashed(params: Record<string, string | number> = {}): Promise<CheckoutListResponse> {
+    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
+    return apiCall<CheckoutListResponse>('/equipment-checkouts/trashed' + (qs ? '?' + qs : ''));
+  },
+};

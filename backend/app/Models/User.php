@@ -107,6 +107,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the equipment checkouts for the user.
+     */
+    public function equipmentCheckouts()
+    {
+        return $this->hasMany(EquipmentCheckout::class, 'user_id');
+    }
+
+    /**
      * Check if user has a specific role.
      * Removed manual override to use Spatie's hasRole method.
      */
