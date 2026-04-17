@@ -15,6 +15,7 @@ import ConfirmationDialog from "@/components/ConfirmationDialog"
 import BarcodeScannerModal from "@/components/BarcodeScannerModal"
 import AddEquipmentModal from "@/components/AddEquipmentModal"
 import EquipmentHistoryModal from "@/components/EquipmentHistoryModal"
+import EquipmentDetailModal from "@/components/EquipmentDetailModal"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import {
     equipmentAPI, getStoredUser, formatAPIError, hasAnyRole,
@@ -48,6 +49,7 @@ function InventoryPage() {
     const [showScannerModal, setShowScannerModal] = useState(false)
     const [showAddModal, setShowAddModal] = useState(false)
     const [showHistoryModal, setShowHistoryModal] = useState(false)
+    const [showDetailModal, setShowDetailModal] = useState(false)
     const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null)
     const [confirmDialog, setConfirmDialog] = useState<{
         isOpen: boolean; title: string; description: string;
@@ -194,7 +196,8 @@ function InventoryPage() {
                                 const StatusIcon = statusCfg.icon
                                 return (
                                     <Card key={item.id}
-                                        className="bg-card/90 backdrop-blur-xl border-0 shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all">
+                                        className="bg-card/90 backdrop-blur-xl border-0 shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all cursor-pointer group"
+                                        onClick={() => { setSelectedEquipment(item); setShowDetailModal(true) }}>
                                         <CardContent className="p-4 space-y-3">
                                             {/* Name + Status */}
                                             <div className="flex items-start justify-between gap-2">
@@ -229,7 +232,7 @@ function InventoryPage() {
                                             )}
 
                                             {/* Actions */}
-                                            <div className="flex gap-1 pt-1 border-t border-border">
+                                            <div className="flex gap-1 pt-1 border-t border-border" onClick={e => e.stopPropagation()}>
                                                 <Button variant="ghost" size="sm" className="h-7 px-2 text-xs flex-1"
                                                     onClick={() => { setSelectedEquipment(item); setShowHistoryModal(true) }}>
                                                     <History className="w-3 h-3 mr-1" />History
@@ -296,6 +299,11 @@ function InventoryPage() {
             <EquipmentHistoryModal
                 isOpen={showHistoryModal}
                 onClose={() => { setShowHistoryModal(false); setSelectedEquipment(null) }}
+                equipment={selectedEquipment}
+            />
+            <EquipmentDetailModal
+                isOpen={showDetailModal}
+                onClose={() => { setShowDetailModal(false); setSelectedEquipment(null) }}
                 equipment={selectedEquipment}
             />
             <ConfirmationDialog
