@@ -195,16 +195,25 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
 
     // -------------------------------------------------------------------------
-    // Equipment Inventory Routes
+    // Equipment & Cables Inventory Routes
     // -------------------------------------------------------------------------
 
-    // Admin, Coordinator, Supervisor: Manage equipment + view trashed
+    // Admin, Coordinator, Supervisor: Manage equipment/cables + view trashed
     Route::middleware(['role:admin,coordinator,supervisor'])->group(function () {
+        // Equipment
         Route::post('/equipment', [EquipmentController::class, 'store']);
         Route::put('/equipment/{equipment}', [EquipmentController::class, 'update']);
         Route::delete('/equipment/{equipment}', [EquipmentController::class, 'destroy']);
         Route::post('/equipment/{id}/restore', [EquipmentController::class, 'restore']);
         Route::get('/equipment/trashed', [EquipmentController::class, 'trashed']);
+        Route::get('/equipment/locations', [EquipmentController::class, 'locations']);
+
+        // Cables
+        Route::post('/cables', [\App\Http\Controllers\Api\CableController::class, 'store']);
+        Route::put('/cables/{cable}', [\App\Http\Controllers\Api\CableController::class, 'update']);
+        Route::delete('/cables/{cable}', [\App\Http\Controllers\Api\CableController::class, 'destroy']);
+        Route::get('/cables/trashed', [\App\Http\Controllers\Api\CableController::class, 'trashed']);
+        Route::get('/cables/locations', [\App\Http\Controllers\Api\CableController::class, 'locations']);
 
         Route::get('/equipment-checkouts/trashed', [EquipmentCheckoutController::class, 'trashed']);
         Route::put('/equipment-checkouts/{id}', [EquipmentCheckoutController::class, 'update']);
@@ -216,9 +225,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['role:admin'])->group(function () {
         Route::delete('/equipment/{id}/force', [EquipmentController::class, 'forceDelete']);
         Route::delete('/equipment-checkouts/{id}/force', [EquipmentCheckoutController::class, 'forceDelete']);
+        Route::delete('/cables/{id}/force', [\App\Http\Controllers\Api\CableController::class, 'forceDelete']); // Note: Need to implement in CableController
     });
 
     // All authenticated users: View inventory, My equipment, Scan operations
+    // Equipment
     Route::get('/equipment', [EquipmentController::class, 'index']);
     Route::get('/equipment/my', [EquipmentController::class, 'myEquipment']);
     Route::get('/equipment/scan/{barcode}', [EquipmentController::class, 'scan']);
@@ -226,6 +237,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/equipment/scan/{barcode}/return', [EquipmentController::class, 'return']);
     Route::get('/equipment/{equipment}', [EquipmentController::class, 'show']);
     Route::get('/equipment/{equipment}/history', [EquipmentController::class, 'history']);
+
+    // Cables
+    Route::get('/cables', [\App\Http\Controllers\Api\CableController::class, 'index']);
+    Route::get('/cables/scan/{barcode}', [\App\Http\Controllers\Api\CableController::class, 'scan']);
+    Route::post('/cables/scan/{barcode}/checkout', [\App\Http\Controllers\Api\CableController::class, 'checkout']);
+    Route::post('/cables/scan/{barcode}/return', [\App\Http\Controllers\Api\CableController::class, 'return']);
+    Route::get('/cables/{cable}', [\App\Http\Controllers\Api\CableController::class, 'show']);
+    Route::get('/cables/{cable}/history', [\App\Http\Controllers\Api\CableController::class, 'history']);
 
     // All authenticated users: View checkout records
     Route::get('/equipment-checkouts', [EquipmentCheckoutController::class, 'index']);

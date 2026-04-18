@@ -6,60 +6,67 @@ import Barcode from "react-barcode"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { equipmentAPI, formatAPIError, type Equipment } from "@/lib/api"
+import { cableAPI, formatAPIError, type Cable } from "@/lib/api"
 
 interface Props {
     isOpen: boolean
     onClose: () => void
     onSaved: () => void
-    editEquipment?: Equipment | null
+    editCable?: Cable | null
 }
 
-export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipment }: Props) {
-    const isEdit = !!editEquipment
+export default function AddCableModal({ isOpen, onClose, onSaved, editCable }: Props) {
+    const isEdit = !!editCable
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [createdBarcode, setCreatedBarcode] = useState<string | null>(null)
+    const [copied, setCopied] = useState(false)
 
     const [form, setForm] = useState({
-        name: "", category: "", location: "", purchase_date: "", condition: "good",
+        name: "",
+        length: "",
+        amount: 0,
+        category: "XLR",
+        location: "",
+        purchase_date: "",
+        condition: "good",
     })
-    const [copied, setCopied] = useState(false)
-    const barcodeRef = useRef<any>(null)
 
     useEffect(() => {
         if (isOpen) {
             setError(null)
             setCreatedBarcode(null)
-            if (editEquipment) {
+            if (editCable) {
                 setForm({
-                    name: editEquipment.name,
-                    category: editEquipment.category,
-                    location: editEquipment.location,
-                    purchase_date: editEquipment.purchase_date ?? "",
-                    condition: editEquipment.condition,
+                    name: editCable.name,
+                    length: editCable.length,
+                    amount: editCable.amount,
+                    category: editCable.category || "Other",
+                    location: editCable.location,
+                    purchase_date: editCable.purchase_date ?? "",
+                    condition: editCable.condition,
                 })
             } else {
-                setForm({ name: "", category: "", location: "", purchase_date: "", condition: "good" })
+                setForm({ name: "", length: "", amount: 0, category: "XLR", location: "", purchase_date: "", condition: "good" })
             }
         }
-    }, [isOpen, editEquipment])
+    }, [isOpen, editCable])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         setError(null)
         try {
-            if (isEdit && editEquipment) {
-                await equipmentAPI.update(editEquipment.id, {
+            if (isEdit && editCable) {
+                await cableAPI.update(editCable.id, {
                     ...form,
                     condition: form.condition as 'good' | 'fair' | 'poor',
                 })
                 onSaved()
                 onClose()
             } else {
-                const res = await equipmentAPI.create(form)
-                setCreatedBarcode(res.equipment.barcode)
+                const res = await cableAPI.create(form)
+                setCreatedBarcode(res.cable.barcode)
                 onSaved()
             }
         } catch (err) {
@@ -71,9 +78,8 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
 
     const handleCopy = async () => {
         if (!createdBarcode) return
-
         try {
-            const canvas = document.querySelector('.barcode-container canvas') as HTMLCanvasElement
+            const canvas = document.querySelector('.barcode-container-cable canvas') as HTMLCanvasElement
             if (canvas) {
                 const blob = await new Promise<Blob | null>(res => canvas.toBlob(res))
                 if (blob) {
@@ -101,7 +107,7 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <div className="flex items-center gap-2">
                         <Package className="w-5 h-5 text-primary" />
-                        <h2 className="text-lg font-semibold">{isEdit ? "Edit Equipment" : "Add Equipment"}</h2>
+                        <h2 className="text-lg font-semibold">{isEdit ? "Edit Cable" : "Add Cable"}</h2>
                     </div>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
                         <X className="w-4 h-4" />
@@ -109,12 +115,11 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                 </div>
 
                 <div className="p-5">
-                    {/* After create: show generated barcode */}
                     {createdBarcode ? (
                         <div className="text-center space-y-4">
                             <div className="bg-white/5 border border-border rounded-lg p-6 flex flex-col items-center">
-                                <p className="text-sm text-muted-foreground mb-4">Equipment created! Barcode label:</p>
-                                <div className="bg-white p-4 rounded-md barcode-container">
+                                <p className="text-sm text-muted-foreground mb-4">Cable created! Barcode label:</p>
+                                <div className="bg-white p-4 rounded-md barcode-container-cable">
                                     <Barcode
                                         value={createdBarcode}
                                         width={2}
@@ -126,7 +131,7 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                                     />
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-4">
-                                    Copy or print this barcode for the equipment.
+                                    Copy or print this barcode for the cable bundle.
                                 </p>
                             </div>
                             <div className="flex gap-2">
@@ -143,26 +148,39 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="eq-name">Name <span className="text-destructive">*</span></Label>
-                                <Input id="eq-name" required value={form.name}
+                                <Label htmlFor="cb-name">Name <span className="text-destructive">*</span></Label>
+                                <Input id="cb-name" required value={form.name}
                                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                                    placeholder="e.g. Sony A7III Camera" />
+                                    placeholder="e.g. XLR Cable" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-2">
-                                    <Label htmlFor="eq-category">Category <span className="text-destructive">*</span></Label>
-                                    <select id="eq-category" required value={form.category}
+                                    <Label htmlFor="cb-length">Length <span className="text-destructive">*</span></Label>
+                                    <Input id="cb-length" required value={form.length}
+                                        onChange={e => setForm(f => ({ ...f, length: e.target.value }))}
+                                        placeholder="e.g. 5m, 10m" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="cb-amount">Initial Amount <span className="text-destructive">*</span></Label>
+                                    <Input id="cb-amount" type="number" required value={form.amount}
+                                        onChange={e => setForm(f => ({ ...f, amount: parseInt(e.target.value) || 0 }))}
+                                        min={0} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="cb-category">Category <span className="text-destructive">*</span></Label>
+                                    <select id="cb-category" required value={form.category}
                                         onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                                         className="w-full px-3 py-2 rounded-md border border-border bg-background text-foreground text-sm">
-                                        <option value="">Select…</option>
-                                        {["Audio Indoor", "Audio Outdoor", "Livestream", "Lighting", "Other"].map(c => (
+                                        {["XLR", "HDMI", "SDI", "USB", "Power", "Other"].map(c => (
                                             <option key={c} value={c}>{c}</option>
                                         ))}
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="eq-condition">Condition</Label>
-                                    <select id="eq-condition" value={form.condition}
+                                    <Label htmlFor="cb-condition">Condition</Label>
+                                    <select id="cb-condition" value={form.condition}
                                         onChange={e => setForm(f => ({ ...f, condition: e.target.value }))}
                                         className="w-full px-3 py-2 rounded-md border border-border bg-background text-foreground text-sm">
                                         <option value="good">Good</option>
@@ -172,17 +190,16 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="eq-location">
+                                <Label htmlFor="cb-location">
                                     Location <span className="text-destructive">*</span>
-                                    {!isEdit && <span className="text-xs text-muted-foreground ml-1">(used to generate barcode)</span>}
                                 </Label>
-                                <Input id="eq-location" required value={form.location}
+                                <Input id="cb-location" required value={form.location}
                                     onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                                    placeholder="e.g. Studio A, Storage Room" />
+                                    placeholder="e.g. Cable Bin 1, Studio A" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="eq-date">Purchase Date</Label>
-                                <Input id="eq-date" type="date" value={form.purchase_date}
+                                <Label htmlFor="cb-date">Purchase Date</Label>
+                                <Input id="cb-date" type="date" value={form.purchase_date}
                                     onChange={e => setForm(f => ({ ...f, purchase_date: e.target.value }))} />
                             </div>
                             {error && <p className="text-sm text-destructive">{error}</p>}

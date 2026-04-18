@@ -1296,6 +1296,10 @@ export const notificationAPI = {
 // Equipment Inventory Types & API
 // -------------------------------------------------------------------------
 
+// -------------------------------------------------------------------------
+// Equipment & Cables Inventory Types & API
+// -------------------------------------------------------------------------
+
 export interface Equipment {
   id: string;
   name: string;
@@ -1326,8 +1330,44 @@ export interface EquipmentCheckout {
   deleted_at?: string | null;
 }
 
+export interface Cable {
+  id: string;
+  name: string;
+  length: string;
+  amount: number;
+  category: string;
+  barcode: string;
+  location: string;
+  purchase_date?: string | null;
+  condition: 'good' | 'fair' | 'poor';
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface CableCheckout {
+  id: string;
+  cable_id: string;
+  user_id: string;
+  quantity_checked_out: number;
+  event_note: string;
+  checked_out_at: string;
+  returned_at?: string | null;
+  return_note?: string | null;
+  cable?: Cable;
+  user?: User;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
 export interface EquipmentListResponse {
   data: Equipment[];
+  meta: { total: number; per_page: number; current_page: number; last_page: number; };
+}
+
+export interface CableListResponse {
+  data: Cable[];
   meta: { total: number; per_page: number; current_page: number; last_page: number; };
 }
 
@@ -1377,6 +1417,50 @@ export const equipmentAPI = {
   },
   async myEquipment(): Promise<{ checkouts: EquipmentCheckout[] }> {
     return apiCall<{ checkouts: EquipmentCheckout[] }>('/equipment/my');
+  },
+  async locations(): Promise<{ locations: string[] }> {
+    return apiCall<{ locations: string[] }>('/equipment/locations');
+  },
+};
+
+export const cableAPI = {
+  async list(params: Record<string, string | number> = {}): Promise<CableListResponse> {
+    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
+    return apiCall<CableListResponse>('/cables' + (qs ? '?' + qs : ''));
+  },
+  async get(id: string): Promise<{ cable: Cable }> {
+    return apiCall<{ cable: Cable }>('/cables/' + id);
+  },
+  async scan(barcode: string): Promise<{ cable: Cable; active_checkouts: CableCheckout[] }> {
+    return apiCall<{ cable: Cable; active_checkouts: CableCheckout[] }>('/cables/scan/' + encodeURIComponent(barcode));
+  },
+  async create(data: { name: string; length: string; amount: number; category?: string; location: string; purchase_date?: string; condition?: string; }): Promise<{ message: string; cable: Cable }> {
+    return apiCall<{ message: string; cable: Cable }>('/cables', { method: 'POST', body: JSON.stringify(data) });
+  },
+  async update(id: string, data: Partial<Cable>): Promise<{ message: string; cable: Cable }> {
+    return apiCall<{ message: string; cable: Cable }>('/cables/' + id, { method: 'PUT', body: JSON.stringify(data) });
+  },
+  async delete(id: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>('/cables/' + id, { method: 'DELETE' });
+  },
+  async forceDelete(id: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>('/cables/' + id + '/force', { method: 'DELETE' });
+  },
+  async trashed(params: Record<string, string | number> = {}): Promise<CableListResponse> {
+    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
+    return apiCall<CableListResponse>('/cables/trashed' + (qs ? '?' + qs : ''));
+  },
+  async checkout(barcode: string, quantity: number, event_note: string): Promise<{ message: string; checkout: CableCheckout }> {
+    return apiCall<{ message: string; checkout: CableCheckout }>('/cables/scan/' + encodeURIComponent(barcode) + '/checkout', { method: 'POST', body: JSON.stringify({ quantity, event_note }) });
+  },
+  async return(barcode: string, checkout_id: string, return_note?: string): Promise<{ message: string; cable: Cable }> {
+    return apiCall<{ message: string; cable: Cable }>('/cables/scan/' + encodeURIComponent(barcode) + '/return', { method: 'POST', body: JSON.stringify({ checkout_id, return_note: return_note ?? null }) });
+  },
+  async history(id: string): Promise<{ cable: Cable; history: CableCheckout[] }> {
+    return apiCall<{ cable: Cable; history: CableCheckout[] }>('/cables/' + id + '/history');
+  },
+  async locations(): Promise<{ locations: string[] }> {
+    return apiCall<{ locations: string[] }>('/cables/locations');
   },
 };
 

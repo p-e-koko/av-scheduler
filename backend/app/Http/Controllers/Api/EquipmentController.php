@@ -339,4 +339,17 @@ class EquipmentController extends Controller
 
         return response()->json(['message' => 'Equipment permanently deleted']);
     }
+
+    /**
+     * Get all unique locations currently in use.
+     */
+    public function locations(): JsonResponse
+    {
+        $locations = Equipment::select('location')
+            ->distinct()
+            ->orderBy('location')
+            ->pluck('location');
+
+        return response()->json(['locations' => $locations]);
+    }
 }

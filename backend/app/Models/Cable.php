@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Equipment extends Model
+class Cable extends Model
 {
     use HasFactory, SoftDeletes, HasUuid;
 
-    protected $table = 'equipment';
+    protected $table = 'cables';
 
     /**
      * The primary key associated with the table.
@@ -23,12 +23,13 @@ class Equipment extends Model
      */
     protected $fillable = [
         'name',
+        'length',
+        'amount',
         'category',
         'barcode',
         'location',
         'purchase_date',
         'condition',
-        'status',
     ];
 
     /**
@@ -36,52 +37,36 @@ class Equipment extends Model
      */
     protected $casts = [
         'purchase_date' => 'date',
+        'amount' => 'integer',
     ];
 
     /**
-     * Get all checkouts for this equipment.
+     * Get all checkouts for this cable.
      */
     public function checkouts()
     {
-        return $this->hasMany(EquipmentCheckout::class, 'equipment_id');
+        return $this->hasMany(CableCheckout::class, 'cable_id');
     }
 
     /**
-     * Get the current active checkout (not returned yet).
+     * Get active checkouts (not fully returned).
      */
-    public function currentCheckout()
+    public function activeCheckouts()
     {
-        return $this->hasOne(EquipmentCheckout::class, 'equipment_id')->whereNull('returned_at');
-    }
-
-    /**
-     * Scope: available equipment.
-     */
-    public function scopeAvailable($query)
-    {
-        return $query->where('status', 'available');
-    }
-
-    /**
-     * Scope: checked-out equipment.
-     */
-    public function scopeCheckedOut($query)
-    {
-        return $query->where('status', 'checked_out');
+        return $this->hasMany(CableCheckout::class, 'cable_id')->whereNull('returned_at');
     }
 
     /**
      * Generate a unique barcode based on the given location.
-     * Format: E{loc}{num}
-     * e.g. "Studio A" -> "EST001"
+     * Format: C{loc}{num}
+     * e.g. "Studio A" -> "CST001"
      */
     public static function generateBarcode(string $location): string
     {
         // Take first 2 letters of location, uppercase
         $locPart = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $location), 0, 2));
-        $prefix = 'E' . $locPart;
+        $prefix = 'C' . $locPart;
 
-        // Find highest existing number for this prefix
         $barcodes = self::withTrashed()
             ->where('barcode', 'like', "{$prefix}%")
             ->pluck('barcode');
@@ -97,21 +82,5 @@ class Equipment extends Model
         $nextNum = $maxNum + 1;
 
         return $prefix . str_pad($nextNum, 3, '0', STR_PAD_LEFT);
-    }
-
-    /**
-     * Check if equipment is currently available.
-     */
-    public function isAvailable(): bool
-    {
-        return $this->status === 'available';
-    }
-
-    /**
-     * Check if equipment is currently checked out.
-     */
-    public function isCheckedOut(): bool
-    {
-        return $this->status === 'checked_out';
     }
 }

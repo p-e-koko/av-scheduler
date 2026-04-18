@@ -3,16 +3,18 @@
 import { X, Printer } from "lucide-react"
 import Barcode from "react-barcode"
 import { Button } from "@/components/ui/button"
-import type { Equipment } from "@/lib/api"
+import type { Equipment, Cable } from "@/lib/api"
 
 interface Props {
     equipment: Equipment | null
+    cable?: Cable | null
     isOpen: boolean
     onClose: () => void
 }
 
-export default function EquipmentDetailModal({ equipment, isOpen, onClose }: Props) {
-    if (!isOpen || !equipment) return null
+export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose }: Props) {
+    if (!isOpen || (!equipment && !cable)) return null
+    const displayItem = equipment || cable!
 
     const handlePrint = () => {
         window.print()
@@ -32,11 +34,11 @@ export default function EquipmentDetailModal({ equipment, isOpen, onClose }: Pro
                 </div>
 
                 <div className="p-6 text-center">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-4">{equipment.name}</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-4">{displayItem.name}</h3>
 
                     <div className="bg-white p-6 rounded-md shadow-inner flex justify-center mb-6">
                         <Barcode
-                            value={equipment.barcode}
+                            value={displayItem.barcode}
                             width={2}
                             height={80}
                             fontSize={16}
@@ -59,14 +61,14 @@ export default function EquipmentDetailModal({ equipment, isOpen, onClose }: Pro
             <div className="hidden print:flex fixed inset-0 bg-white items-center justify-center p-0 m-0 z-[9999]">
                 <div className="flex flex-col items-center justify-center border-2 border-black p-8 rounded-lg">
                     <Barcode
-                        value={equipment.barcode}
+                        value={displayItem.barcode}
                         width={3}
                         height={100}
                         fontSize={24}
                         background="#ffffff"
                         lineColor="#000000"
                     />
-                    <p className="mt-4 text-xl font-mono font-bold tracking-widest">{equipment.barcode}</p>
+                    <p className="mt-4 text-xl font-mono font-bold tracking-widest">{displayItem.barcode}</p>
                 </div>
             </div>
 

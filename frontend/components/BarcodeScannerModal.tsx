@@ -6,7 +6,7 @@ import { BrowserMultiFormatReader } from "@zxing/library"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { equipmentAPI, formatAPIError, type Equipment } from "@/lib/api"
+import { equipmentAPI, cableAPI, formatAPIError, type Equipment, type Cable, type CableCheckout } from "@/lib/api"
 
 interface Props {
     isOpen: boolean
@@ -19,6 +19,10 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
     const [step, setStep] = useState<ScanStep>("scan")
     const [barcode, setBarcode] = useState("")
     const [equipment, setEquipment] = useState<Equipment | null>(null)
+    const [cable, setCable] = useState<Cable | null>(null)
+    const [activeCableCheckouts, setActiveCableCheckouts] = useState<CableCheckout[]>([])
+    const [checkoutQuantity, setCheckoutQuantity] = useState(1)
+    const [selectedCheckoutId, setSelectedCheckoutId] = useState<string | null>(null)
     const [eventNote, setEventNote] = useState("")
     const [returnNote, setReturnNote] = useState("")
     const [loading, setLoading] = useState(false)
@@ -36,6 +40,10 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
             setStep("scan")
             setBarcode("")
             setEquipment(null)
+            setCable(null)
+            setActiveCableCheckouts([])
+            setCheckoutQuantity(1)
+            setSelectedCheckoutId(null)
             setEventNote("")
             setReturnNote("")
             setError(null)
@@ -87,28 +95,43 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
     }
 
     const handleScan = async (codeToScan?: string | React.MouseEvent) => {
-        const targetBarcode = typeof codeToScan === 'string' ? codeToScan : barcode
-        if (!targetBarcode.trim()) return
+        const targetBarcode = (typeof codeToScan === 'string' ? codeToScan : barcode).trim()
+        if (!targetBarcode) return
 
         setLoading(true)
         setError(null)
         stopScanner()
 
         try {
-            const res = await equipmentAPI.scan(targetBarcode.trim())
-            const item = res.equipment
-            setEquipment(item)
+            // New logic: 'C' prefix for Cables, 'E' for Equipment
+            if (targetBarcode.startsWith("C")) {
+                const res = await cableAPI.scan(targetBarcode)
+                setCable(res.cable)
+                setActiveCableCheckouts(res.active_checkouts)
 
-            if (item.status === "available") {
-                setStep("checkout")
-            } else if (item.status === "checked_out") {
-                setStep("confirm_return")
+                if (res.active_checkouts.length > 0) {
+                    // Decide based on state? For now, if active, offer return, else offer checkout
+                    // Actually, cables can be checked out multiple times
+                    // Let's default to checkout, but show active checkouts
+                    setStep("checkout")
+                } else {
+                    setStep("checkout")
+                }
             } else {
-                setError(`This equipment is currently under maintenance and cannot be checked out.`)
+                const res = await equipmentAPI.scan(targetBarcode)
+                const item = res.equipment
+                setEquipment(item)
+
+                if (item.status === "available") {
+                    setStep("checkout")
+                } else if (item.status === "checked_out") {
+                    setStep("confirm_return")
+                } else {
+                    setError(`This equipment is currently under maintenance and cannot be checked out.`)
+                }
             }
         } catch (err: any) {
             setError(formatAPIError(err))
-            // Only restart scanner if we were in camera mode and failed
             if (isCameraActive && step === "scan") startScanner()
         } finally {
             setLoading(false)
@@ -117,14 +140,20 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
 
     const handleCheckout = async () => {
         if (!eventNote.trim()) { setError("Event note is required."); return }
-        if (!equipment) return
         setLoading(true)
         setError(null)
         try {
-            const res = await equipmentAPI.checkout(equipment.barcode, eventNote.trim())
-            setResultMessage(res.message)
-            setResultSuccess(true)
-            setStep("result")
+            if (equipment) {
+                const res = await equipmentAPI.checkout(equipment.barcode, eventNote.trim())
+                setResultMessage(res.message)
+                setResultSuccess(true)
+                setStep("result")
+            } else if (cable) {
+                const res = await cableAPI.checkout(cable.barcode, checkoutQuantity, eventNote.trim())
+                setResultMessage(res.message)
+                setResultSuccess(true)
+                setStep("result")
+            }
         } catch (err: any) {
             setError(formatAPIError(err))
         } finally {
@@ -133,14 +162,21 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
     }
 
     const handleReturn = async () => {
-        if (!equipment) return
         setLoading(true)
         setError(null)
         try {
-            const res = await equipmentAPI.return(equipment.barcode, returnNote.trim() || undefined)
-            setResultMessage(res.message)
-            setResultSuccess(true)
-            setStep("result")
+            if (equipment) {
+                const res = await equipmentAPI.return(equipment.barcode, returnNote.trim() || undefined)
+                setResultMessage(res.message)
+                setResultSuccess(true)
+                setStep("result")
+            } else if (cable) {
+                if (!selectedCheckoutId) { setError("Please select a checkout record to return."); setLoading(false); return }
+                const res = await cableAPI.return(cable.barcode, selectedCheckoutId, returnNote.trim() || undefined)
+                setResultMessage(res.message)
+                setResultSuccess(true)
+                setStep("result")
+            }
         } catch (err: any) {
             setResultMessage(formatAPIError(err))
             setResultSuccess(false)
@@ -229,16 +265,54 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                     )}
 
                     {/* Step: Checkout */}
-                    {step === "checkout" && equipment && (
+                    {step === "checkout" && (equipment || cable) && (
                         <>
                             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
                                 <p className="text-sm font-semibold text-emerald-400 flex items-center gap-1">
                                     <CheckCircle className="w-4 h-4" />
-                                    Equipment Available
+                                    Item Available
                                 </p>
-                                <p className="text-sm text-foreground mt-1 font-medium">{equipment.name}</p>
-                                <p className="text-xs text-muted-foreground">{equipment.barcode} · {equipment.location}</p>
+                                <p className="text-sm text-foreground mt-1 font-medium">{equipment?.name || cable?.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {equipment?.barcode || cable?.barcode} · {equipment?.location || cable?.location}
+                                    {cable && <span className="ml-2 font-bold text-primary">({cable.amount} available)</span>}
+                                </p>
                             </div>
+
+                            {cable && activeCableCheckouts.length > 0 && (
+                                <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <p className="text-xs font-semibold text-amber-400">Your Active Checkouts</p>
+                                        <Button variant="link" size="sm" className="h-auto p-0 text-xs"
+                                            onClick={() => setStep("confirm_return")}>
+                                            Go to Return
+                                        </Button>
+                                    </div>
+                                    <div className="space-y-1">
+                                        {activeCableCheckouts.map(c => (
+                                            <div key={c.id} className="text-[10px] text-muted-foreground flex justify-between">
+                                                <span>{c.quantity_checked_out}m - {c.event_note}</span>
+                                                <span>{new Date(c.checked_out_at).toLocaleDateString()}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {cable && (
+                                <div className="space-y-2">
+                                    <Label htmlFor="checkout-quantity">Quantity to Check Out</Label>
+                                    <Input
+                                        id="checkout-quantity"
+                                        type="number"
+                                        min={1}
+                                        max={cable.amount}
+                                        value={checkoutQuantity}
+                                        onChange={e => setCheckoutQuantity(parseInt(e.target.value) || 1)}
+                                    />
+                                </div>
+                            )}
+
                             <div className="space-y-2">
                                 <Label htmlFor="event-note">
                                     Event / Purpose <span className="text-destructive">*</span>
@@ -257,32 +331,58 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                                 <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
                                     onClick={handleCheckout} disabled={loading}>
                                     {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                    Check Out
+                                    Check Out {cable ? `(${checkoutQuantity})` : ""}
                                 </Button>
                             </div>
                         </>
                     )}
 
                     {/* Step: Confirm Return */}
-                    {step === "confirm_return" && equipment && (
+                    {step === "confirm_return" && (equipment || cable) && (
                         <>
                             <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
                                 <p className="text-sm font-semibold text-amber-400 flex items-center gap-1">
                                     <AlertCircle className="w-4 h-4" />
-                                    Currently Checked Out
+                                    Return Item
                                 </p>
-                                <p className="text-sm text-foreground mt-1 font-medium">{equipment.name}</p>
-                                {equipment.current_checkout && (
-                                    <>
+                                <p className="text-sm text-foreground mt-1 font-medium">{equipment?.name || cable?.name}</p>
+
+                                {equipment?.current_checkout && (
+                                    <div className="mt-2 pt-2 border-t border-amber-500/10">
                                         <p className="text-xs text-muted-foreground">
                                             Held by: <span className="text-foreground">{equipment.current_checkout?.user?.name}</span>
                                         </p>
                                         <p className="text-xs text-muted-foreground mt-0.5">
                                             For: {equipment.current_checkout?.event_note}
                                         </p>
-                                    </>
+                                    </div>
+                                )}
+
+                                {cable && activeCableCheckouts.length > 0 && (
+                                    <div className="mt-3 space-y-2">
+                                        <p className="text-xs text-amber-400 font-medium">Select checkout to return:</p>
+                                        <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
+                                            {activeCableCheckouts.map(c => (
+                                                <button
+                                                    key={c.id}
+                                                    onClick={() => setSelectedCheckoutId(c.id)}
+                                                    className={`w-full text-left p-2 rounded border text-xs transition-colors ${selectedCheckoutId === c.id
+                                                        ? "bg-amber-500/20 border-amber-500/40 text-foreground"
+                                                        : "bg-black/20 border-border text-muted-foreground hover:bg-black/40"
+                                                        }`}
+                                                >
+                                                    <div className="flex justify-between font-medium">
+                                                        <span>{c.quantity_checked_out}m</span>
+                                                        <span>{new Date(c.checked_out_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <div className="truncate opacity-70">{c.event_note}</div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
+
                             <div className="space-y-2">
                                 <Label htmlFor="return-note">Return Note (optional)</Label>
                                 <Input
@@ -292,16 +392,14 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                                     onChange={e => setReturnNote(e.target.value)}
                                     placeholder="e.g. Returned in good condition"
                                 />
+                                {error && <p className="text-sm text-destructive">{error}</p>}
                             </div>
-                            {error && <p className="text-sm text-destructive">{error}</p>}
-                            <p className="text-xs text-muted-foreground">
-                                ⚠️ Only the person who checked it out can return this equipment.
-                            </p>
+
                             <div className="flex gap-2">
                                 <Button variant="outline" className="flex-1" onClick={() => setStep("scan")}>Back</Button>
-                                <Button className="flex-1" onClick={handleReturn} disabled={loading}>
+                                <Button className="flex-1" onClick={handleReturn} disabled={loading || !!(cable && !selectedCheckoutId)}>
                                     {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                    Return Equipment
+                                    Return Item
                                 </Button>
                             </div>
                         </>
@@ -319,7 +417,17 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                             </div>
                             <div className="flex gap-2">
                                 <Button className="flex-1" variant="outline"
-                                    onClick={() => { setStep("scan"); setBarcode(""); setEquipment(null); setEventNote(""); setReturnNote("") }}>
+                                    onClick={() => {
+                                        setStep("scan");
+                                        setBarcode("");
+                                        setEquipment(null);
+                                        setCable(null);
+                                        setActiveCableCheckouts([]);
+                                        setCheckoutQuantity(1);
+                                        setSelectedCheckoutId(null);
+                                        setEventNote("");
+                                        setReturnNote("")
+                                    }}>
                                     Scan Another
                                 </Button>
                                 <Button className="flex-1" onClick={onClose}>Done</Button>

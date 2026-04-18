@@ -3,31 +3,42 @@
 import { useState, useEffect } from "react"
 import { X, History, Clock, CheckCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { equipmentAPI, formatAPIError, type Equipment, type EquipmentCheckout } from "@/lib/api"
+import { equipmentAPI, cableAPI, formatAPIError, type Equipment, type Cable, type EquipmentCheckout, type CableCheckout } from "@/lib/api"
 
 interface Props {
     isOpen: boolean
     onClose: () => void
     equipment: Equipment | null
+    cable?: Cable | null
 }
 
-export default function EquipmentHistoryModal({ isOpen, onClose, equipment }: Props) {
-    const [history, setHistory] = useState<EquipmentCheckout[]>([])
+export default function EquipmentHistoryModal({ isOpen, onClose, equipment, cable }: Props) {
+    const [history, setHistory] = useState<(EquipmentCheckout | CableCheckout)[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        if (isOpen && equipment) {
-            setLoading(true)
-            setError(null)
-            equipmentAPI.history(equipment.id)
-                .then(res => setHistory(res.history))
-                .catch(err => setError(formatAPIError(err)))
-                .finally(() => setLoading(false))
+        if (isOpen) {
+            if (equipment) {
+                setLoading(true)
+                setError(null)
+                equipmentAPI.history(equipment.id)
+                    .then(res => setHistory(res.history))
+                    .catch(err => setError(formatAPIError(err)))
+                    .finally(() => setLoading(false))
+            } else if (cable) {
+                setLoading(true)
+                setError(null)
+                cableAPI.history(cable.id)
+                    .then(res => setHistory(res.history))
+                    .catch(err => setError(formatAPIError(err)))
+                    .finally(() => setLoading(false))
+            }
         }
-    }, [isOpen, equipment])
+    }, [isOpen, equipment, cable])
 
-    if (!isOpen || !equipment) return null
+    if (!isOpen || (!equipment && !cable)) return null
+    const displayItem = equipment || cable!
 
     const fmt = (dt: string) => new Date(dt).toLocaleString("en-US", {
         year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
@@ -44,7 +55,7 @@ export default function EquipmentHistoryModal({ isOpen, onClose, equipment }: Pr
                             <History className="w-5 h-5 text-primary" />
                             <h2 className="text-lg font-semibold">Checkout History</h2>
                         </div>
-                        <p className="text-sm text-muted-foreground">{equipment.name} · <span className="font-mono">{equipment.barcode}</span></p>
+                        <p className="text-sm text-muted-foreground">{displayItem.name} · <span className="font-mono">{displayItem.barcode}</span></p>
                     </div>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
                         <X className="w-4 h-4" />
@@ -68,7 +79,10 @@ export default function EquipmentHistoryModal({ isOpen, onClose, equipment }: Pr
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium text-foreground">{c.user?.name ?? "Unknown"}</p>
-                                            <p className="text-xs text-muted-foreground truncate" title={c.event_note}>{c.event_note}</p>
+                                            <p className="text-xs text-muted-foreground truncate" title={c.event_note}>
+                                                {'quantity_checked_out' in c && <span className="font-bold mr-1">[{c.quantity_checked_out} pcs]</span>}
+                                                {c.event_note}
+                                            </p>
                                         </div>
                                         {c.returned_at
                                             ? <span className="flex items-center gap-1 text-xs text-emerald-400 shrink-0"><CheckCircle className="w-3 h-3" />Returned</span>
