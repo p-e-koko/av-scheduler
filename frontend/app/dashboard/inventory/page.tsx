@@ -169,7 +169,7 @@ function InventoryPage() {
                             <p className="text-sm text-muted-foreground mt-1">Track and manage media team resources</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -322,8 +322,8 @@ function InventoryPage() {
                                 }
                             </div>
                         ) : (
-                            <div className="bg-card/90 backdrop-blur-xl rounded-lg border border-border overflow-hidden">
-                                <table className="w-full text-left text-sm">
+                            <div className="bg-card/90 backdrop-blur-xl rounded-lg border border-border overflow-x-auto">
+                                <table className="min-w-[800px] w-full text-left text-sm">
                                     <thead className="bg-muted/50 border-b border-border">
                                         <tr>
                                             <th className="px-4 py-3 font-medium text-muted-foreground">Name</th>

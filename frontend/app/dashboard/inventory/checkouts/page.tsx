@@ -147,7 +147,7 @@ function CheckoutsPage() {
                     <>
                         <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
                             <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
+                                <table className="min-w-[1000px] w-full text-sm">
                                     <thead className="bg-muted/30 border-b border-border">
                                         <tr>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Item</th>
