@@ -14,14 +14,14 @@ import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import {
     checkoutAPI, getStoredUser, formatAPIError, hasAnyRole,
-    type EquipmentCheckout, type User
+    type UnifiedCheckout, type User
 } from "@/lib/api"
 
 function CheckoutsPage() {
     const router = useRouter()
     const [currentUser, setCurrentUser] = useState<User | null>(null)
     const [tab, setTab] = useState<"active" | "returned" | "trashed">("active")
-    const [checkouts, setCheckouts] = useState<EquipmentCheckout[]>([])
+    const [checkouts, setCheckouts] = useState<UnifiedCheckout[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
@@ -52,7 +52,7 @@ function CheckoutsPage() {
 
             let res
             if (tab === "trashed") {
-                res = await checkoutAPI.trashed(params)
+                res = await checkoutAPI.trashed({ ...params, tab: "trashed" })
             } else {
                 res = await checkoutAPI.list(params)
             }
@@ -100,20 +100,19 @@ function CheckoutsPage() {
     return (
         <>
             <header className="bg-card/70 backdrop-blur-xl border-b border-border px-4 sm:px-6 py-4 shadow-sm">
-                <div className="flex items-center justify-between">
-                    <div>
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard/inventory")} className="text-muted-foreground hover:text-foreground">
+                        <ChevronLeft className="w-6 h-6" />
+                    </Button>
+                    <div className="flex-1">
                         <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
                             <History className="w-6 h-6 text-primary" />
                             Checkout Records
                         </h1>
-                        <p className="text-sm text-muted-foreground mt-1">All equipment check-in/out history</p>
+                        <p className="text-sm text-muted-foreground mt-1">All equipment and cable check-in/out history</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <NotificationDropdown />
-                        <Button variant="outline" size="sm" onClick={() => router.push("/dashboard/inventory")}>
-                            <ChevronLeft className="w-4 h-4 mr-1" />
-                            Back to Inventory
-                        </Button>
                     </div>
                 </div>
             </header>
@@ -135,7 +134,7 @@ function CheckoutsPage() {
                             placeholder="Search by equipment, user, event..."
                             value={searchQuery}
                             onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1) }}
-                            className="pl-10 bg-card/80 border-border w-72"
+                            className="pl-10 bg-card/80 border-border w-full md:w-72"
                         />
                     </div>
                 </div>
@@ -151,10 +150,12 @@ function CheckoutsPage() {
                                 <table className="w-full text-sm">
                                     <thead className="bg-muted/30 border-b border-border">
                                         <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Equipment</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Item</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Type</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Qty</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">User</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Event Note</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Checked Out</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase whitespace-nowrap">Checked Out</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Returned</th>
                                             <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase">Status</th>
                                             {canManage && (
@@ -164,12 +165,16 @@ function CheckoutsPage() {
                                     </thead>
                                     <tbody className="divide-y divide-border">
                                         {checkouts.map(c => (
-                                            <tr key={c.id} className="hover:bg-muted/20 transition-colors">
+                                            <tr key={`${c.item_type}-${c.id}`} className="hover:bg-muted/20 transition-colors">
                                                 <td className="px-4 py-3">
-                                                    <div className="font-medium text-foreground">{c.equipment?.name ?? "—"}</div>
-                                                    <div className="text-xs font-mono text-muted-foreground">{c.equipment?.barcode}</div>
+                                                    <div className="font-medium text-foreground">{c.item_name ?? "—"}</div>
+                                                    <div className="text-xs font-mono text-muted-foreground">{c.barcode}</div>
                                                 </td>
-                                                <td className="px-4 py-3 text-foreground">{c.user?.name ?? "—"}</td>
+                                                <td className="px-4 py-3">
+                                                    <Badge variant="outline" className="capitalize text-[10px]">{c.item_type}</Badge>
+                                                </td>
+                                                <td className="px-4 py-3 text-foreground">{c.quantity}</td>
+                                                <td className="px-4 py-3 text-foreground">{c.user_name ?? "—"}</td>
                                                 <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate" title={c.event_note}>{c.event_note}</td>
                                                 <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{fmt(c.checked_out_at)}</td>
                                                 <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">

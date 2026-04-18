@@ -121,6 +121,22 @@ export interface Position {
   updated_at: string;
 }
 
+
+export interface UnifiedCheckout {
+  id: string;
+  user_id: string;
+  user_name: string;
+  item_name: string;
+  barcode: string;
+  event_note: string;
+  checked_out_at: string;
+  returned_at: string | null;
+  return_note: string | null;
+  deleted_at: string | null;
+  item_type: 'equipment' | 'cable';
+  quantity: number;
+}
+
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -677,6 +693,16 @@ export interface AssignmentsQueryParams {
   search?: string;
   sort_by?: string;
   sort_order?: 'asc' | 'desc';
+}
+
+export interface UnifiedCheckoutListResponse {
+  data: UnifiedCheckout[];
+  meta: {
+    total: number;
+    per_page: number;
+    current_page: number;
+    last_page: number;
+  };
 }
 
 export interface AvailabilityQueryParams {
@@ -1465,9 +1491,9 @@ export const cableAPI = {
 };
 
 export const checkoutAPI = {
-  async list(params: Record<string, string | number> = {}): Promise<CheckoutListResponse> {
+  async list(params: Record<string, string | number> = {}): Promise<UnifiedCheckoutListResponse> {
     const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
-    return apiCall<CheckoutListResponse>('/equipment-checkouts' + (qs ? '?' + qs : ''));
+    return apiCall<UnifiedCheckoutListResponse>('/inventory-checkouts' + (qs ? '?' + qs : ''));
   },
   async get(id: string): Promise<{ checkout: EquipmentCheckout }> {
     return apiCall<{ checkout: EquipmentCheckout }>('/equipment-checkouts/' + id);
@@ -1484,8 +1510,8 @@ export const checkoutAPI = {
   async restore(id: string): Promise<{ message: string; checkout: EquipmentCheckout }> {
     return apiCall<{ message: string; checkout: EquipmentCheckout }>('/equipment-checkouts/' + id + '/restore', { method: 'POST' });
   },
-  async trashed(params: Record<string, string | number> = {}): Promise<CheckoutListResponse> {
-    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
-    return apiCall<CheckoutListResponse>('/equipment-checkouts/trashed' + (qs ? '?' + qs : ''));
+  async trashed(params: Record<string, string | number> = {}): Promise<UnifiedCheckoutListResponse> {
+    const qs = new URLSearchParams(Object.entries({ ...params, tab: 'trashed' }).map(([k, v]) => [k, String(v)])).toString();
+    return apiCall<UnifiedCheckoutListResponse>('/inventory-checkouts' + (qs ? '?' + qs : ''));
   },
 };

@@ -269,7 +269,7 @@ function InventoryPage() {
                             <select
                                 value={statusFilter}
                                 onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1) }}
-                                className="px-3 py-2 rounded-md border border-border bg-card/80 text-foreground text-sm"
+                                className="w-full md:w-auto px-3 py-2 rounded-md border border-border bg-card/80 text-foreground text-sm"
                             >
                                 <option value="">All Status</option>
                                 <option value="available">Available</option>
@@ -280,7 +280,7 @@ function InventoryPage() {
                         <select
                             value={categoryFilter}
                             onChange={e => { setCategoryFilter(e.target.value); setCurrentPage(1) }}
-                            className="px-3 py-2 rounded-md border border-border bg-card/80 text-foreground text-sm"
+                            className="w-full md:w-auto px-3 py-2 rounded-md border border-border bg-card/80 text-foreground text-sm"
                         >
                             <option value="">All Categories</option>
                             {(itemType === "equipment"
@@ -292,7 +292,7 @@ function InventoryPage() {
                         </select>
                         {canManage && itemType === "equipment" && (
                             <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/inventory/checkouts")}
-                                className="text-muted-foreground hover:text-foreground">
+                                className="w-full md:w-auto text-muted-foreground hover:text-foreground justify-start md:justify-center">
                                 <History className="w-4 h-4 mr-1" />
                                 Checkout Records
                             </Button>
@@ -508,7 +508,7 @@ function CableCard({ item, canManage, onAction, onDelete, onHistory, onEdit }: {
                         <h3 className="font-semibold text-foreground text-sm leading-tight">{item.name}</h3>
                         <p className="text-xs text-muted-foreground mt-0.5">{item.category} • {item.length}</p>
                     </div>
-                    <Badge variant="outline" className={`text-[10px] ${item.amount === 0 ? "border-destructive text-destructive" : "border-primary/30 text-primary"}`}>
+                    <Badge variant="outline" className={`text-[10px] ${item.amount === 0 ? "border-destructive text-destructive" : "border-primary/30 text-primary dark:text-white"}`}>
                         {item.amount} available
                     </Badge>
                 </div>

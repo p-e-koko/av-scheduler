@@ -247,6 +247,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/cables/{cable}/history', [\App\Http\Controllers\Api\CableController::class, 'history']);
 
     // All authenticated users: View checkout records
+    Route::get('/inventory-checkouts', [\App\Http\Controllers\Api\InventoryCheckoutController::class, 'index']);
     Route::get('/equipment-checkouts', [EquipmentCheckoutController::class, 'index']);
     Route::get('/equipment-checkouts/{id}', [EquipmentCheckoutController::class, 'show']);
 

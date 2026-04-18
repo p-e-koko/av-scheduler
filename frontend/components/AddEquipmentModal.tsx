@@ -212,7 +212,7 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                     placeholder="e.g. Sony A7III Camera" />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div className="space-y-2">
                                     <Label htmlFor="eq-category">Category <span className="text-destructive">*</span></Label>
                                     <select id="eq-category" required value={form.category}

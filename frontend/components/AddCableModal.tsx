@@ -153,7 +153,7 @@ export default function AddCableModal({ isOpen, onClose, onSaved, editCable }: P
                                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                     placeholder="e.g. XLR Cable" />
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div className="space-y-2">
                                     <Label htmlFor="cb-length">Length <span className="text-destructive">*</span></Label>
                                     <Input id="cb-length" required value={form.length}
