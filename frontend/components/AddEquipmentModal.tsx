@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { X, Package, Loader2, Printer, Copy, Check } from "lucide-react"
 import Barcode from "react-barcode"
+import { QRCodeCanvas } from "qrcode.react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -25,6 +26,7 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
         name: "", category: "", location: "", purchase_date: "", condition: "good",
     })
     const [copied, setCopied] = useState(false)
+    const [copiedQR, setCopiedQR] = useState(false)
     const barcodeRef = useRef<any>(null)
 
     useEffect(() => {
@@ -87,7 +89,54 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                 await navigator.clipboard.writeText(createdBarcode)
             }
         } catch (err) {
-            console.error("Failed to copy", err)
+            console.error("Failed to copy barcode", err)
+            navigator.clipboard.writeText(createdBarcode)
+        }
+    }
+
+    const handleCopyQR = async () => {
+        if (!createdBarcode) return
+
+        try {
+            const qrCanvas = document.querySelector('.qrcode-container canvas') as HTMLCanvasElement
+            if (qrCanvas) {
+                // Composite canvas to include text label
+                const compositeCanvas = document.createElement('canvas')
+                const ctx = compositeCanvas.getContext('2d')
+                if (!ctx) throw new Error("Could not get canvas context")
+
+                const textPadding = 16
+                const margin = 16
+                compositeCanvas.width = qrCanvas.width + (margin * 2)
+                compositeCanvas.height = qrCanvas.height + textPadding + (margin * 2)
+
+                // Fill white background
+                ctx.fillStyle = "#ffffff"
+                ctx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height)
+
+                // Draw QR Code
+                ctx.drawImage(qrCanvas, margin, margin)
+
+                // Draw Text
+                ctx.fillStyle = "#000000"
+                ctx.font = "bold 14px monospace"
+                ctx.textAlign = "center"
+                ctx.textBaseline = "top"
+                ctx.fillText(createdBarcode, compositeCanvas.width / 2, qrCanvas.height + margin + 4)
+
+                const blob = await new Promise<Blob | null>(res => compositeCanvas.toBlob(res))
+                if (blob) {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ "image/png": blob })
+                    ])
+                    setCopiedQR(true)
+                    setTimeout(() => setCopiedQR(false), 2000)
+                }
+            } else {
+                await navigator.clipboard.writeText(createdBarcode)
+            }
+        } catch (err) {
+            console.error("Failed to copy QR code", err)
             navigator.clipboard.writeText(createdBarcode)
         }
     }
@@ -114,29 +163,44 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                         <div className="text-center space-y-4">
                             <div className="bg-white/5 border border-border rounded-lg p-6 flex flex-col items-center">
                                 <p className="text-sm text-muted-foreground mb-4">Equipment created! Barcode label:</p>
-                                <div className="bg-white p-4 rounded-md barcode-container">
-                                    <Barcode
-                                        value={createdBarcode}
-                                        width={2}
-                                        height={60}
-                                        fontSize={16}
-                                        background="#ffffff"
-                                        lineColor="#000000"
-                                        renderer="canvas"
-                                    />
+                                <div className="flex flex-col gap-4">
+                                    <div className="bg-white p-4 rounded-md barcode-container flex justify-center">
+                                        <Barcode
+                                            value={createdBarcode}
+                                            width={2}
+                                            height={60}
+                                            fontSize={16}
+                                            background="#ffffff"
+                                            lineColor="#000000"
+                                            renderer="canvas"
+                                        />
+                                    </div>
+                                    <div className="bg-white p-4 rounded-md qrcode-container flex flex-col items-center">
+                                        <QRCodeCanvas
+                                            value={createdBarcode}
+                                            size={100}
+                                            level="H"
+                                            includeMargin={false}
+                                        />
+                                        <p className="mt-2 text-xs font-mono font-bold tracking-widest text-black">{createdBarcode}</p>
+                                    </div>
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-4">
-                                    Copy or print this barcode for the equipment.
+                                    Copy or print these labels for the equipment.
                                 </p>
                             </div>
-                            <div className="flex gap-2">
-                                <Button variant="outline" className="flex-1" onClick={handleCopy}>
+                            <div className="flex flex-wrap gap-2">
+                                <Button variant="outline" className="flex-1 min-w-[120px]" onClick={handleCopy}>
                                     {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                                    {copied ? "Copied!" : "Copy Label"}
+                                    {copied ? "Copied!" : "Copy Barcode"}
                                 </Button>
-                                <Button variant="outline" className="flex-1" onClick={() => window.print()}>
+                                <Button variant="outline" className="flex-1 min-w-[120px]" onClick={handleCopyQR}>
+                                    {copiedQR ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                                    {copiedQR ? "Copied!" : "Copy QR Code"}
+                                </Button>
+                                <Button variant="outline" className="w-full mt-2" onClick={() => window.print()}>
                                     <Printer className="w-4 h-4 mr-2" />
-                                    Print Label
+                                    Print Labels
                                 </Button>
                             </div>
                         </div>

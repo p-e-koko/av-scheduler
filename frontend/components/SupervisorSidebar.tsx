@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import {
   BarChart3,
   Users,
@@ -37,6 +37,7 @@ interface SupervisorSidebarProps {
 
 export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: SupervisorSidebarProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [currentUser, setCurrentUser] = useState<UserType | null>(null)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
@@ -186,9 +187,13 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               router.push('/dashboard/inventory')
               if (isMobile && onClose) onClose()
             }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/inventory')
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/inventory') ? 'border-primary/20' : 'border-transparent'
+              }`}
           >
-            <Package className="w-5 h-5 flex-shrink-0" />
+            <Package className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/inventory') ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Inventory</span>}
           </div>
 

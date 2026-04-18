@@ -175,7 +175,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/inventory') ? 'border-primary/20' : 'border-transparent'
               }`}
           >
-            <Package className="w-5 h-5 flex-shrink-0" />
+            <Package className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/inventory') ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Inventory</span>}
           </div>
 
