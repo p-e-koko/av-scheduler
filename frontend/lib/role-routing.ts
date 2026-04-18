@@ -13,60 +13,60 @@ export const getRoleBasedDashboardPath = (role: string | string[]): string => {
   if (roles.includes('admin')) return '/dashboard/admin';
   if (roles.includes('supervisor')) return '/dashboard/supervisor';
   if (roles.includes('coordinator')) return '/dashboard/coordinator';
-  
+
   return '/dashboard/student';
 };
 
 // Check if user can access a specific dashboard
 export const canAccessDashboard = (userRole: string | string[], dashboardPath: string): boolean => {
   const roles = normalizeRoles(userRole);
-  
+
   // Admin can access all dashboards
   if (roles.includes('admin')) {
     return true;
   }
-  
+
   // Check role-specific access
-  const rolePathMap: Record<string, string> = {
-    'coordinator': '/dashboard/coordinator',
-    'student': '/dashboard/student',
-    'supervisor': '/dashboard/supervisor'
+  const rolePathMap: Record<string, string[]> = {
+    'coordinator': ['/dashboard/coordinator', '/dashboard/inventory'],
+    'student': ['/dashboard/student', '/dashboard/inventory'],
+    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory']
   };
-  
-  // Allow access if any of the user's roles matches the dashboard path
-  // Note: This checks for exact match or if the path starts with the dashboard path 
-  // (to support sub-pages if any, though strict equality was used before)
+
   return roles.some(role => {
-      const allowedPath = rolePathMap[role];
-      return allowedPath === dashboardPath || (allowedPath && dashboardPath.startsWith(allowedPath + '/'));
+    const allowedPaths = rolePathMap[role] || [];
+    return allowedPaths.some(allowedPath =>
+      allowedPath === dashboardPath || dashboardPath.startsWith(allowedPath + '/')
+    );
   });
 };
 
 // Get allowed dashboard paths for a user
 export const getAllowedDashboards = (userRole: string | string[]): string[] => {
   const roles = normalizeRoles(userRole);
-  
+
   if (roles.includes('admin')) {
     return [
       '/dashboard/admin',
       '/dashboard/coordinator',
       '/dashboard/student',
-      '/dashboard/supervisor'
+      '/dashboard/supervisor',
+      '/dashboard/inventory'
     ];
   }
-  
+
   const rolePathMap: Record<string, string[]> = {
-    'coordinator': ['/dashboard/coordinator'],
-    'student': ['/dashboard/student'],
-    'supervisor': ['/dashboard/supervisor']
+    'coordinator': ['/dashboard/coordinator', '/dashboard/inventory'],
+    'student': ['/dashboard/student', '/dashboard/inventory'],
+    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory']
   };
-  
+
   const allowed = new Set<string>();
   roles.forEach(role => {
-      const paths = rolePathMap[role];
-      if (paths) paths.forEach(p => allowed.add(p));
+    const paths = rolePathMap[role];
+    if (paths) paths.forEach(p => allowed.add(p));
   });
-  
+
   return Array.from(allowed);
 };
 

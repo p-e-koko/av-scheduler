@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect } from 'react';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -104,9 +106,8 @@ export function NotificationDropdown() {
             notifications.map((notification) => (
               <DropdownMenuItem
                 key={notification.id}
-                className={`flex flex-col items-start p-3 cursor-pointer ${
-                  !notification.read_at ? 'bg-muted/50' : ''
-                }`}
+                className={`flex flex-col items-start p-3 cursor-pointer ${!notification.read_at ? 'bg-muted/50' : ''
+                  }`}
                 onClick={() => handleNotificationClick(notification)}
               >
                 <div className="text-sm font-medium">{notification.data.message}</div>

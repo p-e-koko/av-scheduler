@@ -11,6 +11,7 @@ import {
   LogOut,
   CheckCircle,
   Clock,
+  Package,
   X,
   Loader2,
   LayoutDashboard
@@ -128,8 +129,8 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "profile"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "profile" ? 'border-primary/20' : 'border-transparent'
               }`}
           >
@@ -142,8 +143,8 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "assignments"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
               }`}
           >
@@ -156,13 +157,23 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "schedule"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "schedule" ? 'border-primary/20' : 'border-transparent'
               }`}
           >
             <Clock className="w-5 h-5 flex-shrink-0" />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">My Schedule</span>}
+          </div>
+          <div
+            onClick={() => {
+              router.push('/dashboard/inventory')
+              if (isMobile && onClose) onClose()
+            }}
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
+          >
+            <Package className="w-5 h-5 flex-shrink-0" />
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Inventory</span>}
           </div>
 
           {/* Switch Dashboard Section */}

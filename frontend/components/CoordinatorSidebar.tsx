@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import {
   ClipboardList,
   Users,
@@ -14,6 +14,7 @@ import {
   X,
   Loader2,
   Trash2,
+  Package,
   LayoutDashboard
 } from "lucide-react"
 
@@ -39,6 +40,7 @@ interface CoordinatorSidebarProps {
 
 export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, user }: CoordinatorSidebarProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [localUser, setLocalUser] = useState<UserType | null>(null)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
@@ -134,8 +136,8 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "assignments"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
               }`}
           >
@@ -149,8 +151,8 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "students"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "students" ? 'border-primary/20' : 'border-transparent'
               }`}
           >
@@ -164,8 +166,8 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "schedules"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "schedules" ? 'border-primary/20' : 'border-transparent'
               }`}
           >
@@ -179,8 +181,8 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "positions"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "positions" ? 'border-primary/20' : 'border-transparent'
               }`}
           >
@@ -194,13 +196,27 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "recycle-bin"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-                : 'text-muted-foreground hover:bg-accent'
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "recycle-bin" ? 'border-primary/20' : 'border-transparent'
               }`}
           >
             <Trash2 className={`w-5 h-5 ${activeTab === "recycle-bin" ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Recycle Bin</span>}
+          </div>
+          <div
+            onClick={() => {
+              router.push('/dashboard/inventory')
+              if (isMobile && onClose) onClose()
+            }}
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/inventory')
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/inventory') ? 'border-primary/20' : 'border-transparent'
+              }`}
+          >
+            <Package className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/inventory') ? 'text-primary dark:text-white' : ''}`} />
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Inventory</span>}
           </div>
 
           {/* Switch Dashboard Section */}
