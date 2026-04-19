@@ -72,14 +72,14 @@ class Equipment extends Model
 
     /**
      * Generate a unique barcode based on the given location.
-     * Format: E{loc}{num}
-     * e.g. "Studio A" -> "EST001"
+     * Format: AV2026E{loc}{num}
+     * e.g. "Studio A" -> "AV2026EST001"
      */
     public static function generateBarcode(string $location): string
     {
         // Take first 2 letters of location, uppercase
         $locPart = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $location), 0, 2));
-        $prefix = 'E' . $locPart;
+        $prefix = 'AV2026E' . $locPart;
 
         // Find highest existing number for this prefix
         $barcodes = self::withTrashed()
@@ -88,7 +88,13 @@ class Equipment extends Model
 
         $maxNum = 0;
         foreach ($barcodes as $barcode) {
-            $num = (int) substr($barcode, 3);
+            // Suffix starts after AV2026E + 2 chars of location (Total 9 chars)
+            $suffix = substr($barcode, 9);
+            // Stripping any potential sub-item suffixes like -1
+            if (str_contains($suffix, '-')) {
+                $suffix = explode('-', $suffix)[0];
+            }
+            $num = (int) $suffix;
             if ($num > $maxNum) {
                 $maxNum = $num;
             }

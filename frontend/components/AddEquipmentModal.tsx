@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react"
 import { X, Package, Loader2, Printer, Copy, Check } from "lucide-react"
-import Barcode from "react-barcode"
 import { QRCodeCanvas } from "qrcode.react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -75,22 +74,11 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
         if (!createdBarcode) return
 
         try {
-            const canvas = document.querySelector('.barcode-container canvas') as HTMLCanvasElement
-            if (canvas) {
-                const blob = await new Promise<Blob | null>(res => canvas.toBlob(res))
-                if (blob) {
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ "image/png": blob })
-                    ])
-                    setCopied(true)
-                    setTimeout(() => setCopied(false), 2000)
-                }
-            } else {
-                await navigator.clipboard.writeText(createdBarcode)
-            }
+            await navigator.clipboard.writeText(createdBarcode)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
         } catch (err) {
-            console.error("Failed to copy barcode", err)
-            navigator.clipboard.writeText(createdBarcode)
+            console.error("Failed to copy code", err)
         }
     }
 
@@ -164,21 +152,10 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                             <div className="bg-white/5 border border-border rounded-lg p-6 flex flex-col items-center">
                                 <p className="text-sm text-muted-foreground mb-4">Equipment created! Barcode label:</p>
                                 <div className="flex flex-col gap-4">
-                                    <div className="bg-white p-4 rounded-md barcode-container flex justify-center">
-                                        <Barcode
-                                            value={createdBarcode}
-                                            width={2}
-                                            height={60}
-                                            fontSize={16}
-                                            background="#ffffff"
-                                            lineColor="#000000"
-                                            renderer="canvas"
-                                        />
-                                    </div>
                                     <div className="bg-white p-4 rounded-md qrcode-container flex flex-col items-center">
                                         <QRCodeCanvas
                                             value={createdBarcode}
-                                            size={100}
+                                            size={120}
                                             level="H"
                                             includeMargin={false}
                                         />
@@ -192,7 +169,7 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                             <div className="flex flex-wrap gap-2">
                                 <Button variant="outline" className="flex-1 min-w-[120px]" onClick={handleCopy}>
                                     {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                                    {copied ? "Copied!" : "Copy Barcode"}
+                                    {copied ? "Copied!" : "Copy Code"}
                                 </Button>
                                 <Button variant="outline" className="flex-1 min-w-[120px]" onClick={handleCopyQR}>
                                     {copiedQR ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
@@ -254,7 +231,7 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                                 <Button type="button" variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
                                 <Button type="submit" className="flex-1" disabled={loading}>
                                     {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                                    {isEdit ? "Save Changes" : "Create & Get Barcode"}
+                                    {isEdit ? "Save Changes" : "Create & Get QR Code"}
                                 </Button>
                             </div>
                         </form>

@@ -180,7 +180,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           </div>
 
           {/* Switch Dashboard Section */}
-          {currentUser && getAllowedDashboards(currentUser.roles || []).filter(path => !path.includes('/dashboard/admin')).length > 0 && (
+          {currentUser && getAllowedDashboards(currentUser.roles || []).filter(path => !path.includes('/dashboard/admin') && !path.includes('/dashboard/inventory')).length > 0 && (
             <>
               <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
                 {(!sidebarCollapsed || isMobile) ? (
@@ -192,7 +192,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 )}
               </div>
               {getAllowedDashboards(currentUser.roles || [])
-                .filter(path => !path.includes('/dashboard/admin'))
+                .filter(path => !path.includes('/dashboard/admin') && !path.includes('/dashboard/inventory'))
                 .map(path => {
                   const label = path.split('/').pop();
                   return (

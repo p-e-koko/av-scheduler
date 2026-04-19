@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { X, Package, Loader2, Printer, Copy, Check } from "lucide-react"
-import Barcode from "react-barcode"
+import { QRCodeCanvas } from "qrcode.react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,6 +21,7 @@ export default function AddCableModal({ isOpen, onClose, onSaved, editCable }: P
     const [error, setError] = useState<string | null>(null)
     const [createdBarcode, setCreatedBarcode] = useState<string | null>(null)
     const [copied, setCopied] = useState(false)
+    const [copiedQR, setCopiedQR] = useState(false)
 
     const [form, setForm] = useState({
         name: "",
@@ -79,21 +80,45 @@ export default function AddCableModal({ isOpen, onClose, onSaved, editCable }: P
     const handleCopy = async () => {
         if (!createdBarcode) return
         try {
-            const canvas = document.querySelector('.barcode-container-cable canvas') as HTMLCanvasElement
-            if (canvas) {
-                const blob = await new Promise<Blob | null>(res => canvas.toBlob(res))
+            await navigator.clipboard.writeText(createdBarcode)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        } catch (err) {
+            console.error("Failed to copy", err)
+        }
+    }
+
+    const handleCopyQR = async () => {
+        if (!createdBarcode) return
+        try {
+            const qrCanvas = document.querySelector('.qrcode-container-cable canvas') as HTMLCanvasElement
+            if (qrCanvas) {
+                const compositeCanvas = document.createElement('canvas')
+                const ctx = compositeCanvas.getContext('2d')
+                if (!ctx) throw new Error("Could not get context")
+                const margin = 16
+                const textPadding = 16
+                compositeCanvas.width = qrCanvas.width + (margin * 2)
+                compositeCanvas.height = qrCanvas.height + textPadding + (margin * 2)
+                ctx.fillStyle = "#ffffff"
+                ctx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height)
+                ctx.drawImage(qrCanvas, margin, margin)
+                ctx.fillStyle = "#000000"
+                ctx.font = "bold 14px monospace"
+                ctx.textAlign = "center"
+                ctx.textBaseline = "top"
+                ctx.fillText(createdBarcode, compositeCanvas.width / 2, qrCanvas.height + margin + 4)
+                const blob = await new Promise<Blob | null>(res => compositeCanvas.toBlob(res))
                 if (blob) {
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ "image/png": blob })
-                    ])
-                    setCopied(true)
-                    setTimeout(() => setCopied(false), 2000)
+                    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
+                    setCopiedQR(true)
+                    setTimeout(() => setCopiedQR(false), 2000)
                 }
             } else {
                 await navigator.clipboard.writeText(createdBarcode)
             }
         } catch (err) {
-            console.error("Failed to copy", err)
+            console.error("Failed to copy QR", err)
             navigator.clipboard.writeText(createdBarcode)
         }
     }
@@ -118,28 +143,32 @@ export default function AddCableModal({ isOpen, onClose, onSaved, editCable }: P
                     {createdBarcode ? (
                         <div className="text-center space-y-4">
                             <div className="bg-white/5 border border-border rounded-lg p-6 flex flex-col items-center">
-                                <p className="text-sm text-muted-foreground mb-4">Cable created! Barcode label:</p>
-                                <div className="bg-white p-4 rounded-md barcode-container-cable">
-                                    <Barcode
+                                <p className="text-sm text-muted-foreground mb-4">Cable created! QR Code label:</p>
+                                <div className="bg-white p-4 rounded-md qrcode-container-cable flex flex-col items-center">
+                                    <QRCodeCanvas
                                         value={createdBarcode}
-                                        width={2}
-                                        height={60}
-                                        fontSize={16}
-                                        background="#ffffff"
-                                        lineColor="#000000"
-                                        renderer="canvas"
+                                        size={120}
+                                        level="H"
+                                        includeMargin={false}
                                     />
+                                    <p className="mt-2 text-xs font-mono font-bold tracking-widest text-black">{createdBarcode}</p>
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-4">
-                                    Copy or print this barcode for the cable bundle.
+                                    {form.amount > 1
+                                        ? `Showing base code. Individual suffixes (-1 to -${form.amount}) are available in details.`
+                                        : "Copy or print this QR code for the cable."}
                                 </p>
                             </div>
-                            <div className="flex gap-2">
-                                <Button variant="outline" className="flex-1" onClick={handleCopy}>
+                            <div className="flex flex-wrap gap-2">
+                                <Button variant="outline" className="flex-1 min-w-[120px]" onClick={handleCopy}>
                                     {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                                    {copied ? "Copied!" : "Copy Label"}
+                                    {copied ? "Copied!" : "Copy Code"}
                                 </Button>
-                                <Button variant="outline" className="flex-1" onClick={() => window.print()}>
+                                <Button variant="outline" className="flex-1 min-w-[120px]" onClick={handleCopyQR}>
+                                    {copiedQR ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                                    {copiedQR ? "Copied!" : "Copy QR Code"}
+                                </Button>
+                                <Button variant="outline" className="w-full mt-2" onClick={() => window.print()}>
                                     <Printer className="w-4 h-4 mr-2" />
                                     Print Label
                                 </Button>
@@ -207,7 +236,7 @@ export default function AddCableModal({ isOpen, onClose, onSaved, editCable }: P
                                 <Button type="button" variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
                                 <Button type="submit" className="flex-1" disabled={loading}>
                                     {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                                    {isEdit ? "Save Changes" : "Create & Get Barcode"}
+                                    {isEdit ? "Save Changes" : "Create & Get QR Code"}
                                 </Button>
                             </div>
                         </form>

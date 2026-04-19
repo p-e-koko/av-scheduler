@@ -127,7 +127,10 @@ class CableController extends Controller
      */
     public function scan(string $barcode): JsonResponse
     {
-        $cable = Cable::where('barcode', $barcode)->first();
+        // Handle suffixes like AV2026CAB001-1
+        $baseBarcode = str_contains($barcode, '-') ? explode('-', $barcode)[0] : $barcode;
+        
+        $cable = Cable::where('barcode', $baseBarcode)->first();
 
         if (!$cable) {
             return response()->json(['message' => 'Cable not found'], 404);
@@ -154,7 +157,10 @@ class CableController extends Controller
             'event_note' => 'required|string|max:500',
         ]);
 
-        $cable = Cable::where('barcode', $barcode)->first();
+        // Handle suffixes like AV2026CAB001-1
+        $baseBarcode = str_contains($barcode, '-') ? explode('-', $barcode)[0] : $barcode;
+
+        $cable = Cable::where('barcode', $baseBarcode)->first();
 
         if (!$cable) {
             return response()->json(['message' => 'Cable not found for this barcode'], 404);
@@ -202,7 +208,10 @@ class CableController extends Controller
             'return_note' => 'nullable|string|max:500',
         ]);
 
-        $cable = Cable::where('barcode', $barcode)->first();
+        // Handle suffixes like AV2026CAB001-1
+        $baseBarcode = str_contains($barcode, '-') ? explode('-', $barcode)[0] : $barcode;
+
+        $cable = Cable::where('barcode', $baseBarcode)->first();
 
         if (!$cable) {
             return response()->json(['message' => 'Cable not found for this barcode'], 404);

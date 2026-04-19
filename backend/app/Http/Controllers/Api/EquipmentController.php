@@ -91,7 +91,10 @@ class EquipmentController extends Controller
      */
     public function scan(string $barcode): JsonResponse
     {
-        $equipment = Equipment::where('barcode', $barcode)
+        // Handle suffixes just in case
+        $baseBarcode = str_contains($barcode, '-') ? explode('-', $barcode)[0] : $barcode;
+
+        $equipment = Equipment::where('barcode', $baseBarcode)
             ->with(['currentCheckout.user'])
             ->first();
 
@@ -156,7 +159,10 @@ class EquipmentController extends Controller
             'event_note' => 'required|string|max:500',
         ]);
 
-        $equipment = Equipment::where('barcode', $barcode)->first();
+        // Handle suffixes just in case
+        $baseBarcode = str_contains($barcode, '-') ? explode('-', $barcode)[0] : $barcode;
+
+        $equipment = Equipment::where('barcode', $baseBarcode)->first();
 
         if (!$equipment) {
             return response()->json(['message' => 'Equipment not found for this barcode'], 404);
@@ -207,7 +213,10 @@ class EquipmentController extends Controller
             'return_note' => 'nullable|string|max:500',
         ]);
 
-        $equipment = Equipment::where('barcode', $barcode)->first();
+        // Handle suffixes just in case
+        $baseBarcode = str_contains($barcode, '-') ? explode('-', $barcode)[0] : $barcode;
+
+        $equipment = Equipment::where('barcode', $baseBarcode)->first();
 
         if (!$equipment) {
             return response()->json(['message' => 'Equipment not found for this barcode'], 404);
