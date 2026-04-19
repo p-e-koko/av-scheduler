@@ -2,7 +2,6 @@
 
 import { X, Printer, Copy, Check } from "lucide-react"
 import { useState, useRef } from "react"
-import Barcode from "react-barcode"
 import { QRCodeCanvas } from "qrcode.react"
 import { Button } from "@/components/ui/button"
 import type { Equipment, Cable } from "@/lib/api"
@@ -24,30 +23,19 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
         window.print()
     }
 
-    const handleCopy = async () => {
+    const handleCopy = async (code: string) => {
         try {
-            const canvas = document.querySelector('.barcode-detail-container canvas') as HTMLCanvasElement
-            if (canvas) {
-                const blob = await new Promise<Blob | null>(res => canvas.toBlob(res))
-                if (blob) {
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ "image/png": blob })
-                    ])
-                    setCopied(true)
-                    setTimeout(() => setCopied(false), 2000)
-                }
-            } else {
-                await navigator.clipboard.writeText(displayItem.barcode)
-            }
+            await navigator.clipboard.writeText(code)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
         } catch (err) {
-            console.error("Failed to copy barcode", err)
-            navigator.clipboard.writeText(displayItem.barcode)
+            console.error("Failed to copy code", err)
         }
     }
 
-    const handleCopyQR = async () => {
+    const handleCopyQR = async (code: string, containerId: string) => {
         try {
-            const qrCanvas = document.querySelector('.qrcode-detail-container canvas') as HTMLCanvasElement
+            const qrCanvas = document.querySelector(`#${containerId} canvas`) as HTMLCanvasElement
             if (qrCanvas) {
                 // Composite canvas to include text label
                 const compositeCanvas = document.createElement('canvas')
@@ -71,7 +59,7 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
                 ctx.font = "bold 16px monospace"
                 ctx.textAlign = "center"
                 ctx.textBaseline = "top"
-                ctx.fillText(displayItem.barcode, compositeCanvas.width / 2, qrCanvas.height + margin + 4)
+                ctx.fillText(code, compositeCanvas.width / 2, qrCanvas.height + margin + 4)
 
                 const blob = await new Promise<Blob | null>(res => compositeCanvas.toBlob(res))
                 if (blob) {
@@ -82,11 +70,11 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
                     setTimeout(() => setCopiedQR(false), 2000)
                 }
             } else {
-                await navigator.clipboard.writeText(displayItem.barcode)
+                await navigator.clipboard.writeText(code)
             }
         } catch (err) {
             console.error("Failed to copy QR code", err)
-            navigator.clipboard.writeText(displayItem.barcode)
+            await navigator.clipboard.writeText(code)
         }
     }
 
@@ -103,45 +91,67 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
                     </Button>
                 </div>
 
-                <div className="p-6 text-center">
+                <div className="p-6 text-center h-[500px] overflow-y-auto custom-scrollbar">
                     <h3 className="text-sm font-medium text-muted-foreground mb-4">{displayItem.name}</h3>
 
-                    <div className="flex flex-col gap-4 mb-6">
-                        <div className="bg-white p-6 rounded-md shadow-inner flex justify-center barcode-detail-container">
-                            <Barcode
-                                value={displayItem.barcode}
-                                width={2}
-                                height={80}
-                                fontSize={16}
-                                background="#ffffff"
-                                lineColor="#000000"
-                                renderer="canvas"
-                            />
-                        </div>
+                    <div className="flex flex-col gap-6 mb-6">
+                        {/* If it's a cable with amount > 1, show multiple QR codes */}
+                        {cable && cable.amount > 1 ? (
+                            Array.from({ length: cable.amount }, (_, i) => i + 1).map(num => {
+                                const code = `${displayItem.barcode}-${num}`
+                                const containerId = `qrcode-container-${num}`
+                                return (
+                                    <div key={num} className="bg-white/5 border border-border/50 p-4 rounded-lg">
+                                        <p className="text-xs font-mono text-muted-foreground mb-3 text-left">Label #{num}</p>
+                                        <div className="bg-white p-4 rounded-md shadow-inner flex flex-col items-center" id={containerId}>
+                                            <QRCodeCanvas
+                                                value={code}
+                                                size={120}
+                                                level="H"
+                                                includeMargin={false}
+                                            />
+                                            <p className="mt-4 text-sm font-mono font-bold tracking-widest text-black">{code}</p>
+                                        </div>
+                                        <div className="flex gap-2 mt-4">
+                                            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => handleCopy(code)}>
+                                                {copied ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                                                Copy Code
+                                            </Button>
+                                            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => handleCopyQR(code, containerId)}>
+                                                {copiedQR ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                                                Copy QR
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        ) : (
+                            <div className="bg-white/5 border border-border/50 p-4 rounded-lg">
+                                <div className="bg-white p-6 rounded-md shadow-inner flex flex-col items-center" id="qrcode-detail-single">
+                                    <QRCodeCanvas
+                                        value={displayItem.barcode}
+                                        size={140}
+                                        level="H"
+                                        includeMargin={false}
+                                    />
+                                    <p className="mt-4 text-sm font-mono font-bold tracking-widest text-black">{displayItem.barcode}</p>
+                                </div>
+                                <div className="flex gap-2 mt-6">
+                                    <Button variant="outline" className="flex-1" onClick={() => handleCopy(displayItem.barcode)}>
+                                        {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                                        Copy Code
+                                    </Button>
+                                    <Button variant="outline" className="flex-1" onClick={() => handleCopyQR(displayItem.barcode, "qrcode-detail-single")}>
+                                        {copiedQR ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                                        Copy QR
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
 
-                        <div className="bg-white p-6 rounded-md shadow-inner flex flex-col items-center qrcode-detail-container">
-                            <QRCodeCanvas
-                                value={displayItem.barcode}
-                                size={128}
-                                level="H"
-                                includeMargin={false}
-                            />
-                            <p className="mt-4 text-sm font-mono font-bold tracking-widest text-black">{displayItem.barcode}</p>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" className="flex-1 min-w-[120px]" onClick={handleCopy}>
-                            {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                            {copied ? "Copied!" : "Copy Barcode"}
-                        </Button>
-                        <Button variant="outline" className="flex-1 min-w-[120px]" onClick={handleCopyQR}>
-                            {copiedQR ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                            {copiedQR ? "Copied!" : "Copy QR Code"}
-                        </Button>
-                        <Button variant="outline" className="w-full mt-2" onClick={handlePrint}>
+                        <Button variant="outline" className="w-full" onClick={handlePrint}>
                             <Printer className="w-4 h-4 mr-2" />
-                            Print Label
+                            Print Labels
                         </Button>
                     </div>
                 </div>
@@ -149,16 +159,28 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
 
             {/* Print-only section */}
             <div className="hidden print:flex fixed inset-0 bg-white items-center justify-center p-0 m-0 z-[9999]">
-                <div className="flex flex-col items-center justify-center border-2 border-black p-8 rounded-lg">
-                    <Barcode
-                        value={displayItem.barcode}
-                        width={3}
-                        height={100}
-                        fontSize={24}
-                        background="#ffffff"
-                        lineColor="#000000"
-                    />
-                    <p className="mt-4 text-xl font-mono font-bold tracking-widest">{displayItem.barcode}</p>
+                <div className="flex flex-col gap-8 items-center py-10">
+                    {cable && cable.amount > 1 ? (
+                        Array.from({ length: cable.amount }, (_, i) => i + 1).map(num => (
+                            <div key={num} className="flex flex-col items-center justify-center border-2 border-black p-8 rounded-lg page-break-after-always">
+                                <QRCodeCanvas
+                                    value={`${displayItem.barcode}-${num}`}
+                                    size={200}
+                                    level="H"
+                                />
+                                <p className="mt-4 text-2xl font-mono font-bold tracking-widest">{displayItem.barcode}-{num}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="flex flex-col items-center justify-center border-2 border-black p-8 rounded-lg">
+                            <QRCodeCanvas
+                                value={displayItem.barcode}
+                                size={200}
+                                level="H"
+                            />
+                            <p className="mt-4 text-2xl font-mono font-bold tracking-widest">{displayItem.barcode}</p>
+                        </div>
+                    )}
                 </div>
             </div>
 

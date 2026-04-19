@@ -103,20 +103,14 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
         stopScanner()
 
         try {
-            // New logic: 'C' prefix for Cables, 'E' for Equipment
-            if (targetBarcode.startsWith("C")) {
+            // Logic: 'AV2026C' for Cables, 'AV2026E' for Equipment
+            // The backend handles stripping suffixes, so we just check the prefix
+            if (targetBarcode.includes("AV2026C") || targetBarcode.startsWith("C")) {
                 const res = await cableAPI.scan(targetBarcode)
                 setCable(res.cable)
                 setActiveCableCheckouts(res.active_checkouts)
 
-                if (res.active_checkouts.length > 0) {
-                    // Decide based on state? For now, if active, offer return, else offer checkout
-                    // Actually, cables can be checked out multiple times
-                    // Let's default to checkout, but show active checkouts
-                    setStep("checkout")
-                } else {
-                    setStep("checkout")
-                }
+                setStep("checkout")
             } else {
                 const res = await equipmentAPI.scan(targetBarcode)
                 const item = res.equipment
@@ -127,7 +121,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                 } else if (item.status === "checked_out") {
                     setStep("confirm_return")
                 } else {
-                    setError(`This equipment is currently under maintenance and cannot be checked out.`)
+                    setError(`This item is currently under maintenance and cannot be checked out.`)
                 }
             }
         } catch (err: any) {
@@ -196,7 +190,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <div className="flex items-center gap-2">
                         <QrCode className="w-5 h-5 text-primary" />
-                        <h2 className="text-lg font-semibold">Equipment Scanner</h2>
+                        <h2 className="text-lg font-semibold">QR Code Scanner</h2>
                     </div>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
                         <X className="w-4 h-4" />
@@ -209,7 +203,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                         <>
                             <div className="flex justify-between items-center mb-1">
                                 <p className="text-sm text-muted-foreground">
-                                    {isCameraActive ? "Point camera at the barcode" : "Type barcode manually"}
+                                    {isCameraActive ? "Point camera at the QR code" : "Type code manually"}
                                 </p>
                                 <Button
                                     variant="ghost"
@@ -242,7 +236,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    <Label htmlFor="barcode-input">Barcode Number</Label>
+                                    <Label htmlFor="barcode-input">QR Code Value</Label>
                                     <div className="flex gap-2">
                                         <Input
                                             id="barcode-input"
@@ -250,7 +244,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                                             value={barcode}
                                             onChange={e => setBarcode(e.target.value)}
                                             onKeyDown={e => e.key === "Enter" && handleScan()}
-                                            placeholder="e.g. STUDIOA-001"
+                                            placeholder="e.g. AV2026CAB001-1"
                                             className="font-mono"
                                         />
                                         <Button onClick={() => handleScan()} disabled={loading || !barcode.trim()}>
@@ -436,6 +430,6 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     )
 }
