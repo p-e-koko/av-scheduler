@@ -184,7 +184,7 @@ function InventoryPage() {
                             className="bg-gradient-to-r from-primary to-primary-medium text-primary-foreground hover:shadow-lg transition-all"
                         >
                             <QrCode className="w-4 h-4 mr-2" />
-                            Scan Barcode
+                            Scan QRcode
                         </Button>
                         {canManage && (
                             <Button variant="outline" onClick={() => itemType === "equipment" ? setShowAddModal(true) : setShowAddCableModal(true)}>
