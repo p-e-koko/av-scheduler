@@ -53,6 +53,7 @@ function InventoryPage() {
 
     const [viewMode, setViewMode] = useState<"grid" | "list">("list")
     const [itemType, setItemType] = useState<"equipment" | "cables">("equipment")
+    const [isSeeAll, setIsSeeAll] = useState(false)
 
     const [showScannerModal, setShowScannerModal] = useState(false)
     const [showAddModal, setShowAddModal] = useState(false)
@@ -79,7 +80,10 @@ function InventoryPage() {
         try {
             setLoading(true)
             setError(null)
-            const params: Record<string, string | number> = { page: currentPage, per_page: 15 }
+            const params: Record<string, string | number> = {
+                page: isSeeAll ? 1 : currentPage,
+                per_page: isSeeAll ? 1000 : 15
+            }
             if (searchQuery) params.search = searchQuery
             if (categoryFilter) params.category = categoryFilter
             if (locationFilter) params.location = locationFilter
@@ -99,7 +103,7 @@ function InventoryPage() {
         } finally {
             setLoading(false)
         }
-    }, [currentPage, searchQuery, statusFilter, categoryFilter, itemType])
+    }, [currentPage, searchQuery, statusFilter, categoryFilter, itemType, isSeeAll])
 
     useEffect(() => {
         const fetchLocations = async () => {
@@ -386,20 +390,34 @@ function InventoryPage() {
                             </div>
                         )}
 
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="flex items-center justify-center gap-4 mt-8">
-                                <Button variant="outline" size="sm" disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage(p => p - 1)}>
-                                    <ChevronLeft className="w-4 h-4" />
-                                </Button>
-                                <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
-                                <Button variant="outline" size="sm" disabled={currentPage === totalPages}
-                                    onClick={() => setCurrentPage(p => p + 1)}>
-                                    <ChevronRight className="w-4 h-4" />
-                                </Button>
-                            </div>
-                        )}
+                        {/* View All / Pagination */}
+                        <div className="flex flex-col items-center gap-6 mt-8">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setIsSeeAll(!isSeeAll)
+                                    setCurrentPage(1)
+                                }}
+                                className="text-primary hover:text-primary-dark font-medium"
+                            >
+                                {isSeeAll ? "Show less (Paginated)" : `See all ${itemType}`}
+                            </Button>
+
+                            {!isSeeAll && totalPages > 1 && (
+                                <div className="flex items-center justify-center gap-4">
+                                    <Button variant="outline" size="sm" disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage(p => p - 1)}>
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </Button>
+                                    <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
+                                    <Button variant="outline" size="sm" disabled={currentPage === totalPages}
+                                        onClick={() => setCurrentPage(p => p + 1)}>
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </>
                 )}
             </main>
