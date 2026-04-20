@@ -399,7 +399,7 @@ function InventoryPage() {
                                     setIsSeeAll(!isSeeAll)
                                     setCurrentPage(1)
                                 }}
-                                className="text-primary hover:text-primary-dark font-medium"
+                                className="text-primary dark:text-white hover:text-primary-medium font-medium"
                             >
                                 {isSeeAll ? "Show less (Paginated)" : `See all ${itemType}`}
                             </Button>
