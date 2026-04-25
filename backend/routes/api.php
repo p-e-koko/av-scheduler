@@ -252,26 +252,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/inventory-checkouts', [\App\Http\Controllers\Api\InventoryCheckoutController::class, 'index']);
     Route::get('/equipment-checkouts/{id}', [EquipmentCheckoutController::class, 'show']);
     
-    // -------------------------------------------------------------------------
-    // Key Management Routes
-    // -------------------------------------------------------------------------
-    
-    // Coordinator: Full CRUD on keys
     Route::middleware(['role:coordinator,admin'])->group(function () {
-        Route::post('/keys', [KeyController::class, 'store']);
-        Route::put('/keys/{id}', [KeyController::class, 'update']);
-        Route::delete('/keys/{id}', [KeyController::class, 'destroy']);
+        Route::post('/keys', [\App\Http\Controllers\Api\KeyController::class, 'store']);
+        Route::put('/keys/{id}', [\App\Http\Controllers\Api\KeyController::class, 'update']);
+        Route::delete('/keys/{id}', [\App\Http\Controllers\Api\KeyController::class, 'destroy']);
     });
 
     // All authenticated users: View keys and history
-    Route::get('/keys', [KeyController::class, 'index']);
-    Route::get('/keys/{id}', [KeyController::class, 'show']);
-    Route::get('/keys/{id}/history', [KeyController::class, 'history']);
+    Route::get('/keys', [\App\Http\Controllers\Api\KeyController::class, 'index']);
+    Route::get('/keys/{id}', [\App\Http\Controllers\Api\KeyController::class, 'show']);
+    Route::get('/keys/{id}/history', [\App\Http\Controllers\Api\KeyController::class, 'history']);
 
     // Students: Checkout/Return
     Route::middleware(['role:student'])->group(function () {
-        Route::post('/keys/{id}/checkout', [KeyCheckoutController::class, 'checkout']);
-        Route::post('/keys/{id}/return', [KeyCheckoutController::class, 'return']);
+        Route::post('/keys/{id}/checkout', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'checkout']);
+        Route::post('/keys/{id}/return', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'return']);
     });
 
 }); // end auth:sanctum group
