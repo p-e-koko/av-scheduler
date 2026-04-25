@@ -1341,6 +1341,31 @@ export interface Equipment {
   deleted_at?: string | null;
 }
 
+export interface Key {
+  id: string;
+  code: string;
+  description: string;
+  current_checkout?: KeyCheckout | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface KeyCheckout {
+  id: string;
+  key_id: string;
+  user_id: string;
+  student_id: string;
+  purpose: string;
+  checked_out_at: string;
+  returned_at?: string | null;
+  key?: Key;
+  user?: User;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
 export interface EquipmentCheckout {
   id: string;
   equipment_id: string;
@@ -1513,5 +1538,32 @@ export const checkoutAPI = {
   async trashed(params: Record<string, string | number> = {}): Promise<UnifiedCheckoutListResponse> {
     const qs = new URLSearchParams(Object.entries({ ...params, tab: 'trashed' }).map(([k, v]) => [k, String(v)])).toString();
     return apiCall<UnifiedCheckoutListResponse>('/inventory-checkouts' + (qs ? '?' + qs : ''));
+  },
+};
+
+export const keyAPI = {
+  async list(): Promise<Key[]> {
+    return apiCall<Key[]>('/keys');
+  },
+  async get(id: string): Promise<Key> {
+    return apiCall<Key>('/keys/' + id);
+  },
+  async create(data: { code: string; description: string; }): Promise<Key> {
+    return apiCall<Key>('/keys', { method: 'POST', body: JSON.stringify(data) });
+  },
+  async update(id: string, data: { code: string; description: string; }): Promise<Key> {
+    return apiCall<Key>('/keys/' + id, { method: 'PUT', body: JSON.stringify(data) });
+  },
+  async delete(id: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>('/keys/' + id, { method: 'DELETE' });
+  },
+  async checkout(id: string, data: { student_id: string; purpose: string; }): Promise<KeyCheckout> {
+    return apiCall<KeyCheckout>('/keys/' + id + '/checkout', { method: 'POST', body: JSON.stringify(data) });
+  },
+  async return(id: string): Promise<{ message: string; checkout: KeyCheckout }> {
+    return apiCall<{ message: string; checkout: KeyCheckout }>('/keys/' + id + '/return', { method: 'POST' });
+  },
+  async history(id: string): Promise<KeyCheckout[]> {
+    return apiCall<KeyCheckout[]>('/keys/' + id + '/history');
   },
 };

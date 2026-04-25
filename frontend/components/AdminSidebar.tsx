@@ -14,7 +14,8 @@ import {
   Package,
   X,
   Loader2,
-  LayoutDashboard
+  LayoutDashboard,
+  Key
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -177,6 +178,20 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           >
             <Package className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/inventory') ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Inventory</span>}
+          </div>
+          <div
+            onClick={() => {
+              router.push('/dashboard/keys')
+              if (isMobile && onClose) onClose()
+            }}
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/keys')
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/keys') ? 'border-primary/20' : 'border-transparent'
+              }`}
+          >
+            <Key className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/keys') ? 'text-primary dark:text-white' : ''}`} />
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Keys</span>}
           </div>
 
           {/* Switch Dashboard Section */}
