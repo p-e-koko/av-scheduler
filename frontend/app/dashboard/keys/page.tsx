@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import {
-    Key as KeyIcon, Search, Plus, Edit, Trash2, Clock, History,
-    CheckCircle, AlertCircle, ChevronLeft, Sun, Moon, LogIn, LogOut
+    Key as KeyIcon, Search, Plus, Edit, Trash2, Clock,
+    CheckCircle, AlertCircle, ChevronLeft, Sun, Moon, BookOpen
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,7 +18,7 @@ import {
     keyAPI, getStoredUser, formatAPIError, hasAnyRole,
     type Key, type User, type KeyCheckout
 } from "@/lib/api"
-import { KeyActionModal, KeyHistoryModal, KeyCheckoutModal } from "@/components/KeyModals"
+import { KeyActionModal, KeyHistoryModal, KeyCheckoutModal, KeyDetailModal } from "@/components/KeyModals"
 
 function KeyManagementPage() {
     const router = useRouter()
@@ -31,6 +31,7 @@ function KeyManagementPage() {
     const [showActionModal, setShowActionModal] = useState(false)
     const [showCheckoutModal, setShowCheckoutModal] = useState(false)
     const [showHistoryModal, setShowHistoryModal] = useState(false)
+    const [showDetailModal, setShowDetailModal] = useState(false)
     const { theme, setTheme } = useTheme()
     const [selectedKey, setSelectedKey] = useState<Key | null>(null)
     const [confirmDialog, setConfirmDialog] = useState<{
@@ -172,11 +173,9 @@ function KeyManagementPage() {
                                     item={key}
                                     canManage={canManage}
                                     isStudent={isStudent}
+                                    onClick={() => { setSelectedKey(key); setShowDetailModal(true) }}
                                     onEdit={() => { setSelectedKey(key); setShowActionModal(true) }}
                                     onDelete={() => handleDelete(key)}
-                                    onHistory={() => { setSelectedKey(key); setShowHistoryModal(true) }}
-                                    onCheckout={() => { setSelectedKey(key); setShowCheckoutModal(true) }}
-                                    onReturn={() => handleReturn(key)}
                                 />
                             ))}
                         </div>
@@ -212,6 +211,12 @@ function KeyManagementPage() {
                 onClose={() => { setShowHistoryModal(false); setSelectedKey(null) }}
                 targetKey={selectedKey}
             />
+            <KeyDetailModal
+                isOpen={showDetailModal}
+                onClose={() => { setShowDetailModal(false); setSelectedKey(null) }}
+                onRefresh={fetchKeys}
+                targetKey={selectedKey}
+            />
             <ConfirmationDialog
                 isOpen={confirmDialog.isOpen}
                 onClose={() => setConfirmDialog(p => ({ ...p, isOpen: false }))}
@@ -225,27 +230,35 @@ function KeyManagementPage() {
     )
 }
 
-function KeyCard({ item, canManage, isStudent, onEdit, onDelete, onHistory, onCheckout, onReturn }: {
+function KeyCard({ item, canManage, isStudent, onClick, onEdit, onDelete }: {
     item: Key,
     canManage: boolean,
     isStudent: boolean,
+    onClick: () => void,
     onEdit: () => void,
     onDelete: () => void,
-    onHistory: () => void,
-    onCheckout: () => void,
-    onReturn: () => void
 }) {
     const isCheckedOut = !!item.current_checkout
     const currentHolder = item.current_checkout?.user?.name
 
     return (
-        <Card className="bg-card/90 backdrop-blur-xl border-border shadow-lg hover:shadow-xl transition-all overflow-hidden flex flex-col">
+        <Card
+            className="bg-card/90 backdrop-blur-xl border-border shadow-lg hover:shadow-xl hover:border-primary/30 transition-all overflow-hidden flex flex-col cursor-pointer group"
+            onClick={onClick}
+        >
             <CardContent className="p-5 space-y-4 flex-1 flex flex-col justify-between">
                 <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                         <div>
-                            <h3 className="font-bold text-xl text-foreground tracking-tight">{item.code}</h3>
-                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{item.description}</p>
+                            <h3 className="font-bold text-xl text-foreground tracking-tight group-hover:text-primary group-hover:dark:text-white transition-colors">{item.code}</h3>
+                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed line-clamp-1">{item.description}</p>
+
+                            {item.assigned_user && (
+                                <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-primary/70 uppercase tracking-wider">
+                                    <BookOpen className="w-3 h-3" />
+                                    <span>Assigned: {item.assigned_user.name}</span>
+                                </div>
+                            )}
                         </div>
                         <Badge variant="outline" className={`text-xs px-2 py-0.5 border ${isCheckedOut ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"}`}>
                             {isCheckedOut ? <Clock className="w-3 h-3 mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
@@ -267,32 +280,16 @@ function KeyCard({ item, canManage, isStudent, onEdit, onDelete, onHistory, onCh
                     )}
                 </div>
 
-                <div className="pt-4 mt-auto border-t border-border/50 flex flex-wrap gap-2">
-                    {isStudent && (
-                        isCheckedOut ? (
-                            <Button variant="outline" size="sm" className="flex-1 bg-amber-500/5 hover:bg-amber-500/10 text-amber-600 border-amber-500/20" onClick={onReturn}>
-                                <LogOut className="w-3.5 h-3.5 mr-1.5" /> Return
-                            </Button>
-                        ) : (
-                            <Button variant="default" size="sm" className="flex-1 group" onClick={onCheckout}>
-                                <LogIn className="w-3.5 h-3.5 mr-1.5 group-hover:translate-x-0.5 transition-transform" /> Checkout
-                            </Button>
-                        )
-                    )}
-                    <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={onHistory} title="View History">
-                        <History className="w-4 h-4" />
-                    </Button>
-                    {canManage && (
-                        <>
-                            <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={onEdit} title="Edit Key">
-                                <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-destructive hover:bg-destructive/10" onClick={onDelete} title="Delete Key">
-                                <Trash2 className="w-4 h-4" />
-                            </Button>
-                        </>
-                    )}
-                </div>
+                {canManage && (
+                    <div className="pt-4 mt-auto border-t border-border/50 flex flex-wrap gap-2">
+                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0" onClick={(e) => { e.stopPropagation(); onEdit() }} title="Edit Key">
+                            <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0 text-destructive hover:bg-destructive/10" onClick={(e) => { e.stopPropagation(); onDelete() }} title="Delete Key">
+                            <Trash2 className="w-4 h-4" />
+                        </Button>
+                    </div>
+                )}
             </CardContent>
         </Card>
     )

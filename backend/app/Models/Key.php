@@ -18,7 +18,16 @@ class Key extends Model
     protected $fillable = [
         'code',
         'description',
+        'assigned_user_id',
     ];
+
+    /**
+     * Get the user this key is originally assigned to.
+     */
+    public function assignedUser()
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
 
     /**
      * Get all checkouts for this key.

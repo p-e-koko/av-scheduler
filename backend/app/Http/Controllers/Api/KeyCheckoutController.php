@@ -24,7 +24,6 @@ class KeyCheckoutController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'student_id' => 'required|string',
             'purpose' => 'required|string',
         ]);
 
@@ -32,10 +31,13 @@ class KeyCheckoutController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $user = Auth::user();
+        $studentId = $user->student_id ?? $user->username ?? 'Unknown';
+
         $checkout = KeyCheckout::create([
             'key_id' => $key->id,
-            'user_id' => Auth::id(),
-            'student_id' => $request->student_id,
+            'user_id' => $user->id,
+            'student_id' => $studentId,
             'purpose' => $request->purpose,
             'checked_out_at' => now(),
         ]);

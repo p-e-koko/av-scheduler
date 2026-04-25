@@ -14,7 +14,7 @@ class KeyController extends Controller
      */
     public function index()
     {
-        $keys = Key::with(['currentCheckout.user'])->get();
+        $keys = Key::with(['currentCheckout.user', 'assignedUser'])->get();
         
         return response()->json($keys);
     }
@@ -27,6 +27,7 @@ class KeyController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => 'required|string|unique:key_management,code',
             'description' => 'required|string',
+            'assigned_user_id' => 'nullable|exists:users,id',
         ]);
 
         if ($validator->fails()) {
@@ -43,7 +44,7 @@ class KeyController extends Controller
      */
     public function show($id)
     {
-        $key = Key::with(['currentCheckout.user', 'checkouts.user'])->findOrFail($id);
+        $key = Key::with(['currentCheckout.user', 'checkouts.user', 'assignedUser'])->findOrFail($id);
         
         return response()->json($key);
     }
@@ -58,6 +59,7 @@ class KeyController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => 'required|string|unique:key_management,code,' . $key->id . ',id',
             'description' => 'required|string',
+            'assigned_user_id' => 'nullable|exists:users,id',
         ]);
 
         if ($validator->fails()) {

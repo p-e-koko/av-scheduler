@@ -1346,6 +1346,8 @@ export interface Key {
   code: string;
   description: string;
   current_checkout?: KeyCheckout | null;
+  assigned_user_id?: string | null;
+  assigned_user?: User | null;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
@@ -1548,16 +1550,16 @@ export const keyAPI = {
   async get(id: string): Promise<Key> {
     return apiCall<Key>('/keys/' + id);
   },
-  async create(data: { code: string; description: string; }): Promise<Key> {
+  async create(data: { code: string; description: string; assigned_user_id?: string | null }): Promise<Key> {
     return apiCall<Key>('/keys', { method: 'POST', body: JSON.stringify(data) });
   },
-  async update(id: string, data: { code: string; description: string; }): Promise<Key> {
+  async update(id: string, data: { code: string; description: string; assigned_user_id?: string | null }): Promise<Key> {
     return apiCall<Key>('/keys/' + id, { method: 'PUT', body: JSON.stringify(data) });
   },
   async delete(id: string): Promise<{ message: string }> {
     return apiCall<{ message: string }>('/keys/' + id, { method: 'DELETE' });
   },
-  async checkout(id: string, data: { student_id: string; purpose: string; }): Promise<KeyCheckout> {
+  async checkout(id: string, data: { student_id?: string; purpose: string; }): Promise<KeyCheckout> {
     return apiCall<KeyCheckout>('/keys/' + id + '/checkout', { method: 'POST', body: JSON.stringify(data) });
   },
   async return(id: string): Promise<{ message: string; checkout: KeyCheckout }> {

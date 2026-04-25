@@ -263,11 +263,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/keys/{id}', [\App\Http\Controllers\Api\KeyController::class, 'show']);
     Route::get('/keys/{id}/history', [\App\Http\Controllers\Api\KeyController::class, 'history']);
 
-    // Students: Checkout/Return
-    Route::middleware(['role:student'])->group(function () {
-        Route::post('/keys/{id}/checkout', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'checkout']);
-        Route::post('/keys/{id}/return', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'return']);
-    });
+    // All authenticated users: Checkout/Return
+    Route::post('/keys/{id}/checkout', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'checkout']);
+    Route::post('/keys/{id}/return', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'return']);
 
 }); // end auth:sanctum group
 
