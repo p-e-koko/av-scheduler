@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, Key as KeyIcon, Loader2, Check, Clock, History, User as UserIcon, BookOpen, AlertCircle, LogIn, LogOut } from "lucide-react"
+import { X, Key as KeyIcon, Loader2, Check, Clock, History, User as UserIcon, BookOpen, AlertCircle, LogIn, LogOut, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -411,9 +411,10 @@ interface KeyDetailProps {
     onClose: () => void
     onRefresh: () => void
     targetKey?: Key | null
+    currentUser: User | null
 }
 
-export function KeyDetailModal({ isOpen, onClose, onRefresh, targetKey }: KeyDetailProps) {
+export function KeyDetailModal({ isOpen, onClose, onRefresh, targetKey, currentUser }: KeyDetailProps) {
     const [history, setHistory] = useState<KeyCheckout[]>([])
     const [historyLoading, setHistoryLoading] = useState(true)
     const [checkoutLoading, setCheckoutLoading] = useState(false)
@@ -511,14 +512,14 @@ export function KeyDetailModal({ isOpen, onClose, onRefresh, targetKey }: KeyDet
                     </div>
                     <div className="flex items-center gap-2">
                         {localKey?.assigned_user && (
-                            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10">
-                                <BookOpen className="w-3 h-3 text-primary" />
-                                <span className="text-[10px] font-bold text-primary uppercase">Original Holder: {localKey.assigned_user.name}</span>
+                            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 dark:bg-white/10 dark:border-white/20">
+                                <BookOpen className="w-3 h-3 text-primary dark:text-white" />
+                                <span className="text-[10px] font-bold text-primary dark:text-white uppercase">Original Holder: {localKey.assigned_user.name}</span>
                             </div>
                         )}
                         <Badge variant="outline" className={`text-xs px-2.5 py-1 border ${isCheckedOut ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"}`}>
-                            {isCheckedOut ? <Clock className="w-3 h-3 mr-1" /> : <Check className="w-3 h-3 mr-1" />}
-                            {isCheckedOut ? "In Use" : "Available"}
+                            {isCheckedOut ? <Clock className="w-3 h-3 mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+                            {isCheckedOut ? "Currently Held" : "Available"}
                         </Badge>
                         <Button variant="ghost" size="icon" className="rounded-full" onClick={onClose}>
                             <X className="w-4 h-4" />
@@ -532,8 +533,7 @@ export function KeyDetailModal({ isOpen, onClose, onRefresh, targetKey }: KeyDet
                     {/* Current Holder / Checkout Form Section */}
                     <div className="p-5 space-y-4 border-b border-border">
 
-                        {isCheckedOut ? (
-                            /* ---- Key is checked out: show current holder + return button ---- */
+                        {isCheckedOut && (
                             <div className="space-y-4">
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                                     <UserIcon className="w-3.5 h-3.5" /> Current Key Holder
@@ -553,51 +553,63 @@ export function KeyDetailModal({ isOpen, onClose, onRefresh, targetKey }: KeyDet
                                         <p className="text-sm italic text-foreground mt-0.5">{holder?.purpose}</p>
                                     </div>
                                 </div>
-
-                                {/* Return button */}
-                                <Button
-                                    variant="outline"
-                                    className="w-full bg-amber-500/5 hover:bg-amber-500/10 text-amber-600 border-amber-500/20 rounded-xl h-11"
-                                    onClick={handleReturn}
-                                    disabled={returnLoading}
-                                >
-                                    {returnLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <LogOut className="w-4 h-4 mr-2" />}
-                                    Return Key
-                                </Button>
-                            </div>
-                        ) : (
-                            /* ---- Key is available: show checkout form ---- */
-                            <div className="space-y-4">
-                                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                    <LogIn className="w-3.5 h-3.5" /> Take This Key
-                                </h3>
-                                <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-xl p-4">
-                                    <form onSubmit={handleCheckout} className="space-y-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="detail-purpose" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                                Purpose <span className="text-destructive">*</span>
-                                            </Label>
-                                            <Input
-                                                id="detail-purpose"
-                                                required
-                                                value={form.purpose}
-                                                onChange={e => setForm(f => ({ ...f, purpose: e.target.value }))}
-                                                placeholder="Why are you taking this key?"
-                                                className="bg-background/50 border-border/50 focus:border-emerald-500 transition-all"
-                                            />
-                                        </div>
-                                        <Button
-                                            type="submit"
-                                            className="w-full rounded-xl h-11 shadow-lg shadow-primary/20"
-                                            disabled={checkoutLoading}
-                                        >
-                                            {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <LogIn className="w-4 h-4 mr-2" />}
-                                            Checkout Key
-                                        </Button>
-                                    </form>
-                                </div>
                             </div>
                         )}
+
+                        {/* Actions Section */}
+                        <div className="pt-2">
+                            {isCheckedOut && currentUser?.id === holder?.user_id ? (
+                                /* Current user is the holder: only show Return */
+                                <div className="space-y-4 mt-4">
+                                    <Button
+                                        variant="outline"
+                                        className="w-full bg-amber-500/5 hover:bg-amber-500/10 text-amber-600 border-amber-500/20 rounded-xl h-11"
+                                        onClick={handleReturn}
+                                        disabled={returnLoading}
+                                    >
+                                        {returnLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <LogOut className="w-4 h-4 mr-2" />}
+                                        Return Key (You have it)
+                                    </Button>
+                                </div>
+                            ) : (
+                                /* Key is available OR held by someone else: show Checkout form */
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                        <LogIn className="w-3.5 h-3.5" /> {isCheckedOut ? "Take From Current Holder" : "Take This Key"}
+                                    </h3>
+                                    <div className={`rounded-xl p-4 border ${isCheckedOut ? "bg-primary/5 border-primary/20" : "bg-emerald-500/5 border-emerald-500/15"}`}>
+                                        <form onSubmit={handleCheckout} className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="detail-purpose" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                                    Purpose <span className="text-destructive">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="detail-purpose"
+                                                    required
+                                                    value={form.purpose}
+                                                    onChange={e => setForm(f => ({ ...f, purpose: e.target.value }))}
+                                                    placeholder={isCheckedOut ? "Handing over from previous student..." : "Why are you taking this key?"}
+                                                    className="bg-background/50 border-border/50 focus:border-primary transition-all"
+                                                />
+                                            </div>
+                                            <Button
+                                                type="submit"
+                                                className={`w-full rounded-xl h-11 shadow-lg ${isCheckedOut ? "bg-primary shadow-primary/20" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"}`}
+                                                disabled={checkoutLoading}
+                                            >
+                                                {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <LogIn className="w-4 h-4 mr-2" />}
+                                                {isCheckedOut ? "Confirm Handover" : "Checkout Key"}
+                                            </Button>
+                                            {isCheckedOut && (
+                                                <p className="text-[10px] text-muted-foreground text-center italic mt-2">
+                                                    Note: Taking this key will automatically complete the previous student's session.
+                                                </p>
+                                            )}
+                                        </form>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Error / Success Messages */}
                         {error && (

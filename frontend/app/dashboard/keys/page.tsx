@@ -216,6 +216,7 @@ function KeyManagementPage() {
                 onClose={() => { setShowDetailModal(false); setSelectedKey(null) }}
                 onRefresh={fetchKeys}
                 targetKey={selectedKey}
+                currentUser={currentUser}
             />
             <ConfirmationDialog
                 isOpen={confirmDialog.isOpen}
@@ -250,15 +251,18 @@ function KeyCard({ item, canManage, isStudent, onClick, onEdit, onDelete }: {
                 <div className="space-y-3">
                     <div className="flex items-start justify-between gap-2">
                         <div>
-                            <h3 className="font-bold text-xl text-foreground tracking-tight group-hover:text-primary group-hover:dark:text-white transition-colors">{item.code}</h3>
+                            <div className="flex items-center gap-3">
+                                <h3 className="font-bold text-xl text-foreground tracking-tight group-hover:text-primary group-hover:dark:text-white transition-colors">{item.code}</h3>
+                                {item.assigned_user && (
+                                    <Badge variant="secondary" className="text-[9px] h-5 px-2 font-bold uppercase tracking-tight bg-primary/10 text-primary border-primary/20 dark:bg-white/10 dark:text-white dark:border-white/20 whitespace-nowrap">
+                                        <BookOpen className="w-2.5 h-2.5 mr-1" />
+                                        Original: {item.assigned_user.name}
+                                    </Badge>
+                                )}
+                            </div>
                             <p className="text-sm text-muted-foreground mt-1 leading-relaxed line-clamp-1">{item.description}</p>
 
-                            {item.assigned_user && (
-                                <div className="mt-2 flex items-center gap-1.5 text-[10px] font-bold text-primary/70 uppercase tracking-wider">
-                                    <BookOpen className="w-3 h-3" />
-                                    <span>Assigned: {item.assigned_user.name}</span>
-                                </div>
-                            )}
+
                         </div>
                         <Badge variant="outline" className={`text-xs px-2 py-0.5 border ${isCheckedOut ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"}`}>
                             {isCheckedOut ? <Clock className="w-3 h-3 mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}

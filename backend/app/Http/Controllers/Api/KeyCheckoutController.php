@@ -18,11 +18,6 @@ class KeyCheckoutController extends Controller
     {
         $key = Key::findOrFail($id);
 
-        // Check if key is already checked out
-        if ($key->currentCheckout()->exists()) {
-            return response()->json(['message' => 'Key is already checked out'], 400);
-        }
-
         $validator = Validator::make($request->all(), [
             'purpose' => 'required|string',
         ]);
@@ -33,6 +28,15 @@ class KeyCheckoutController extends Controller
 
         $user = Auth::user();
         $studentId = $user->student_id ?? $user->username ?? 'Unknown';
+
+        // Check if key is already checked out by someone else
+        $currentCheckout = $key->currentCheckout;
+        if ($currentCheckout) {
+            // Automatic handover: mark previous checkout as returned
+            $currentCheckout->update([
+                'returned_at' => now(),
+            ]);
+        }
 
         $checkout = KeyCheckout::create([
             'key_id' => $key->id,

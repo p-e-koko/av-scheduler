@@ -28,9 +28,9 @@ export const canAccessDashboard = (userRole: string | string[], dashboardPath: s
 
   // Check role-specific access
   const rolePathMap: Record<string, string[]> = {
-    'coordinator': ['/dashboard/coordinator', '/dashboard/inventory'],
-    'student': ['/dashboard/student', '/dashboard/inventory'],
-    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory']
+    'coordinator': ['/dashboard/coordinator', '/dashboard/inventory', '/dashboard/keys'],
+    'student': ['/dashboard/student', '/dashboard/inventory', '/dashboard/keys'],
+    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys']
   };
 
   return roles.some(role => {
@@ -56,9 +56,9 @@ export const getAllowedDashboards = (userRole: string | string[]): string[] => {
   }
 
   const rolePathMap: Record<string, string[]> = {
-    'coordinator': ['/dashboard/coordinator', '/dashboard/inventory'],
-    'student': ['/dashboard/student', '/dashboard/inventory'],
-    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory']
+    'coordinator': ['/dashboard/coordinator', '/dashboard/inventory', '/dashboard/keys'],
+    'student': ['/dashboard/student', '/dashboard/inventory', '/dashboard/keys'],
+    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys']
   };
 
   const allowed = new Set<string>();
