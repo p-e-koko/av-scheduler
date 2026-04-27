@@ -96,11 +96,6 @@ export default function Home() {
                 Go to My Dashboard
               </Button>
 
-              <Link href="/dashboard">
-                <Button variant="outline" className="w-full bg-white/80 backdrop-blur-xl border-gray-300/30">
-                  Quick Access
-                </Button>
-              </Link>
             </>
           ) : (
             <>

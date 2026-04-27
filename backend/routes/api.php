@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\AvailabilityController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\EquipmentController;
 use App\Http\Controllers\Api\EquipmentCheckoutController;
+use App\Http\Controllers\Api\KeyController;
+use App\Http\Controllers\Api\KeyCheckoutController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -248,8 +250,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // All authenticated users: View checkout records
     Route::get('/inventory-checkouts', [\App\Http\Controllers\Api\InventoryCheckoutController::class, 'index']);
-    Route::get('/equipment-checkouts', [EquipmentCheckoutController::class, 'index']);
     Route::get('/equipment-checkouts/{id}', [EquipmentCheckoutController::class, 'show']);
+    
+    Route::middleware(['role:coordinator,admin'])->group(function () {
+        Route::post('/keys', [\App\Http\Controllers\Api\KeyController::class, 'store']);
+        Route::put('/keys/{id}', [\App\Http\Controllers\Api\KeyController::class, 'update']);
+        Route::delete('/keys/{id}', [\App\Http\Controllers\Api\KeyController::class, 'destroy']);
+    });
+
+    // All authenticated users: View keys and history
+    Route::get('/keys', [\App\Http\Controllers\Api\KeyController::class, 'index']);
+    Route::get('/keys/{id}', [\App\Http\Controllers\Api\KeyController::class, 'show']);
+    Route::get('/keys/{id}/history', [\App\Http\Controllers\Api\KeyController::class, 'history']);
+
+    // All authenticated users: Checkout/Return
+    Route::post('/keys/{id}/checkout', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'checkout']);
+    Route::post('/keys/{id}/return', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'return']);
 
 }); // end auth:sanctum group
 
