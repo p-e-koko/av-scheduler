@@ -12,9 +12,15 @@ class KeyController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $keys = Key::with(['currentCheckout.user', 'assignedUser'])->get();
+        $query = Key::with(['currentCheckout.user', 'assignedUser']);
+
+        if ($request->has('assigned_user_id')) {
+            $query->where('assigned_user_id', $request->assigned_user_id);
+        }
+
+        $keys = $query->get();
         
         return response()->json($keys);
     }

@@ -18,6 +18,13 @@ import {
     keyAPI, getStoredUser, formatAPIError, hasAnyRole,
     type Key, type User, type KeyCheckout
 } from "@/lib/api"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { KeyActionModal, KeyHistoryModal, KeyCheckoutModal, KeyDetailModal } from "@/components/KeyModals"
 
 function KeyManagementPage() {
@@ -27,6 +34,7 @@ function KeyManagementPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState("")
+    const [ownerFilter, setOwnerFilter] = useState<string>("all")
 
     const [showActionModal, setShowActionModal] = useState(false)
     const [showCheckoutModal, setShowCheckoutModal] = useState(false)
@@ -95,10 +103,17 @@ function KeyManagementPage() {
         router.push(`/dashboard/${currentUser.role}`)
     }
 
-    const filteredKeys = keys.filter(k =>
-        k.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        k.description.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    const filteredKeys = keys.filter(k => {
+        const matchesSearch = k.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            k.description.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesOwner = ownerFilter === "all" || k.assigned_user_id === ownerFilter
+        return matchesSearch && matchesOwner
+    })
+
+    const uniqueOwners = Array.from(new Set(keys
+        .filter(k => k.assigned_user)
+        .map(k => JSON.stringify({ id: k.assigned_user?.id, name: k.assigned_user?.name }))
+    )).map(s => JSON.parse(s))
 
     if (!currentUser) return <div className="flex items-center justify-center h-screen">Loading...</div>
 
@@ -141,15 +156,32 @@ function KeyManagementPage() {
 
             {/* Main */}
             <main className="p-4 sm:p-6 pb-24 max-w-7xl mx-auto">
-                {/* Search */}
-                <div className="relative w-full max-w-md mb-8">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search keys by code or description..."
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        className="pl-10 bg-card/80 border-border"
-                    />
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search keys by code or description..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="pl-10 bg-card/80 border-border"
+                        />
+                    </div>
+                    <div className="w-full sm:w-64">
+                        <Select value={ownerFilter} onValueChange={setOwnerFilter}>
+                            <SelectTrigger className="bg-card/80 border-border">
+                                <SelectValue placeholder="Filter by Original Owner" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Owners</SelectItem>
+                                {uniqueOwners.map((owner: any) => (
+                                    <SelectItem key={owner.id} value={owner.id}>
+                                        {owner.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
 
                 {error && (
