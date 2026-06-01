@@ -432,6 +432,26 @@ function SupervisorDashboard() {
     return `${studentAvail.length} slots available`;
   };
 
+  // Filter assignments for the current week
+  const weeklyAssignments = React.useMemo(() => {
+    const now = getServerTime()
+    const startOfWeek = new Date(now)
+    const day = now.getDay() || 7
+    startOfWeek.setHours(0, 0, 0, 0)
+    if (day !== 1) startOfWeek.setDate(now.getDate() - (day - 1))
+
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6)
+    endOfWeek.setHours(23, 59, 59, 999)
+
+    return assignments
+      .filter(a => {
+        const startDate = new Date(a.event_start_datetime)
+        return startDate >= startOfWeek && startDate <= endOfWeek
+      })
+      .sort((a, b) => new Date(a.event_start_datetime).getTime() - new Date(b.event_start_datetime).getTime())
+  }, [assignments])
+
   const handleEventClick = (event: CalendarEvent) => {
     const assignment = assignments.find(a => a.id.toString() === event.id)
     if (assignment) {
@@ -958,55 +978,47 @@ function SupervisorDashboard() {
               {/* Assignment Timeline */}
               <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                 <CardHeader>
-                  <CardTitle>Today Assignment</CardTitle>
+                  <CardTitle>Weekly Assignments</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {assignments
-                      .filter(a => {
-                        const startDate = new Date(a.event_start_datetime);
-                        const today = getServerTime();
-                        return startDate.getFullYear() === today.getFullYear() &&
-                               startDate.getMonth() === today.getMonth() &&
-                               startDate.getDate() === today.getDate();
-                      })
-                      .sort((a, b) => new Date(a.event_start_datetime).getTime() - new Date(b.event_start_datetime).getTime())
-                      .map((assignment, index) => (
-                        <div key={assignment.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg border-l-4 border-purple-500 dark:border-purple-400 gap-4 sm:gap-0">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-                              <ClipboardList className="w-6 h-6 text-primary" />
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-foreground">{assignment.assignment_name}</h4>
-                              <p className="text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">
-                                {assignment.users && assignment.users.length > 0
-                                  ? `Assigned to: ${assignment.users.map(u => u.name).join(', ')}`
-                                  : 'Unassigned'}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(assignment.event_start_datetime).toLocaleString()}
-                              </p>
-                            </div>
+                    {weeklyAssignments.map((assignment, index) => (
+                      <div
+                        key={assignment.id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg border-l-4 border-purple-500 dark:border-purple-400 gap-4 sm:gap-0 cursor-pointer hover:bg-muted/80 transition-colors"
+                        onClick={() => {
+                          setSelectedAssignment(assignment)
+                          setIsDetailModalOpen(true)
+                        }}
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
+                            <ClipboardList className="w-6 h-6 text-primary" />
                           </div>
-                          <div className="flex items-center space-x-2 self-start sm:self-center pl-16 sm:pl-0">
-                            <Badge className={`text-xs px-2 py-1 ${assignment.status === "pending" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white" :
-                              assignment.status === "confirmed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
-                                "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
-                              }`}>
-                              {assignment.status}
-                            </Badge>
+                          <div>
+                            <h4 className="font-semibold text-foreground">{assignment.assignment_name}</h4>
+                            <p className="text-sm text-muted-foreground line-clamp-1 sm:line-clamp-none">
+                              {assignment.users && assignment.users.length > 0
+                                ? `Assigned to: ${assignment.users.map(u => u.name).join(', ')}`
+                                : 'Unassigned'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(assignment.event_start_datetime).toLocaleString()}
+                            </p>
                           </div>
                         </div>
-                      ))}
-                    {assignments.filter(a => {
-                      const startDate = new Date(a.event_start_datetime);
-                      const today = getServerTime();
-                      return startDate.getFullYear() === today.getFullYear() &&
-                             startDate.getMonth() === today.getMonth() &&
-                             startDate.getDate() === today.getDate();
-                    }).length === 0 && (
-                      <div className="text-center py-4 text-muted-foreground">No assignments found for today.</div>
+                        <div className="flex items-center space-x-2 self-start sm:self-center pl-16 sm:pl-0">
+                          <Badge className={`text-xs px-2 py-1 ${assignment.status === "pending" ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white" :
+                            assignment.status === "confirmed" ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" :
+                              "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+                            }`}>
+                            {assignment.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    {weeklyAssignments.length === 0 && (
+                      <div className="text-center py-4 text-muted-foreground">No assignments found for this week.</div>
                     )}
                   </div>
                 </CardContent>
