@@ -78,6 +78,9 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
 
   if (!currentUser) return null
 
+  const userRoles = currentUser.roles && currentUser.roles.length > 0 ? currentUser.roles : [currentUser.role];
+  const hasOnlyStudentRole = userRoles.length === 1 && userRoles[0].toLowerCase() === 'student';
+
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div className="w-full bg-card/80 backdrop-blur-xl border-r border-border shadow-lg shadow-gray-100/50 dark:shadow-none h-full flex flex-col">
       {/* Sidebar Header - App Branding */}
@@ -188,7 +191,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
           </div>
 
           {/* Switch Dashboard Section */}
-          {currentUser && getAllowedDashboards(currentUser.roles || []).filter(path => !path.includes('/dashboard/student') && !path.includes('/dashboard/inventory')).length > 0 && (
+          {currentUser && !hasOnlyStudentRole && getAllowedDashboards(currentUser.roles || []).filter(path => !path.includes('/dashboard/student') && !path.includes('/dashboard/inventory')).length > 0 && (
             <>
               <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
                 {(!sidebarCollapsed || isMobile) ? (
