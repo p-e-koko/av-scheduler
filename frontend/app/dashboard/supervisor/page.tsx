@@ -958,14 +958,19 @@ function SupervisorDashboard() {
               {/* Assignment Timeline */}
               <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg">
                 <CardHeader>
-                  <CardTitle>Upcoming Assignments</CardTitle>
+                  <CardTitle>Today Assignment</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {assignments
-                      .filter(a => new Date(a.event_start_datetime) >= getServerTime())
+                      .filter(a => {
+                        const startDate = new Date(a.event_start_datetime);
+                        const today = getServerTime();
+                        return startDate.getFullYear() === today.getFullYear() &&
+                               startDate.getMonth() === today.getMonth() &&
+                               startDate.getDate() === today.getDate();
+                      })
                       .sort((a, b) => new Date(a.event_start_datetime).getTime() - new Date(b.event_start_datetime).getTime())
-                      .slice(0, 5)
                       .map((assignment, index) => (
                         <div key={assignment.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-muted/50 rounded-lg border-l-4 border-purple-500 dark:border-purple-400 gap-4 sm:gap-0">
                           <div className="flex items-center space-x-4">
@@ -994,8 +999,14 @@ function SupervisorDashboard() {
                           </div>
                         </div>
                       ))}
-                    {assignments.filter(a => new Date(a.event_start_datetime) >= getServerTime()).length === 0 && (
-                      <div className="text-center py-4 text-muted-foreground">No upcoming assignments found.</div>
+                    {assignments.filter(a => {
+                      const startDate = new Date(a.event_start_datetime);
+                      const today = getServerTime();
+                      return startDate.getFullYear() === today.getFullYear() &&
+                             startDate.getMonth() === today.getMonth() &&
+                             startDate.getDate() === today.getDate();
+                    }).length === 0 && (
+                      <div className="text-center py-4 text-muted-foreground">No assignments found for today.</div>
                     )}
                   </div>
                 </CardContent>
