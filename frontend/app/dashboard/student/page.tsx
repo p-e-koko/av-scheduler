@@ -1330,7 +1330,7 @@ function StudentDashboard() {
                     onClick={() => setIsAddAvailabilityModalOpen(true)}
                   >
                     <Plus className="w-4 h-4 mr-1" />
-                    {isMobile ? "Add" : "Add Availability"}
+                    {isMobile ? "Add" : "Add Schedule"}
                   </Button>
                 </div>
               </div>
