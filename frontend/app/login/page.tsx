@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import { useState, Suspense } from "react"
@@ -40,6 +40,10 @@ function LoginPageContent() {
     const errorFromQuery = searchParams.get("error");
     if (errorFromQuery) {
       setError(errorFromQuery);
+    } else if (searchParams.get("expired") === "true") {
+      setError("Your session has expired. Please log in again.");
+    } else if (searchParams.get("changed") === "true") {
+      setError("Your account details have changed. Please log in again.");
     }
   }, [searchParams]);
 

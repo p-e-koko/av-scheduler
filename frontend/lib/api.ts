@@ -293,6 +293,10 @@ async function apiCall<T>(
         throw new APIError('Invalid credentials. Please check your email and password.', 401);
       }
 
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login?expired=true';
+      }
+
       throw new APIError('Session expired or unauthenticated. Please log in again.', 401);
     }
 
