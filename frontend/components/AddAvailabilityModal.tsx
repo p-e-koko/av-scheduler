@@ -176,7 +176,7 @@ export function AddAvailabilityModal({ isOpen, onClose, onSuccess, existingAvail
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] bg-card text-card-foreground">
         <DialogHeader>
-          <DialogTitle>Add Availability</DialogTitle>
+          <DialogTitle>Add Schedule</DialogTitle>
           <DialogDescription>
             Set your availability for a specific date and time.
           </DialogDescription>
