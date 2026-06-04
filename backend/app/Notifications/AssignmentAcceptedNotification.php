@@ -8,6 +8,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 class AssignmentAcceptedNotification extends Notification
 {
@@ -32,7 +34,19 @@ class AssignmentAcceptedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database', 'mail', WebPushChannel::class];
+    }
+
+    /**
+     * Get the WebPush representation of the notification.
+     */
+    public function toWebPush(object $notifiable, $notification): WebPushMessage
+    {
+        return (new WebPushMessage)
+            ->title('Assignment Accepted')
+            ->icon('/icons/icon-192x192.png')
+            ->body($this->student->name . ' has accepted the assignment: ' . $this->assignment->assignment_name)
+            ->data(['url' => '/dashboard/coordinator?tab=assignments']);
     }
 
     /**

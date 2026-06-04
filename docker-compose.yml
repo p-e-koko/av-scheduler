@@ -42,6 +42,10 @@ services:
       # Feedback
       FEEDBACK_RECIPIENT_EMAIL: ${FEEDBACK_RECIPIENT_EMAIL}
 
+      # Web Push VAPID Keys
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+
       # CORS & Sanctum
       # Adjust these to matching your frontend domain/IP
       SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS}

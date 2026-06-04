@@ -14,12 +14,54 @@ import {
 import { notificationAPI, type Notification } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
+import { Switch } from '@/components/ui/switch';
+import { getPushSubscription, subscribeToPush, unsubscribeFromPush, isPushSupported } from '@/components/PwaRegister';
 
 export function NotificationDropdown() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [isPushEnabled, setIsPushEnabled] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    async function checkSubscription() {
+      const supported = await isPushSupported();
+      setPushSupported(supported);
+      if (supported) {
+        const sub = await getPushSubscription();
+        setIsPushEnabled(!!sub);
+      }
+    }
+    checkSubscription();
+
+    const handleSubChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setIsPushEnabled(!!customEvent.detail);
+    };
+
+    window.addEventListener('push-subscription-change', handleSubChange);
+    return () => {
+      window.removeEventListener('push-subscription-change', handleSubChange);
+    };
+  }, []);
+
+  const handlePushToggle = async (checked: boolean) => {
+    try {
+      if (checked) {
+        await subscribeToPush();
+        alert('Mobile push notifications enabled successfully!');
+      } else {
+        await unsubscribeFromPush();
+        alert('Mobile push notifications disabled.');
+      }
+    } catch (error: any) {
+      console.error('Failed to toggle push subscription:', error);
+      alert(`Failed to toggle push notifications: ${error.message || error}`);
+      setIsPushEnabled(!checked);
+    }
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -89,13 +131,28 @@ export function NotificationDropdown() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs h-auto p-0 text-blue-600"
+              className="text-xs h-auto p-0 text-blue-600 hover:bg-transparent"
               onClick={handleMarkAllAsRead}
             >
               Mark all as read
             </Button>
           )}
         </DropdownMenuLabel>
+        
+        {pushSupported && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="flex items-center justify-between px-3 py-2 text-sm bg-muted/20">
+              <span className="font-medium text-xs text-muted-foreground">Mobile Push Notifications</span>
+              <Switch
+                checked={isPushEnabled}
+                onCheckedChange={handlePushToggle}
+                className="scale-75"
+              />
+            </div>
+          </>
+        )}
+        
         <DropdownMenuSeparator />
         <div className="max-h-[300px] overflow-y-auto">
           {notifications.length === 0 ? (

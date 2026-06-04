@@ -54,4 +54,49 @@ class NotificationController extends Controller
 
         return response()->json(['message' => 'All notifications marked as read']);
     }
+
+    /**
+     * Store or update a push subscription.
+     */
+    public function subscribe(Request $request): JsonResponse
+    {
+        $request->validate([
+            'endpoint' => 'required|string',
+            'keys.p256dh' => 'required|string',
+            'keys.auth' => 'required|string',
+        ]);
+
+        $endpoint = $request->input('endpoint');
+        $key = $request->input('keys.p256dh');
+        $token = $request->input('keys.auth');
+        $contentEncoding = $request->input('contentEncoding', 'aesgcm');
+
+        $request->user()->updatePushSubscription($endpoint, $key, $token, $contentEncoding);
+
+        return response()->json(['message' => 'Push subscription saved successfully']);
+    }
+
+    /**
+     * Delete a push subscription.
+     */
+    public function unsubscribe(Request $request): JsonResponse
+    {
+        $request->validate([
+            'endpoint' => 'required|string',
+        ]);
+
+        $endpoint = $request->input('endpoint');
+        $request->user()->deletePushSubscription($endpoint);
+
+        return response()->json(['message' => 'Push subscription deleted successfully']);
+    }
+
+    /**
+     * Get the VAPID public key.
+     */
+    public function vapidKey(): JsonResponse
+    {
+        $publicKey = config('webpush.vapid.public_key');
+        return response()->json(['vapid_public_key' => $publicKey]);
+    }
 }

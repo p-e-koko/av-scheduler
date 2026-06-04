@@ -1319,6 +1319,21 @@ export const notificationAPI = {
       method: 'POST',
     });
   },
+  subscribePush: async (subscription: any): Promise<ApiResponse> => {
+    return apiCall<ApiResponse>('/push-subscriptions', {
+      method: 'POST',
+      body: JSON.stringify(subscription),
+    });
+  },
+  unsubscribePush: async (endpoint: string): Promise<ApiResponse> => {
+    return apiCall<ApiResponse>('/push-subscriptions/unsubscribe', {
+      method: 'POST',
+      body: JSON.stringify({ endpoint }),
+    });
+  },
+  getVapidPublicKey: async (): Promise<{ vapid_public_key: string }> => {
+    return apiCall<{ vapid_public_key: string }>('/push-subscriptions/vapid-key');
+  },
 };
 
 
