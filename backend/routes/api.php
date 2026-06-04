@@ -195,6 +195,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
     Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+    Route::post('/push-subscriptions', [\App\Http\Controllers\Api\NotificationController::class, 'subscribe']);
+    Route::post('/push-subscriptions/unsubscribe', [\App\Http\Controllers\Api\NotificationController::class, 'unsubscribe']);
+    Route::get('/push-subscriptions/vapid-key', [\App\Http\Controllers\Api\NotificationController::class, 'vapidKey']);
 
     // -------------------------------------------------------------------------
     // Equipment & Cables Inventory Routes

@@ -7,6 +7,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 class AssignmentDeletedNotification extends Notification
 {
@@ -34,7 +36,19 @@ class AssignmentDeletedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database', 'mail', WebPushChannel::class];
+    }
+
+    /**
+     * Get the WebPush representation of the notification.
+     */
+    public function toWebPush(object $notifiable, $notification): WebPushMessage
+    {
+        return (new WebPushMessage)
+            ->title('Assignment Cancelled')
+            ->icon('/icons/icon-192x192.png')
+            ->body('Assignment has been cancelled: ' . $this->assignmentName)
+            ->data(['url' => '/dashboard/student?tab=assignments']);
     }
 
     /**

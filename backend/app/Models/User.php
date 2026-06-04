@@ -11,11 +11,12 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use App\Notifications\VerifyEmailQueued;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, SoftDeletes, HasRoles, HasUuid;
+    use HasFactory, Notifiable, HasApiTokens, SoftDeletes, HasRoles, HasUuid, HasPushSubscriptions;
 
     /**
      * The attributes that are mass assignable.
