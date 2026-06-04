@@ -58,6 +58,17 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
     }
   }, [user])
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isOpen])
+
   const handleLogoutClick = () => {
     setShowLogoutDialog(true)
   }
@@ -129,7 +140,7 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
       </div>
 
       {/* Sidebar Navigation */}
-      <div className="flex-1 p-2">
+      <div className="flex-1 p-2 overflow-y-auto overscroll-contain">
         <nav className="space-y-1">
           <div
             onClick={() => {
