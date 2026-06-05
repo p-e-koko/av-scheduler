@@ -68,3 +68,9 @@ self.addEventListener('notificationclick', function (event) {
     })
   );
 });
+
+// Fetch event listener (required for PWA installability on Chrome/Android)
+self.addEventListener('fetch', function (event) {
+  // No-op: let the browser fetch the resource normally.
+  // This satisfies the PWA criteria of having a fetch handler registered.
+});
