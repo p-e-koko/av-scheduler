@@ -19,10 +19,8 @@ export const metadata: Metadata = {
   title: "AV Scheduler - Audio Visual Scheduling System",
   description: "Streamlined scheduling and management for audio visual resources and personnel",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://av.apiu.edu'),
-  manifest: "/manifest.json",
   icons: {
     icon: "/favicon.ico",
-    apple: "/icons/icon-192x192.png",
   },
   appleWebApp: {
     capable: true,
@@ -38,7 +36,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
