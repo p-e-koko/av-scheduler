@@ -89,6 +89,8 @@ export function PwaRegister() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
   const [isIOS, setIsIOS] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(false)
+  const [showManualGuide, setShowManualGuide] = useState(false)
 
   useEffect(() => {
     // Register service worker
@@ -103,10 +105,11 @@ export function PwaRegister() {
     }
 
     // Check if running as standalone
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    const standaloneDetected = window.matchMedia('(display-mode: standalone)').matches
       || (navigator as any).standalone === true;
+    setIsStandalone(standaloneDetected)
 
-    if (isStandalone) {
+    if (standaloneDetected) {
       return
     }
 
@@ -144,12 +147,15 @@ export function PwaRegister() {
   }, [])
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-    console.log(`User choice outcome: ${outcome}`)
-    setDeferredPrompt(null)
-    setShowPrompt(false)
+    if (deferredPrompt) {
+      deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      console.log(`User choice outcome: ${outcome}`)
+      setDeferredPrompt(null)
+      setShowPrompt(false)
+    } else {
+      setShowManualGuide(true)
+    }
   }
 
   const handleDismiss = () => {
@@ -157,10 +163,65 @@ export function PwaRegister() {
     setShowPrompt(false)
   }
 
-  if (!showPrompt) return null
+  // If already running inside PWA standalone window, do not render anything
+  if (isStandalone) return null
+
+  // Show manual instruction popup dialog for Android/Desktop if triggered
+  if (showManualGuide) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200">
+          {/* Close Button */}
+          <button 
+            onClick={() => setShowManualGuide(false)}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted/50"
+            aria-label="Close dialog"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          <div className="flex flex-col items-center text-center space-y-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+              <Download className="h-6 w-6" />
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg text-foreground">
+                How to Install AV Scheduler
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Direct installation isn't supported on this browser or connection type (it requires HTTPS). You can still install the app manually:
+              </p>
+            </div>
+
+            <div className="w-full bg-muted/40 rounded-xl p-4 border border-border/40 text-left text-xs text-muted-foreground space-y-3">
+              <div>
+                <p className="font-medium text-foreground mb-1">On Google Chrome (Android):</p>
+                <p className="pl-1">1. Tap the three dots menu (<strong className="text-foreground">⋮</strong>) in the top-right corner.</p>
+                <p className="pl-1">2. Select <strong className="text-foreground">"Add to Home screen"</strong> or <strong className="text-foreground">"Install app"</strong>.</p>
+              </div>
+              <div className="border-t border-border/40 pt-3">
+                <p className="font-medium text-foreground mb-1">On Samsung Internet:</p>
+                <p className="pl-1">1. Tap the menu bar (<strong className="text-foreground">☰</strong>) in the bottom-right corner.</p>
+                <p className="pl-1">2. Tap <strong className="text-foreground">"Add page to"</strong> and select <strong className="text-foreground">"Home screen"</strong> or select <strong className="text-foreground">"Install"</strong>.</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowManualGuide(false)}
+              className="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow transition-colors hover:bg-primary/95 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // iOS Manual Installation Guide (Bottom Popup)
   if (isIOS) {
+    if (!showPrompt) return null
     return (
       <div className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-[380px] z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
         <div className="relative overflow-hidden rounded-2xl border border-border bg-card/90 backdrop-blur-md p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/5">
@@ -211,14 +272,12 @@ export function PwaRegister() {
     )
   }
 
-  // Android / Desktop Action Button (Top Right Header Placement)
-  if (!deferredPrompt) return null
-
+  // Android / Desktop Action Button (Top Right Header Placement) - Always visible when not in app
   return (
     <div className="fixed top-[20px] right-16 md:right-[72px] z-40 animate-in fade-in duration-300">
       <button
         onClick={handleInstallClick}
-        className="hover:bg-accent hover:text-accent-foreground text-foreground transition-all duration-200 rounded-lg flex items-center justify-center h-10 w-10 active:scale-95 border border-border/10 bg-background/50 backdrop-blur-sm shadow-sm"
+        className="hover:bg-accent hover:text-accent-foreground text-foreground transition-all duration-200 rounded-lg flex items-center justify-center h-10 w-10 active:scale-95 border border-border/10 bg-background/50 backdrop-blur-sm shadow-sm cursor-pointer"
         title="Install AV Scheduler App"
         aria-label="Install AV Scheduler App"
       >
