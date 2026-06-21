@@ -93,6 +93,12 @@ export function PwaRegister() {
   const [showManualGuide, setShowManualGuide] = useState(false)
 
   useEffect(() => {
+    // Check if the event was already captured by the head script
+    if (typeof window !== 'undefined' && (window as any).deferredPrompt) {
+      setDeferredPrompt((window as any).deferredPrompt)
+      setShowPrompt(true)
+    }
+
     // Register service worker
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
@@ -137,24 +143,43 @@ export function PwaRegister() {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
       setShowPrompt(true)
+      ;(window as any).deferredPrompt = e
+    }
+
+    const handlePwaInstallable = () => {
+      if (typeof window !== 'undefined' && (window as any).deferredPrompt) {
+        setDeferredPrompt((window as any).deferredPrompt)
+        setShowPrompt(true)
+      }
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    window.addEventListener('pwa-installable', handlePwaInstallable)
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      window.removeEventListener('pwa-installable', handlePwaInstallable)
     }
   }, [])
 
   const handleInstallClick = async () => {
+    const activePrompt = deferredPrompt || (typeof window !== 'undefined' ? (window as any).deferredPrompt : null)
     if (isIOS) {
       setShowPrompt(true)
-    } else if (deferredPrompt) {
-      deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
-      console.log(`User choice outcome: ${outcome}`)
-      setDeferredPrompt(null)
-      setShowPrompt(false)
+    } else if (activePrompt) {
+      try {
+        activePrompt.prompt()
+        const { outcome } = await activePrompt.userChoice
+        console.log(`User choice outcome: ${outcome}`)
+        setDeferredPrompt(null)
+        if (typeof window !== 'undefined') {
+          (window as any).deferredPrompt = null
+        }
+        setShowPrompt(false)
+      } catch (err) {
+        console.error('Failed to trigger install prompt:', err)
+        setShowManualGuide(true)
+      }
     } else {
       setShowManualGuide(true)
     }
