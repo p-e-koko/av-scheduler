@@ -110,23 +110,22 @@ export function PwaRegister() {
       return
     }
 
-    // Check local storage dismissal
-    const dismissedTime = localStorage.getItem('pwa-prompt-dismissed')
-    if (dismissedTime) {
-      const parsedTime = parseInt(dismissedTime, 10)
-      const now = Date.now()
-      // Do not show again for 3 days if dismissed
-      if (now - parsedTime < 3 * 24 * 60 * 60 * 1000) {
-        return
-      }
-    }
-
     // Check device type
     const userAgent = window.navigator.userAgent.toLowerCase()
     const iosDetected = /iphone|ipad|ipod/.test(userAgent)
     setIsIOS(iosDetected)
 
     if (iosDetected) {
+      // Check local storage dismissal (only for iOS popup guide)
+      const dismissedTime = localStorage.getItem('pwa-prompt-dismissed')
+      if (dismissedTime) {
+        const parsedTime = parseInt(dismissedTime, 10)
+        const now = Date.now()
+        // Do not show again for 3 days if dismissed
+        if (now - parsedTime < 3 * 24 * 60 * 60 * 1000) {
+          return
+        }
+      }
       // Show iOS prompt guide automatically
       setShowPrompt(true)
     }
@@ -160,41 +159,37 @@ export function PwaRegister() {
 
   if (!showPrompt) return null
 
-  return (
-    <div className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-[380px] z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-card/90 backdrop-blur-md p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/5">
-        
-        {/* Sleek top ambient glow */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary/10 via-primary to-primary/10" />
+  // iOS Manual Installation Guide (Bottom Popup)
+  if (isIOS) {
+    return (
+      <div className="fixed bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-[380px] z-50 animate-in fade-in slide-in-from-bottom-5 duration-300">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card/90 backdrop-blur-md p-5 shadow-2xl transition-all duration-300 hover:shadow-primary/5">
+          {/* Sleek top ambient glow */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary/10 via-primary to-primary/10" />
 
-        {/* Close Button */}
-        <button 
-          onClick={handleDismiss}
-          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted/50"
-          aria-label="Dismiss prompt"
-        >
-          <X className="h-4 w-4" />
-        </button>
+          {/* Close Button */}
+          <button 
+            onClick={handleDismiss}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted/50"
+            aria-label="Dismiss prompt"
+          >
+            <X className="h-4 w-4" />
+          </button>
 
-        <div className="flex gap-4 items-start">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
-            {isIOS ? (
+          <div className="flex gap-4 items-start">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
               <Smartphone className="h-5 w-5" />
-            ) : (
-              <Download className="h-5 w-5" />
-            )}
-          </div>
-          
-          <div className="flex-1 pr-4">
-            <h3 className="font-semibold text-sm leading-none flex items-center gap-1.5 text-foreground">
-              Install AV Scheduler
-              <Sparkles className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 animate-pulse" />
-            </h3>
-            <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-              Install the app for quick offline access and direct mobile push notifications.
-            </p>
+            </div>
+            
+            <div className="flex-1 pr-4">
+              <h3 className="font-semibold text-sm leading-none flex items-center gap-1.5 text-foreground">
+                Install AV Scheduler
+                <Sparkles className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 animate-pulse" />
+              </h3>
+              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                Install the app for quick offline access and direct mobile push notifications.
+              </p>
 
-            {isIOS ? (
               <div className="mt-3.5 bg-muted/30 rounded-lg p-2.5 border border-border/40 text-xs text-muted-foreground space-y-1">
                 <p className="font-medium text-foreground text-[11px] mb-1">To Install on iPhone/iPad:</p>
                 <div className="flex items-center gap-1">
@@ -209,25 +204,26 @@ export function PwaRegister() {
                   </span>
                 </div>
               </div>
-            ) : (
-              <div className="mt-4 flex gap-2">
-                <button
-                  onClick={handleInstallClick}
-                  className="flex-1 inline-flex items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow transition-colors hover:bg-primary/95 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
-                >
-                  Install Now
-                </button>
-                <button
-                  onClick={handleDismiss}
-                  className="inline-flex items-center justify-center rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
-                >
-                  Later
-                </button>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
+    )
+  }
+
+  // Android / Desktop Action Button (Top Right Header Placement)
+  if (!deferredPrompt) return null
+
+  return (
+    <div className="fixed top-[20px] right-16 md:right-[72px] z-40 animate-in fade-in duration-300">
+      <button
+        onClick={handleInstallClick}
+        className="hover:bg-accent hover:text-accent-foreground text-foreground transition-all duration-200 rounded-lg flex items-center justify-center h-10 w-10 active:scale-95 border border-border/10 bg-background/50 backdrop-blur-sm shadow-sm"
+        title="Install AV Scheduler App"
+        aria-label="Install AV Scheduler App"
+      >
+        <Download className="h-5 w-5 text-primary" />
+      </button>
     </div>
   )
 }
