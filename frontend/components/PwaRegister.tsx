@@ -147,7 +147,9 @@ export function PwaRegister() {
   }, [])
 
   const handleInstallClick = async () => {
-    if (deferredPrompt) {
+    if (isIOS) {
+      setShowPrompt(true)
+    } else if (deferredPrompt) {
       deferredPrompt.prompt()
       const { outcome } = await deferredPrompt.userChoice
       console.log(`User choice outcome: ${outcome}`)
@@ -157,6 +159,17 @@ export function PwaRegister() {
       setShowManualGuide(true)
     }
   }
+
+  // Listen to installation trigger event from download button
+  useEffect(() => {
+    const handleTrigger = () => {
+      handleInstallClick()
+    }
+    window.addEventListener('pwa-trigger-install', handleTrigger)
+    return () => {
+      window.removeEventListener('pwa-trigger-install', handleTrigger)
+    }
+  }, [deferredPrompt, isIOS])
 
   const handleDismiss = () => {
     localStorage.setItem('pwa-prompt-dismissed', Date.now().toString())
@@ -272,17 +285,5 @@ export function PwaRegister() {
     )
   }
 
-  // Android / Desktop Action Button (Top Right Header Placement) - Always visible when not in app
-  return (
-    <div className="fixed top-[20px] right-16 md:right-[72px] z-40 animate-in fade-in duration-300">
-      <button
-        onClick={handleInstallClick}
-        className="hover:bg-accent hover:text-accent-foreground text-foreground transition-all duration-200 rounded-lg flex items-center justify-center h-10 w-10 active:scale-95 border border-border/10 bg-background/50 backdrop-blur-sm shadow-sm cursor-pointer"
-        title="Install AV Scheduler App"
-        aria-label="Install AV Scheduler App"
-      >
-        <Download className="h-5 w-5 text-primary" />
-      </button>
-    </div>
-  )
+  return null
 }
