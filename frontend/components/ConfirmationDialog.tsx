@@ -39,18 +39,18 @@ export default function ConfirmationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-card/95 backdrop-blur-xl border border-border">
+      <DialogContent className="bg-card/95 backdrop-blur-xl border border-border max-w-[90vw] sm:max-w-[400px] rounded-2xl p-5 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-foreground">{title}</DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {description}
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="gap-2 sm:gap-0">
           <Button
             variant="outline"
             onClick={onClose}
-            className="bg-muted text-foreground hover:bg-muted/80 border-input"
+            className="bg-muted text-foreground hover:bg-muted/80 border-input w-full sm:w-auto"
           >
             {cancelText}
           </Button>
@@ -58,8 +58,8 @@ export default function ConfirmationDialog({
             onClick={handleConfirm}
             className={
               variant === "destructive" 
-                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" 
-                : "bg-primary text-primary-foreground hover:bg-primary/90"
+                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full sm:w-auto" 
+                : "bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto"
             }
           >
             {confirmText}
