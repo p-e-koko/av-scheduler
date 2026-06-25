@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "AV Scheduler - Audio Visual Scheduling System",
   "short_name": "AV Scheduler",
   "description": "Streamlined scheduling and management for audio visual resources and personnel",
@@ -32,6 +33,22 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop.png",
+      "sizes": "1024x576",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "AV Scheduler Desktop Dashboard"
+    },
+    {
+      "src": "/screenshots/mobile.png",
+      "sizes": "576x1024",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AV Scheduler Mobile View"
     }
   ]
 }
