@@ -125,7 +125,24 @@ export function NotificationDropdown() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => window.dispatchEvent(new CustomEvent('pwa-trigger-install'))}
+          onClick={async () => {
+            const activePrompt = typeof window !== 'undefined' ? (window as any).deferredPrompt : null;
+            if (activePrompt) {
+              try {
+                activePrompt.prompt();
+                const { outcome } = await activePrompt.userChoice;
+                console.log(`User choice outcome: ${outcome}`);
+                if (typeof window !== 'undefined') {
+                  (window as any).deferredPrompt = null;
+                }
+              } catch (err) {
+                console.error('Failed to trigger install prompt directly:', err);
+                window.dispatchEvent(new CustomEvent('pwa-trigger-install'));
+              }
+            } else {
+              window.dispatchEvent(new CustomEvent('pwa-trigger-install'));
+            }
+          }}
           className="text-muted-foreground hover:text-foreground transition-colors"
           title="Install App"
         >
