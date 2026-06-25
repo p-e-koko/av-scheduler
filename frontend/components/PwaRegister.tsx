@@ -91,12 +91,16 @@ export function PwaRegister() {
   const [isIOS, setIsIOS] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
   const [showManualGuide, setShowManualGuide] = useState(false)
+  const [supportsDirectInstall, setSupportsDirectInstall] = useState(false)
 
   useEffect(() => {
     // Check if the event was already captured by the head script
-    if (typeof window !== 'undefined' && (window as any).deferredPrompt) {
-      setDeferredPrompt((window as any).deferredPrompt)
-      setShowPrompt(true)
+    if (typeof window !== 'undefined') {
+      setSupportsDirectInstall('onbeforeinstallprompt' in window)
+      if ((window as any).deferredPrompt) {
+        setDeferredPrompt((window as any).deferredPrompt)
+        setShowPrompt(true)
+      }
     }
 
     // Register service worker
@@ -228,11 +232,23 @@ export function PwaRegister() {
                 How to Install AV Scheduler
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Direct installation isn't supported on this browser or connection type (it requires HTTPS). You can still install the app manually:
+                {supportsDirectInstall ? (
+                  "Your browser supports direct installation! If the automatic install prompt did not appear, you can install the app using the instructions below:"
+                ) : (
+                  "Direct installation isn't supported on this browser or connection type (it requires HTTPS). You can still install the app manually:"
+                )}
               </p>
             </div>
 
             <div className="w-full bg-muted/40 rounded-xl p-4 border border-border/40 text-left text-xs text-muted-foreground space-y-3">
+              {supportsDirectInstall && (
+                <div className="pb-3 border-b border-border/40">
+                  <p className="font-medium text-foreground mb-1">On Desktop (Edge / Chrome / Brave):</p>
+                  <p className="pl-1">1. Look at the right side of your browser's address bar at the top.</p>
+                  <p className="pl-1">2. Click the <strong className="text-foreground">App Available / Install</strong> icon (represented by a computer monitor with a down arrow, or three squares with a plus symbol).</p>
+                  <p className="pl-1">3. Or click the browser settings menu (<strong className="text-foreground">⋯</strong> or <strong className="text-foreground">⋮</strong>) and select <strong className="text-foreground">"Install AV Scheduler"</strong>.</p>
+                </div>
+              )}
               <div>
                 <p className="font-medium text-foreground mb-1">On Google Chrome (Android):</p>
                 <p className="pl-1">1. Tap the three dots menu (<strong className="text-foreground">⋮</strong>) in the top-right corner.</p>
