@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { Suspense, useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Menu, Plus, RefreshCw, Search, Filter, X, CheckCircle, Clock, CalendarX } from "lucide-react"
 
@@ -40,7 +40,7 @@ const STATUS_FILTERS = [
 ]
 
 // ─── Main Dashboard Component ────────────────────────────────────────────────
-function CustomerDashboard() {
+function CustomerDashboardContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
 
@@ -358,5 +358,9 @@ function MyBookingsTab() {
 
 // ─── Page Export ─────────────────────────────────────────────────────────────
 export default function CustomerDashboardPage() {
-    return <CustomerDashboard />
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center h-screen text-muted-foreground">Loading…</div>}>
+            <CustomerDashboardContent />
+        </Suspense>
+    )
 }

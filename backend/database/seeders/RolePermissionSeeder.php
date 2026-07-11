@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -43,6 +44,7 @@ class RolePermissionSeeder extends Seeder
             'manage user positions',
 
             // Profile management
+            'view own profile',
             'edit own profile',
             'upload profile picture',
 
@@ -53,6 +55,13 @@ class RolePermissionSeeder extends Seeder
             // System administration
             'manage system settings',
             'view system logs',
+
+            // Media booking permissions
+            'view media bookings',
+            'create media bookings',
+            'edit media bookings',
+            'cancel media bookings',
+            'view customer contact',
         ];
 
         foreach ($permissions as $permission) {
@@ -60,7 +69,7 @@ class RolePermissionSeeder extends Seeder
                 'name' => $permission,
                 'guard_name' => 'web'
             ], [
-                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'id' => (string) Str::uuid(),
             ]);
         }
 
@@ -69,14 +78,14 @@ class RolePermissionSeeder extends Seeder
         // Admin role - has all permissions
         $adminRole = Role::firstOrCreate(
             ['name' => 'admin', 'guard_name' => 'web'],
-            ['id' => (string) \Illuminate\Support\Str::uuid()]
+            ['id' => (string) Str::uuid()]
         );
-        $adminRole->syncPermissions(Permission::all());
+        $adminRole->syncPermissions($permissions);
 
         // Supervisor role - can manage assignments and view users
         $supervisorRole = Role::firstOrCreate(
             ['name' => 'supervisor', 'guard_name' => 'web'],
-            ['id' => (string) \Illuminate\Support\Str::uuid()]
+            ['id' => (string) Str::uuid()]
         );
         $supervisorRole->syncPermissions([
             'view users',
@@ -90,12 +99,14 @@ class RolePermissionSeeder extends Seeder
             'view reports',
             'edit own profile',
             'upload profile picture',
+            'view media bookings',
+            'view customer contact',
         ]);
 
         // Coordinator role - can create assignments and manage students
         $coordinatorRole = Role::firstOrCreate(
             ['name' => 'coordinator', 'guard_name' => 'web'],
-            ['id' => (string) \Illuminate\Support\Str::uuid()]
+            ['id' => (string) Str::uuid()]
         );
         $coordinatorRole->syncPermissions([
             'view users',
@@ -115,12 +126,17 @@ class RolePermissionSeeder extends Seeder
             'view reports',
             'edit own profile',
             'upload profile picture',
+            'view media bookings',
+            'create media bookings',
+            'edit media bookings',
+            'cancel media bookings',
+            'view customer contact',
         ]);
 
         // Student role - basic permissions
         $studentRole = Role::firstOrCreate(
             ['name' => 'student', 'guard_name' => 'web'],
-            ['id' => (string) \Illuminate\Support\Str::uuid()]
+            ['id' => (string) Str::uuid()]
         );
         $studentRole->syncPermissions([
             'view assignments',
@@ -128,6 +144,20 @@ class RolePermissionSeeder extends Seeder
             'check out users',
             'edit own profile',
             'upload profile picture',
+        ]);
+
+        // Customer role - media booking only
+        $customerRole = Role::firstOrCreate(
+            ['name' => 'customer', 'guard_name' => 'web'],
+            ['id' => (string) Str::uuid()]
+        );
+        $customerRole->syncPermissions([
+            'view own profile',
+            'edit own profile',
+            'view media bookings',
+            'create media bookings',
+            'edit media bookings',
+            'cancel media bookings',
         ]);
     }
 }

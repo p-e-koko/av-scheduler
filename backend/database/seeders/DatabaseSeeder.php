@@ -76,5 +76,19 @@ class DatabaseSeeder extends Seeder
             ]);
             $student->assignRole('student');
         }
+
+        // 5. Customer User (Media booking test user)
+        $customerEmail = 'customer@apiu.edu';
+        if (!\App\Models\User::withTrashed()->where('email', $customerEmail)->exists()) {
+            $customer = \App\Models\User::create([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'email' => $customerEmail,
+                'name' => 'Customer User',
+                'password' => $password,
+                'role' => 'customer',
+                'email_verified_at' => now(),
+            ]);
+            $customer->assignRole('customer');
+        }
     }
 }
