@@ -12,15 +12,17 @@ interface BookingCardProps {
     onCancel?: (booking: MediaBooking) => void
     onContactCustomer?: (booking: MediaBooking) => void
     showCustomer?: boolean   // for coordinator view
+    customerView?: boolean
     showActions?: boolean
 }
 
 const statusColors: Record<string, string> = {
     to_assign: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
     pending: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-    confirmed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+    confirmed: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
     complete: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
     canceled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+    active: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
 }
 
 const statusLabels: Record<string, string> = {
@@ -29,15 +31,19 @@ const statusLabels: Record<string, string> = {
     confirmed: 'Confirmed',
     complete: 'Complete',
     canceled: 'Canceled',
+    active: 'Active',
 }
 
-export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, showCustomer, showActions = true }: BookingCardProps) {
+export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, showCustomer, customerView = false, showActions = true }: BookingCardProps) {
     const canEdit = ['to_assign', 'pending'].includes(booking.status)
     const canCancel = !['canceled', 'complete'].includes(booking.status)
     const [expanded, setExpanded] = useState(false)
 
     const startDate = new Date(booking.start_datetime)
     const endDate = new Date(booking.end_datetime)
+    const displayStatus = customerView && ['to_assign', 'pending', 'confirmed'].includes(booking.status)
+        ? 'active'
+        : booking.status
 
     const hasExtras = booking.ac_required || booking.spotlight_required || booking.led_light_required || booking.equipment_request || booking.cancel_reason
 
@@ -48,8 +54,8 @@ export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, show
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h4 className="font-medium text-foreground truncate">{booking.event_name}</h4>
-                        <Badge className={`text-xs px-2 py-0.5 border-none shrink-0 ${statusColors[booking.status] ?? 'bg-muted text-muted-foreground'}`}>
-                            {statusLabels[booking.status] ?? booking.status}
+                        <Badge className={`text-xs px-2 py-0.5 border-none shrink-0 ${statusColors[displayStatus] ?? 'bg-muted text-muted-foreground'}`}>
+                            {statusLabels[displayStatus] ?? displayStatus}
                         </Badge>
                     </div>
 

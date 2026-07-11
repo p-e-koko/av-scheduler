@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
 import {
     AlertCircle,
     MapPin,
@@ -28,38 +29,116 @@ interface BookingFormProps {
 const statusColors: Record<string, string> = {
     to_assign: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
     pending: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-    confirmed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+    confirmed: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
     complete: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
     canceled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
 }
 
+const timeOptions = Array.from({ length: 48 }, (_, index) => {
+    const totalMinutes = index * 30
+    const hour24 = Math.floor(totalMinutes / 60)
+    const minute = totalMinutes % 60
+    const period = hour24 >= 12 ? 'PM' : 'AM'
+    const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12
+
+    return {
+        value: `${String(hour24).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+        label: `${hour12}:${String(minute).padStart(2, '0')} ${period}`,
+    }
+})
+
+function formatTimeLabel(timeValue: string): string {
+    if (!timeValue) return ''
+
+    const [hourPart, minutePart] = timeValue.split(':')
+    const hourNumber = Number(hourPart)
+
+    if (Number.isNaN(hourNumber) || minutePart == null) return timeValue
+
+    const period: 'AM' | 'PM' = hourNumber >= 12 ? 'PM' : 'AM'
+    const hour12 = hourNumber % 12 === 0 ? 12 : hourNumber % 12
+
+    return `${hour12}:${minutePart} ${period}`
+}
+
+function buildTimeOptions(currentValue: string) {
+    if (!currentValue) return timeOptions
+
+    if (timeOptions.some(option => option.value === currentValue)) {
+        return timeOptions
+    }
+
+    return [...timeOptions, { value: currentValue, label: formatTimeLabel(currentValue) }]
+}
+
+function parseLocalDateTimeParts(dateTimeValue?: string | null): { date: string; time: string } {
+    if (!dateTimeValue) return { date: "", time: "" }
+
+    const parsedDate = new Date(dateTimeValue)
+    if (Number.isNaN(parsedDate.getTime())) {
+        return { date: dateTimeValue.slice(0, 10), time: dateTimeValue.slice(11, 16) }
+    }
+
+    return {
+        date: `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2, '0')}-${String(parsedDate.getDate()).padStart(2, '0')}`,
+        time: `${String(parsedDate.getHours()).padStart(2, '0')}:${String(parsedDate.getMinutes()).padStart(2, '0')}`,
+    }
+}
+
+async function findMatchingBooking(
+    eventName: string,
+    location: string,
+    selectedDate: string,
+    startTime: string,
+    endTime: string
+): Promise<MediaBooking | null> {
+    const response = await mediaBookingAPI.getBookings({ per_page: 100 })
+    const bookings = (response as { data?: MediaBooking[]; bookings?: MediaBooking[] }).data
+        ?? (response as { data?: MediaBooking[]; bookings?: MediaBooking[] }).bookings
+        ?? []
+
+    return bookings.find(booking =>
+        booking.event_name === eventName &&
+        booking.location === location &&
+        booking.start_datetime.startsWith(`${selectedDate}T${startTime}`) &&
+        booking.end_datetime.startsWith(`${selectedDate}T${endTime}`)
+    ) ?? null
+}
+
+function timeToMinutes(timeValue: string): number {
+    const [hourPart, minutePart] = timeValue.split(':')
+    const hour = Number(hourPart)
+    const minute = Number(minutePart)
+
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return NaN
+
+    return hour * 60 + minute
+}
+
 export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingFormProps) {
     const isEditing = !!editingBooking
+    const editingBookingId = editingBooking?.id ?? null
+    const editingEquipmentRequest = editingBooking?.equipment_request ?? ""
+    const editingStartParts = parseLocalDateTimeParts(editingBooking?.start_datetime)
+    const editingEndParts = parseLocalDateTimeParts(editingBooking?.end_datetime)
     const [step, setStep] = useState(isEditing ? 2 : 1)
 
     // Location
-    const [locations, setLocations] = useState<string[]>([])
     const [selectedLocation, setSelectedLocation] = useState(editingBooking?.location ?? "")
     const [customLocation, setCustomLocation] = useState("")
 
     // Date / Time
-    const [selectedDate, setSelectedDate] = useState<string>(
-        editingBooking ? editingBooking.start_datetime.slice(0, 10) : ""
-    )
-    const [startTime, setStartTime] = useState(
-        editingBooking ? editingBooking.start_datetime.slice(11, 16) : ""
-    )
-    const [endTime, setEndTime] = useState(
-        editingBooking ? editingBooking.end_datetime.slice(11, 16) : ""
-    )
+    const [selectedDate, setSelectedDate] = useState<string>(editingStartParts.date)
+    const [startTime, setStartTime] = useState(editingStartParts.time)
+    const [endTime, setEndTime] = useState(editingEndParts.time)
     const [existingBookings, setExistingBookings] = useState<MediaBooking[]>([])
 
     // Details
     const [eventName, setEventName] = useState(editingBooking?.event_name ?? "")
-    const [equipmentRequest, setEquipmentRequest] = useState(editingBooking?.equipment_request ?? "")
     const [acRequired, setAcRequired] = useState(editingBooking?.ac_required ?? false)
     const [spotlightRequired, setSpotlightRequired] = useState(editingBooking?.spotlight_required ?? false)
     const [ledLightRequired, setLedLightRequired] = useState(editingBooking?.led_light_required ?? false)
+    const equipmentRequestRef = useRef<HTMLTextAreaElement>(null)
 
     // UI state
     const [loading, setLoading] = useState(false)
@@ -74,13 +153,30 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
     })()
 
     const effectiveLocation = selectedLocation === '__custom__' ? customLocation : selectedLocation
+    const selectedStartMinutes = timeToMinutes(startTime)
+    const selectedEndMinutes = timeToMinutes(endTime)
+    const hasTimeConflict = existingBookings.some(booking => {
+        if (Number.isNaN(selectedStartMinutes) || Number.isNaN(selectedEndMinutes)) return false
 
-    // Load locations on mount
+        const bookingStart = new Date(booking.start_datetime)
+        const bookingEnd = new Date(booking.end_datetime)
+        const bookingStartMinutes = bookingStart.getHours() * 60 + bookingStart.getMinutes()
+        const bookingEndMinutes = bookingEnd.getHours() * 60 + bookingEnd.getMinutes()
+
+        return selectedStartMinutes < bookingEndMinutes && selectedEndMinutes > bookingStartMinutes
+    })
+
     useEffect(() => {
-        mediaBookingAPI.getLocations()
-            .then(r => setLocations(r.locations))
-            .catch(() => { })
-    }, [])
+        if (equipmentRequestRef.current) {
+            equipmentRequestRef.current.value = editingEquipmentRequest
+        }
+    }, [editingEquipmentRequest, editingBookingId])
+
+    useEffect(() => {
+        if (step === 2 && selectedLocation && selectedLocation !== '__custom__') {
+            setStep(3)
+        }
+    }, [selectedLocation, step])
 
     // Reload availability whenever location or date changes
     useEffect(() => {
@@ -88,14 +184,14 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
             setFetchingAvailability(true)
             mediaBookingAPI.checkAvailability(effectiveLocation, selectedDate)
                 .then(r => setExistingBookings(
-                    r.bookings.filter(b => b.id !== editingBooking?.id)
+                    r.bookings.filter(b => b.id !== editingBookingId)
                 ))
                 .catch(() => setExistingBookings([]))
                 .finally(() => setFetchingAvailability(false))
         } else {
             setExistingBookings([])
         }
-    }, [effectiveLocation, selectedDate])
+    }, [effectiveLocation, selectedDate, editingBookingId])
 
     const handleSubmit = async () => {
         if (!effectiveLocation || !selectedDate || !startTime || !endTime || !eventName) {
@@ -112,7 +208,7 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
             location: effectiveLocation,
             start_datetime: `${selectedDate}T${startTime}:00`,
             end_datetime: `${selectedDate}T${endTime}:00`,
-            equipment_request: equipmentRequest || undefined,
+            equipment_request: equipmentRequestRef.current?.value.trim() || undefined,
             ac_required: acRequired,
             spotlight_required: spotlightRequired,
             led_light_required: ledLightRequired,
@@ -128,10 +224,27 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
                 result = await mediaBookingAPI.createBooking(data)
             }
             onSuccess(result.booking)
-        } catch (err: any) {
-            const apiError = err?.errors
-                ? Object.values(err.errors).flat().join('\n')
-                : err?.message
+        } catch (err: unknown) {
+            if (!isEditing) {
+                const matchedBooking = await findMatchingBooking(
+                    eventName,
+                    effectiveLocation,
+                    selectedDate,
+                    startTime,
+                    endTime
+                ).catch(() => null)
+
+                if (matchedBooking) {
+                    onSuccess(matchedBooking)
+                    return
+                }
+            }
+
+            const apiError = typeof err === 'object' && err !== null && 'errors' in err
+                ? Object.values((err as { errors?: Record<string, string[]> }).errors ?? {}).flat().join('\n')
+                : err instanceof Error
+                    ? err.message
+                    : null
             setError(apiError || "Failed to submit booking.")
         } finally {
             setLoading(false)
@@ -139,20 +252,20 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
     }
 
     // ─── Step 1: Info Notice ────────────────────────────────────────
-    const StepInfo = () => (
+    const renderStepInfo = () => (
         <div className="space-y-6">
-            <div className="rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 p-5">
+            <div className="rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 p-5">
                 <div className="flex gap-3">
-                    <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                    <Info className="w-5 h-5 text-slate-600 dark:text-slate-400 shrink-0 mt-0.5" />
                     <div className="space-y-2">
-                        <h3 className="font-semibold text-blue-900 dark:text-blue-200">Before You Book</h3>
-                        <p className="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">
+                        <h3 className="font-semibold text-slate-900 dark:text-slate-100">Before You Book</h3>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                             This booking form is for <strong>media services only</strong> (cameras, audio equipment, lighting setup, etc.).
                         </p>
-                        <p className="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">
+                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                             If you want to <strong>book only the room</strong>, please contact the plant service department directly.
                         </p>
-                        <p className="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">
+                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
                             Bookings must be submitted <strong>at least one day in advance</strong>.
                         </p>
                     </div>
@@ -191,7 +304,7 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
         },
     ]
 
-    const StepLocation = () => (
+    const renderStepLocation = () => (
         <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-1">
             <Label className="text-foreground font-medium block sticky top-0 bg-background/80 py-1">
                 <MapPin className="w-4 h-4 inline mr-1" />
@@ -206,7 +319,11 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
                             <button
                                 key={loc}
                                 type="button"
-                                onClick={() => { setSelectedLocation(loc); setCustomLocation('') }}
+                                onClick={() => {
+                                    setSelectedLocation(loc)
+                                    setCustomLocation('')
+                                    setStep(3)
+                                }}
                                 className={`p-2.5 rounded-lg text-sm font-medium text-left border transition-all
                                     ${selectedLocation === loc
                                         ? 'bg-primary text-primary-foreground border-primary shadow-sm'
@@ -264,7 +381,7 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
     )
 
     // ─── Step 3: Date & Time ─────────────────────────────────────────
-    const StepDateTime = () => (
+    const renderStepDateTime = () => (
         <div className="space-y-5">
             <div>
                 <Label className="text-foreground font-medium mb-2 block">
@@ -287,21 +404,29 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
                         <Clock className="w-4 h-4 inline mr-1" />
                         Start Time *
                     </Label>
-                    <Input
-                        type="time"
+                    <select
                         value={startTime}
                         onChange={e => setStartTime(e.target.value)}
-                        className="bg-background/50"
-                    />
+                        className="h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                        <option value="">Select time</option>
+                        {buildTimeOptions(endTime).map(option => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                    </select>
                 </div>
                 <div>
                     <Label className="text-foreground font-medium mb-2 block">End Time *</Label>
-                    <Input
-                        type="time"
+                    <select
                         value={endTime}
                         onChange={e => setEndTime(e.target.value)}
-                        className="bg-background/50"
-                    />
+                        className="h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                        <option value="">Select time</option>
+                        {buildTimeOptions(startTime).map(option => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                    </select>
                 </div>
             </div>
 
@@ -334,7 +459,7 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
                             ))}
                             <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
                                 <AlertCircle className="w-3 h-3" />
-                                Choose a time that doesn't overlap with existing bookings.
+                                Choose a time that does not overlap with existing bookings.
                             </p>
                         </div>
                     )}
@@ -347,7 +472,7 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
                 </Button>
                 <Button
                     onClick={() => setStep(4)}
-                    disabled={!selectedDate || !startTime || !endTime}
+                    disabled={!selectedDate || !startTime || !endTime || fetchingAvailability || hasTimeConflict}
                 >
                     Continue <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
@@ -356,7 +481,7 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
     )
 
     // ─── Step 4: Event Details ───────────────────────────────────────
-    const StepDetails = () => (
+    const renderStepDetails = () => (
         <div className="space-y-5">
             <div>
                 <Label htmlFor="event-name" className="text-foreground font-medium">
@@ -374,13 +499,12 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
 
             <div>
                 <Label htmlFor="equipment-request" className="text-foreground font-medium">Equipment Request</Label>
-                <textarea
+                <Textarea
                     id="equipment-request"
                     placeholder="e.g. 4 wireless mics, 2 cameras, projector"
-                    value={equipmentRequest}
-                    onChange={e => setEquipmentRequest(e.target.value)}
+                    ref={equipmentRequestRef}
                     rows={3}
-                    className="mt-1 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                    className="mt-1 bg-background/50 resize-none"
                 />
             </div>
 
@@ -420,14 +544,14 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
                 <p className="font-medium text-foreground mb-2">Booking Summary</p>
                 <p><span className="text-muted-foreground">Location:</span> {effectiveLocation}</p>
                 <p><span className="text-muted-foreground">Date:</span> {selectedDate}</p>
-                <p><span className="text-muted-foreground">Time:</span> {startTime} – {endTime}</p>
+                <p><span className="text-muted-foreground">Time:</span> {formatTimeLabel(startTime)} – {formatTimeLabel(endTime)}</p>
             </div>
 
             <div className="flex justify-between">
                 <Button variant="outline" onClick={() => { setError(null); setStep(3) }}>
                     <ChevronLeft className="w-4 h-4 mr-1" /> Back
                 </Button>
-                <Button onClick={handleSubmit} disabled={loading || !eventName}>
+                <Button onClick={handleSubmit} disabled={loading || !eventName || fetchingAvailability || hasTimeConflict}>
                     {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     {isEditing ? 'Save Changes' : 'Submit Booking'}
                 </Button>
@@ -438,7 +562,6 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
     const stepLabels = isEditing
         ? ['Location', 'Date & Time', 'Details']
         : ['Notice', 'Location', 'Date & Time', 'Details']
-    const totalSteps = isEditing ? 3 : 4
     const displayStep = isEditing ? step - 1 : step
 
     return (
@@ -469,10 +592,10 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
             </div>
 
             {/* Step content */}
-            {step === 1 && !isEditing && <StepInfo />}
-            {step === 2 && <StepLocation />}
-            {step === 3 && <StepDateTime />}
-            {step === 4 && <StepDetails />}
+            {step === 1 && !isEditing && renderStepInfo()}
+            {step === 2 && renderStepLocation()}
+            {step === 3 && renderStepDateTime()}
+            {step === 4 && renderStepDetails()}
         </div>
     )
 }

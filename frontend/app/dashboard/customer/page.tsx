@@ -1,12 +1,11 @@
 "use client"
 
-import { Suspense, useState, useEffect, useCallback } from "react"
+import { Suspense, useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Menu, Plus, RefreshCw, Search, Filter, X, CheckCircle, Clock, CalendarX } from "lucide-react"
+import { Menu, RefreshCw, Search, X, CheckCircle, CalendarX } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import {
     Dialog,
     DialogContent,
@@ -25,16 +24,12 @@ import {
     hasAnyRole,
     formatAPIError,
     mediaBookingAPI,
-    type User,
     type MediaBooking,
 } from "@/lib/api"
 
 // ─── Status filter options ───────────────────────────────────────────────────
 const STATUS_FILTERS = [
-    { value: 'all', label: 'All' },
-    { value: 'to_assign', label: 'To Assign' },
-    { value: 'pending', label: 'Pending' },
-    { value: 'confirmed', label: 'Confirmed' },
+    { value: 'active', label: 'Active' },
     { value: 'complete', label: 'Complete' },
     { value: 'canceled', label: 'Canceled' },
 ]
@@ -44,33 +39,22 @@ function CustomerDashboardContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
 
-    const [currentUser, setCurrentUser] = useState<User | null>(null)
-    const [activeTab, setActiveTab] = useState<"book" | "my-bookings">("book")
+    const currentUser = useMemo(() => getStoredUser(), [])
+    const activeTab = searchParams.get('tab') === 'my-bookings' ? 'my-bookings' : 'book'
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-
-    // Sync tab from URL
-    useEffect(() => {
-        const tab = searchParams.get('tab')
-        if (tab === 'my-bookings') setActiveTab('my-bookings')
-        else setActiveTab('book')
-    }, [searchParams])
 
     const handleTabChange = (tab: "book" | "my-bookings") => {
         const params = new URLSearchParams(searchParams.toString())
         params.set('tab', tab)
         router.push(`/dashboard/customer?${params.toString()}`)
-        setActiveTab(tab)
     }
 
     // Auth check
     useEffect(() => {
-        const user = getStoredUser()
-        if (!user || !hasAnyRole(['customer'])) {
+        if (!currentUser || !hasAnyRole(['customer'])) {
             router.push('/login')
-            return
         }
-        setCurrentUser(user)
-    }, [])
+    }, [currentUser, router])
 
     if (!currentUser) {
         return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading…</div>
@@ -143,7 +127,7 @@ function BookMediaTab({ onBookingCreated }: { onBookingCreated: () => void }) {
                     </div>
                     <h2 className="text-xl font-semibold text-green-900 dark:text-green-200">Booking Submitted!</h2>
                     <p className="text-sm text-green-800 dark:text-green-300">
-                        Your booking for <strong>{createdBooking.event_name}</strong> has been received. Our coordination team will review and assign staff shortly. You'll receive an email confirmation.
+                        Your booking for <strong>{createdBooking.event_name}</strong> has been received. Our coordination team will review and assign staff shortly. You will receive an email confirmation.
                     </p>
                     <div className="flex gap-3 justify-center pt-2">
                         <Button variant="outline" onClick={() => { setSubmitted(false); setCreatedBooking(null) }}>
@@ -173,7 +157,7 @@ function MyBookingsTab() {
     const [bookings, setBookings] = useState<MediaBooking[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [statusFilter, setStatusFilter] = useState('all')
+    const [statusFilter, setStatusFilter] = useState('active')
     const [searchQuery, setSearchQuery] = useState('')
 
     // Edit booking
@@ -189,7 +173,7 @@ function MyBookingsTab() {
         setError(null)
         try {
             const res = await mediaBookingAPI.getBookings({
-                status: statusFilter !== 'all' ? statusFilter : undefined,
+                status: statusFilter === 'active' ? undefined : statusFilter,
                 per_page: 50,
             })
             setBookings(res.data ?? res)
@@ -216,7 +200,7 @@ function MyBookingsTab() {
         }
     }
 
-    const handleEditSuccess = (updated: MediaBooking) => {
+    const handleEditSuccess = () => {
         setEditDialogOpen(false)
         setEditingBooking(null)
         fetchBookings()
@@ -224,6 +208,12 @@ function MyBookingsTab() {
 
     // Client-side search filter
     const displayedBookings = bookings.filter(b => {
+        const matchesStatus = statusFilter === 'active'
+            ? ['to_assign', 'pending', 'confirmed'].includes(b.status)
+            : b.status === statusFilter
+
+        if (!matchesStatus) return false
+
         if (!searchQuery) return true
         const q = searchQuery.toLowerCase()
         return (
@@ -246,7 +236,7 @@ function MyBookingsTab() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                     { label: 'Total', value: stats.total, color: 'text-foreground' },
-                    { label: 'Active', value: stats.active, color: 'text-blue-600 dark:text-blue-400' },
+                    { label: 'Active', value: stats.active, color: 'text-slate-700 dark:text-slate-200' },
                     { label: 'Complete', value: stats.complete, color: 'text-green-600 dark:text-green-400' },
                     { label: 'Canceled', value: stats.canceled, color: 'text-red-600 dark:text-red-400' },
                 ].map(s => (
@@ -305,8 +295,8 @@ function MyBookingsTab() {
                     <div className="py-16 text-center space-y-3">
                         <CalendarX className="w-12 h-12 mx-auto text-muted-foreground/40" />
                         <p className="text-muted-foreground">No bookings found.</p>
-                        {statusFilter !== 'all' && (
-                            <Button variant="ghost" size="sm" onClick={() => setStatusFilter('all')}>
+                        {statusFilter !== 'active' && (
+                            <Button variant="ghost" size="sm" onClick={() => setStatusFilter('active')}>
                                 <X className="w-4 h-4 mr-1" /> Clear filter
                             </Button>
                         )}
@@ -321,6 +311,7 @@ function MyBookingsTab() {
                                 key={booking.id}
                                 booking={booking}
                                 showCustomer={false}
+                                customerView
                                 onEdit={b => { setEditingBooking(b); setEditDialogOpen(true) }}
                                 onCancel={b => setCancelingBooking(b)}
                             />

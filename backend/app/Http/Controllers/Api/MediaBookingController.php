@@ -14,6 +14,7 @@ use App\Notifications\BookingUpdatedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class MediaBookingController extends Controller
 {
@@ -139,16 +140,23 @@ class MediaBookingController extends Controller
 
             DB::commit();
 
-            // --- Send notifications ---
-            $customer = auth()->user();
+            // Notification delivery should not fail the booking after the transaction has been committed.
+            try {
+                $customer = auth()->user();
 
-            // 1. Notify the customer
-            $customer->notify(new BookingCreatedCustomerNotification($booking));
+                // 1. Notify the customer
+                $customer->notify(new BookingCreatedCustomerNotification($booking));
 
-            // 2. Notify all coordinators and supervisors
-            $staff = User::role(['coordinator', 'supervisor'])->get();
-            foreach ($staff as $staffMember) {
-                $staffMember->notify(new BookingCreatedStaffNotification($booking->fresh(['customer'])));
+                // 2. Notify all coordinators and supervisors
+                $staff = User::role(['coordinator', 'supervisor'])->get();
+                foreach ($staff as $staffMember) {
+                    $staffMember->notify(new BookingCreatedStaffNotification($booking->fresh(['customer'])));
+                }
+            } catch (\Throwable $notificationError) {
+                Log::warning('Media booking created but notification delivery failed.', [
+                    'booking_id' => $booking->id,
+                    'error' => $notificationError->getMessage(),
+                ]);
             }
 
             return response()->json([
