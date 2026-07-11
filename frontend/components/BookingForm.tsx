@@ -168,44 +168,75 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
     )
 
     // ─── Step 2: Location ────────────────────────────────────────────
-    const StepLocation = () => (
-        <div className="space-y-5">
-            <div>
-                <Label className="text-foreground font-medium mb-2 block">
-                    <MapPin className="w-4 h-4 inline mr-1" />
-                    Select Location *
-                </Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {locations.map(loc => (
-                        <button
-                            key={loc}
-                            type="button"
-                            onClick={() => { setSelectedLocation(loc); setCustomLocation("") }}
-                            className={`p-3 rounded-lg text-sm font-medium text-left border transition-all
-                ${selectedLocation === loc && selectedLocation !== '__custom__'
-                                    ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                                    : 'bg-muted/50 text-foreground border-border hover:border-primary/50 hover:bg-muted'
-                                }`}
-                        >
-                            {loc}
-                        </button>
-                    ))}
-                    <button
-                        type="button"
-                        onClick={() => setSelectedLocation('__custom__')}
-                        className={`p-3 rounded-lg text-sm font-medium text-left border transition-all
-              ${selectedLocation === '__custom__'
-                                ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                                : 'bg-muted/50 text-foreground border-border hover:border-primary/50 hover:bg-muted'
-                            }`}
-                    >
-                        Other…
-                    </button>
-                </div>
+    const locationGroups: { label: string; rooms: string[] }[] = [
+        {
+            label: 'General',
+            rooms: ['Auditorium', 'Church', 'Fellowship Hall', 'Science Lobby', 'IT Lobby'],
+        },
+        {
+            label: 'CH',
+            rooms: ['CH113', 'CH114'],
+        },
+        {
+            label: 'AD',
+            rooms: ['AD103', 'AD104', 'AD301', 'AD302', 'AD303', 'AD304', 'AD305', 'AD306', 'AD307', 'AD308'],
+        },
+        {
+            label: 'IT',
+            rooms: [
+                'IT110', 'IT111', 'IT128', 'IT122',
+                'IT210', 'IT211', 'IT222', 'IT223', 'IT224',
+                'IT302', 'IT306', 'IT307',
+            ],
+        },
+    ]
 
+    const StepLocation = () => (
+        <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-1">
+            <Label className="text-foreground font-medium block sticky top-0 bg-background/80 py-1">
+                <MapPin className="w-4 h-4 inline mr-1" />
+                Select Location *
+            </Label>
+
+            {locationGroups.map(group => (
+                <div key={group.label}>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{group.label}</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {group.rooms.map(loc => (
+                            <button
+                                key={loc}
+                                type="button"
+                                onClick={() => { setSelectedLocation(loc); setCustomLocation('') }}
+                                className={`p-2.5 rounded-lg text-sm font-medium text-left border transition-all
+                                    ${selectedLocation === loc
+                                        ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                                        : 'bg-muted/50 text-foreground border-border hover:border-primary/50 hover:bg-muted'
+                                    }`}
+                            >
+                                {loc}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            ))}
+
+            {/* Other / custom */}
+            <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Other</p>
+                <button
+                    type="button"
+                    onClick={() => setSelectedLocation('__custom__')}
+                    className={`p-2.5 rounded-lg text-sm font-medium text-left border transition-all w-full
+                        ${selectedLocation === '__custom__'
+                            ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                            : 'bg-muted/50 text-foreground border-border hover:border-primary/50 hover:bg-muted'
+                        }`}
+                >
+                    Other location…
+                </button>
                 {selectedLocation === '__custom__' && (
                     <Input
-                        className="mt-3 bg-background/50"
+                        className="mt-2 bg-background/50"
                         placeholder="Enter location name"
                         value={customLocation}
                         onChange={e => setCustomLocation(e.target.value)}
@@ -214,7 +245,7 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
                 )}
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex justify-between pt-2">
                 {!isEditing ? (
                     <Button variant="outline" onClick={() => setStep(1)}>
                         <ChevronLeft className="w-4 h-4 mr-1" /> Back

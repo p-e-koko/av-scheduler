@@ -40,6 +40,9 @@ import { PositionModal } from "@/components/PositionModal"
 import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { CoordinatorSidebar } from "@/components/CoordinatorSidebar"
+import { CustomerContactModal } from "@/components/CustomerContactModal"
+import { BookingCard } from "@/components/BookingCard"
+import { CancelBookingDialog } from "@/components/CancelBookingDialog"
 
 import {
   authAPI,
@@ -51,11 +54,13 @@ import {
   assignmentAPI,
   availabilityAPI,
   positionAPI,
+  mediaBookingAPI,
   type Assignment,
   type Availability,
   type Position,
   type AssignmentsQueryParams,
-  type UsersQueryParams
+  type UsersQueryParams,
+  type MediaBooking,
 } from "@/lib/api"
 import { ModeToggle } from "@/components/mode-toggle"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
@@ -88,12 +93,16 @@ function CoordinatorDashboard() {
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null)
   const [isDeleteAssignmentConfirmationOpen, setIsDeleteAssignmentConfirmationOpen] = useState(false)
   const [assignmentToDelete, setAssignmentToDelete] = useState<number | null>(null)
-  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'pending' | 'confirmed' | 'complete'>('all')
+  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'to_assign' | 'pending' | 'confirmed' | 'complete'>('all')
   const [assignmentSearchQuery, setAssignmentSearchQuery] = useState("")
   const [positionFilter, setPositionFilter] = useState<string>('all')
   const [studentFilter, setStudentFilter] = useState<string>('all')
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+
+  // Customer Contact via media booking
+  const [contactBooking, setContactBooking] = useState<MediaBooking | null>(null)
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
 
   // Recycle Bin State
   const [trashedAssignments, setTrashedAssignments] = useState<Assignment[]>([])

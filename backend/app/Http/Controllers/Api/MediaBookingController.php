@@ -64,12 +64,17 @@ class MediaBookingController extends Controller
 
         // Predefined list of known locations:
         $predefinedLocations = [
-            'Studio A',
-            'Studio B',
-            'Auditorium',
-            'Room 201',
-            'Room 202',
-            'Outdoor Stage',
+            // General
+            'Auditorium', 'Church', 'Fellowship Hall', 'Science Lobby', 'IT Lobby',
+            // CH
+            'CH113', 'CH114',
+            // AD
+            'AD103', 'AD104',
+            'AD301', 'AD302', 'AD303', 'AD304', 'AD305', 'AD306', 'AD307', 'AD308',
+            // IT
+            'IT110', 'IT111', 'IT128', 'IT122',
+            'IT210', 'IT211', 'IT222', 'IT223', 'IT224',
+            'IT302', 'IT306', 'IT307',
         ];
 
         $allLocations = $locations->merge($predefinedLocations)->unique()->values();
