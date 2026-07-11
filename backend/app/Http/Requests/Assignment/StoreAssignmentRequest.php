@@ -60,7 +60,7 @@ class StoreAssignmentRequest extends FormRequest
                 }
             ],
             'description' => 'nullable|string|max:1000',
-            'status' => 'required|in:pending,confirmed,complete',
+            'status' => 'required|in:pending,confirmed,complete,to_assign,canceled',
         ];
     }
 
@@ -118,7 +118,7 @@ class StoreAssignmentRequest extends FormRequest
             'description.max' => 'The description may not be greater than 1000 characters.',
 
             'status.required' => 'The status field is required.',
-            'status.in' => 'The selected status is invalid. Must be one of: pending, confirmed, complete.',
+            'status.in' => 'The selected status is invalid. Must be one of: pending, confirmed, complete, to_assign, canceled.',
         ];
     }
 

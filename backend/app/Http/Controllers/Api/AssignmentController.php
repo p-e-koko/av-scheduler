@@ -24,8 +24,8 @@ class AssignmentController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        // Auto-complete past assignments
-        Assignment::where('status', '!=', 'complete')
+        // Auto-complete past assignments (only pending/confirmed, not to_assign or canceled)
+        Assignment::whereIn('status', ['pending', 'confirmed'])
             ->where('event_end_datetime', '<', now())
             ->update(['status' => 'complete']);
 
@@ -274,6 +274,15 @@ class AssignmentController extends Controller
             $status,
             $request->position
         );
+
+        // If assignment was 'to_assign', promote it to 'pending' now that a user is assigned
+        if ($assignment->status === 'to_assign') {
+            $assignment->update(['status' => 'pending']);
+            // Also update the linked booking status
+            if ($assignment->mediaBooking) {
+                $assignment->mediaBooking->update(['status' => 'pending']);
+            }
+        }
 
         if ($status === 'accepted') {
             $duration = abs($assignment->event_end_datetime->diffInMinutes($assignment->event_start_datetime) / 60);
