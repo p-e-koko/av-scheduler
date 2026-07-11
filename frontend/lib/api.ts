@@ -50,7 +50,7 @@ export interface User {
   name: string;
   email: string;
   phone_number?: string | null;
-  role: 'admin' | 'supervisor' | 'coordinator' | 'student';
+  role: 'admin' | 'supervisor' | 'coordinator' | 'student' | 'customer';
   roles?: string[];
   is_approved?: boolean;
   permissions?: string[];
@@ -96,6 +96,38 @@ export interface Assignment {
     is_modified?: boolean;
     microsoft_event_id?: string;
   };
+}
+
+export interface MediaBooking {
+  id: string;
+  customer_id: string;
+  event_name: string;
+  location: string;
+  start_datetime: string;
+  end_datetime: string;
+  equipment_request?: string | null;
+  ac_required: boolean;
+  spotlight_required: boolean;
+  led_light_required: boolean;
+  status: 'pending' | 'to_assign' | 'confirmed' | 'canceled' | 'complete';
+  cancel_reason?: string | null;
+  canceled_by?: 'customer' | 'coordinator' | null;
+  assignment_id?: string | null;
+  customer?: User;
+  assignment?: Assignment;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MediaBookingFormData {
+  event_name: string;
+  location: string;
+  start_datetime: string;
+  end_datetime: string;
+  equipment_request?: string;
+  ac_required?: boolean;
+  spotlight_required?: boolean;
+  led_light_required?: boolean;
 }
 
 export interface Availability {
@@ -1586,5 +1618,56 @@ export const keyAPI = {
   },
   async history(id: string): Promise<KeyCheckout[]> {
     return apiCall<KeyCheckout[]>('/keys/' + id + '/history');
+  },
+};
+
+export const mediaBookingAPI = {
+  async getBookings(params: { status?: string; location?: string; date?: string; per_page?: number } = {}) {
+    const query = new URLSearchParams();
+    if (params.status) query.append('status', params.status);
+    if (params.location) query.append('location', params.location);
+    if (params.date) query.append('date', params.date);
+    if (params.per_page) query.append('per_page', String(params.per_page));
+    const qs = query.toString();
+    return apiCall<any>(`/media-bookings${qs ? '?' + qs : ''}`);
+  },
+
+  async getLocations(): Promise<{ locations: string[] }> {
+    return apiCall('/media-bookings/locations');
+  },
+
+  async checkAvailability(location: string, date: string) {
+    return apiCall<{ bookings: MediaBooking[] }>(
+      `/media-bookings/availability?location=${encodeURIComponent(location)}&date=${date}`
+    );
+  },
+
+  async createBooking(data: MediaBookingFormData): Promise<{ message: string; booking: MediaBooking }> {
+    return apiCall('/media-bookings', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateBooking(id: string, data: Partial<MediaBookingFormData>): Promise<{ message: string; booking: MediaBooking }> {
+    return apiCall(`/media-bookings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async cancelBooking(id: string, reason: string): Promise<{ message: string }> {
+    return apiCall(`/media-bookings/${id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  async getCustomerInfo(bookingId: string): Promise<{ customer: { id: string; name: string; email: string; phone: string } }> {
+    return apiCall(`/media-bookings/${bookingId}/customer-info`);
+  },
+
+  async getBooking(id: string): Promise<{ booking: MediaBooking }> {
+    return apiCall(`/media-bookings/${id}`);
   },
 };
