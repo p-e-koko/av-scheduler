@@ -82,6 +82,8 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh']);
 });
 
+Route::middleware(['auth:sanctum'])->post('/me/request-av-assistant', [UserController::class, 'requestAvAssistant']);
+
 // Protected User Management Routes - Role-Based Access Control
 Route::middleware(['auth:sanctum'])->group(function () {
 
@@ -332,3 +334,4 @@ Route::middleware('auth:sanctum')->group(function () {
     */
 
 });
+

@@ -35,9 +35,19 @@ class MediaBookingController extends Controller
             $query = MediaBooking::with('customer', 'assignment');
         }
 
+        // Sync completed bookings before reading the list
+        $this->syncCompletedBookings();
+
         // Filter by status
         if ($request->has('status')) {
-            $query->where('status', $request->status);
+            $status = $request->status;
+            $resolvedStatuses = $this->resolveStatusFilter($status);
+
+            if (!empty($resolvedStatuses)) {
+                $query->whereIn('status', $resolvedStatuses);
+            } else {
+                $query->where('status', $status);
+            }
         }
 
         // Filter by location (for showing existing bookings on calendar)
@@ -54,6 +64,33 @@ class MediaBookingController extends Controller
         $bookings = $query->orderBy('start_datetime', 'asc')->paginate($perPage);
 
         return response()->json($bookings);
+    }
+
+
+    private function syncCompletedBookings(): void
+    {
+        $completedBookings = MediaBooking::whereNotIn('status', ['canceled', 'complete'])
+            ->where('end_datetime', '<', now())
+            ->get();
+
+        foreach ($completedBookings as $booking) {
+            $booking->update(['status' => 'complete']);
+
+            if ($booking->assignment && $booking->assignment->status !== 'canceled') {
+                $booking->assignment->update(['status' => 'complete']);
+            }
+        }
+    }
+
+    private function resolveStatusFilter(string $status): array
+    {
+        return match ($status) {
+            'requested' => ['booking', 'to_assign', 'pending'],
+            'approved' => ['confirmed'],
+            'canceled' => ['canceled'],
+            'completed' => ['complete'],
+            default => [],
+        };
     }
 
     /**
@@ -187,7 +224,7 @@ class MediaBookingController extends Controller
         if ($user->hasRole('customer') && $mediaBooking->customer_id !== $user->id) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-
+        $this->syncCompletedBookings();
         return response()->json(['booking' => $mediaBooking->load('customer', 'assignment')]);
     }
 
@@ -426,7 +463,7 @@ class MediaBookingController extends Controller
         if ($extras) {
             $lines[] = 'Additional: ' . implode(', ', $extras);
         }
-        $lines[] = 'Note: Celine light will be turned on.';
+        $lines[] = 'Note: Ceiling light will be turned on.';
         return implode("\n", $lines);
     }
 }

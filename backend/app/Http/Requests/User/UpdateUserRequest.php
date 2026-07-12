@@ -30,7 +30,7 @@ class UpdateUserRequest extends FormRequest
             'email' => 'sometimes|required|string|email|max:255|unique:users,email,' . $userId,
             'phone_number' => 'nullable|string|max:20',
             'password' => 'nullable|string|min:8',
-            'role' => 'sometimes|in:admin,supervisor,coordinator,student',
+            'role' => 'sometimes|in:admin,supervisor,coordinator,student,customer',
             'roles' => 'sometimes|array',
             'roles.*' => 'exists:roles,name',
             'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:512000', // 500MB = 512000KB
@@ -50,7 +50,8 @@ class UpdateUserRequest extends FormRequest
         ];
 
         // Make promised_hours_per_week required for students when role is being updated
-        if ($this->has('role') && $this->input('role') === 'student') {
+        $roles = $this->input('roles', []);
+        if ($this->input('role') === 'student' || (is_array($roles) && in_array('student', $roles, true))) {
             $rules['promised_hours_per_week'] = 'required|numeric|min:1|max:20';
         }
 
@@ -84,3 +85,4 @@ class UpdateUserRequest extends FormRequest
         ];
     }
 }
+
