@@ -8,8 +8,10 @@ use App\Http\Requests\MediaBooking\UpdateMediaBookingRequest;
 use App\Models\Assignment;
 use App\Models\MediaBooking;
 use App\Models\User;
+use App\Notifications\BookingApprovedNotification;
 use App\Notifications\BookingCreatedCustomerNotification;
 use App\Notifications\BookingCreatedStaffNotification;
+use App\Notifications\BookingRejectedNotification;
 use App\Notifications\BookingUpdatedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -109,7 +111,10 @@ class MediaBookingController extends Controller
     {
         $data = $request->validated();
         $data['customer_id'] = auth()->id();
-        $data['status'] = 'to_assign';
+        // New bookings start in 'booking' state and await coordinator approval.
+        // Once approved, the status becomes 'to_assign' and enters the staff
+        // assignment queue.
+        $data['status'] = 'booking';
 
         // Check for time conflict at the same location
         if (MediaBooking::hasConflict($data['location'], $data['start_datetime'], $data['end_datetime'])) {
@@ -123,7 +128,9 @@ class MediaBookingController extends Controller
         try {
             $booking = MediaBooking::create($data);
 
-            // Auto-create an Assignment with 'to_assign' status
+            // Auto-create a linked Assignment. It mirrors the booking's 'booking'
+            // status so the request stays out of the "To Assign" staff queue until
+            // a coordinator approves it (which promotes both to 'to_assign').
             $assignment = Assignment::create([
                 'assignment_name'      => 'Media Booking: ' . $booking->event_name,
                 'event_name'           => $booking->event_name,
@@ -131,7 +138,7 @@ class MediaBookingController extends Controller
                 'event_start_datetime' => $booking->start_datetime,
                 'event_end_datetime'   => $booking->end_datetime,
                 'description'          => $this->buildDescription($booking),
-                'status'               => 'to_assign',
+                'status'               => 'booking',
                 'created_by'           => auth()->id(),
             ]);
 
@@ -160,7 +167,7 @@ class MediaBookingController extends Controller
             }
 
             return response()->json([
-                'message' => 'Booking submitted successfully. You will receive a confirmation email.',
+                'message' => 'Booking submitted successfully. Please wait for confirmation.',
                 'booking' => $booking->load('customer', 'assignment'),
             ], 201);
         } catch (\Exception $e) {
@@ -285,6 +292,103 @@ class MediaBookingController extends Controller
         }
 
         return response()->json(['message' => 'Booking has been canceled.']);
+    }
+
+    /**
+     * Approve a booking (coordinator/supervisor/admin).
+     * Promotes the booking (and its linked assignment) from 'booking' to 'to_assign',
+     * moving the request into the staff assignment queue.
+     */
+    public function approve(MediaBooking $mediaBooking): JsonResponse
+    {
+        if (!in_array($mediaBooking->status, ['booking'])) {
+            return response()->json([
+                'message' => 'Only bookings awaiting confirmation can be approved.',
+            ], 422);
+        }
+
+        $mediaBooking->update(['status' => 'to_assign']);
+
+        if ($mediaBooking->assignment) {
+            $mediaBooking->assignment->update(['status' => 'to_assign']);
+        }
+
+        $bookingWithCustomer = $mediaBooking->fresh(['customer', 'assignment']);
+
+        try {
+            // Notify the customer that their booking has been confirmed
+            $mediaBooking->customer->notify(new BookingApprovedNotification($bookingWithCustomer));
+
+            // Notify other coordinators/supervisors for visibility
+            $staff = User::role(['coordinator', 'supervisor'])->get();
+            foreach ($staff as $staffMember) {
+                $staffMember->notify(new BookingApprovedNotification($bookingWithCustomer));
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Booking approved but notification delivery failed.', [
+                'booking_id' => $mediaBooking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Booking approved. It is now available for staff assignment.',
+            'booking' => $bookingWithCustomer,
+        ]);
+    }
+
+    /**
+     * Reject a booking (coordinator/supervisor/admin).
+     * Requires a reason. Sets the booking (and its linked assignment) to 'canceled'.
+     */
+    public function reject(Request $request, MediaBooking $mediaBooking): JsonResponse
+    {
+        $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        if (!in_array($mediaBooking->status, ['booking', 'to_assign'])) {
+            return response()->json([
+                'message' => 'This booking can no longer be rejected.',
+            ], 422);
+        }
+
+        $mediaBooking->update([
+            'status'        => 'canceled',
+            'cancel_reason' => $request->reason,
+            'canceled_by'   => 'coordinator',
+        ]);
+
+        if ($mediaBooking->assignment) {
+            $mediaBooking->assignment->update(['status' => 'canceled']);
+        }
+
+        $bookingWithCustomer = $mediaBooking->fresh(['customer']);
+
+        try {
+            // Notify the customer that their booking was declined (with reason)
+            $mediaBooking->customer->notify(
+                new BookingRejectedNotification($bookingWithCustomer, $request->reason)
+            );
+
+            // Notify coordinators/supervisors
+            $staff = User::role(['coordinator', 'supervisor'])->get();
+            foreach ($staff as $staffMember) {
+                $staffMember->notify(
+                    new BookingUpdatedNotification($bookingWithCustomer, 'canceled', $request->reason, false)
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Booking rejected but notification delivery failed.', [
+                'booking_id' => $mediaBooking->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Booking has been declined.',
+            'booking' => $bookingWithCustomer,
+        ]);
     }
 
     /**

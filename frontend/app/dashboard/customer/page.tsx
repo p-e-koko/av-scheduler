@@ -127,7 +127,7 @@ function BookMediaTab({ onBookingCreated }: { onBookingCreated: () => void }) {
                     </div>
                     <h2 className="text-xl font-semibold text-green-900 dark:text-green-200">Booking Submitted!</h2>
                     <p className="text-sm text-green-800 dark:text-green-300">
-                        Your booking for <strong>{createdBooking.event_name}</strong> has been received. Our coordination team will review and assign staff shortly. You will receive an email confirmation.
+                        Your booking for <strong>{createdBooking.event_name}</strong> has been received. <strong>Please wait for the confirmation.</strong> Our coordination team will review your request and confirm it shortly.
                     </p>
                     <div className="flex gap-3 justify-center pt-2">
                         <Button variant="outline" onClick={() => { setSubmitted(false); setCreatedBooking(null) }}>
@@ -209,7 +209,7 @@ function MyBookingsTab() {
     // Client-side search filter
     const displayedBookings = bookings.filter(b => {
         const matchesStatus = statusFilter === 'active'
-            ? ['to_assign', 'pending', 'confirmed'].includes(b.status)
+            ? ['booking', 'to_assign', 'pending', 'confirmed'].includes(b.status)
             : b.status === statusFilter
 
         if (!matchesStatus) return false
@@ -225,7 +225,7 @@ function MyBookingsTab() {
     // Stats
     const stats = {
         total: bookings.length,
-        active: bookings.filter(b => ['to_assign', 'pending', 'confirmed'].includes(b.status)).length,
+        active: bookings.filter(b => ['booking', 'to_assign', 'pending', 'confirmed'].includes(b.status)).length,
         complete: bookings.filter(b => b.status === 'complete').length,
         canceled: bookings.filter(b => b.status === 'canceled').length,
     }

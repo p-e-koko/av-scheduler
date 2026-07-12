@@ -288,10 +288,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/media-bookings/{mediaBooking}/cancel', [\App\Http\Controllers\Api\MediaBookingController::class, 'cancel']);
     });
 
-    // Coordinator / Supervisor / Admin: cancel any booking + contact customer
+    // Coordinator / Supervisor / Admin: cancel any booking + contact customer + approve/reject
     Route::middleware(['role:coordinator,supervisor,admin'])->group(function () {
         Route::post('/media-bookings/{mediaBooking}/cancel', [\App\Http\Controllers\Api\MediaBookingController::class, 'cancel']);
         Route::get('/media-bookings/{mediaBooking}/customer-info', [\App\Http\Controllers\Api\MediaBookingController::class, 'customerInfo']);
+        Route::post('/media-bookings/{mediaBooking}/approve', [\App\Http\Controllers\Api\MediaBookingController::class, 'approve']);
+        Route::post('/media-bookings/{mediaBooking}/reject', [\App\Http\Controllers\Api\MediaBookingController::class, 'reject']);
     });
 
 }); // end auth:sanctum group

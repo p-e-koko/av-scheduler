@@ -17,6 +17,7 @@ interface BookingCardProps {
 }
 
 const statusColors: Record<string, string> = {
+    booking: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400',
     to_assign: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
     pending: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
     confirmed: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
@@ -26,6 +27,7 @@ const statusColors: Record<string, string> = {
 }
 
 const statusLabels: Record<string, string> = {
+    booking: 'Awaiting Confirmation',
     to_assign: 'To Assign',
     pending: 'Pending',
     confirmed: 'Confirmed',
@@ -35,13 +37,13 @@ const statusLabels: Record<string, string> = {
 }
 
 export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, showCustomer, customerView = false, showActions = true }: BookingCardProps) {
-    const canEdit = ['to_assign', 'pending'].includes(booking.status)
+    const canEdit = ['booking', 'to_assign', 'pending'].includes(booking.status)
     const canCancel = !['canceled', 'complete'].includes(booking.status)
     const [expanded, setExpanded] = useState(false)
 
     const startDate = new Date(booking.start_datetime)
     const endDate = new Date(booking.end_datetime)
-    const displayStatus = customerView && ['to_assign', 'pending', 'confirmed'].includes(booking.status)
+    const displayStatus = customerView && ['booking', 'to_assign', 'pending', 'confirmed'].includes(booking.status)
         ? 'active'
         : booking.status
 

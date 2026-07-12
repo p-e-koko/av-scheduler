@@ -81,10 +81,11 @@ export interface Assignment {
   event_start_datetime: string;
   event_end_datetime: string;
   description?: string;
-  status: 'pending' | 'confirmed' | 'complete';
+  status: 'booking' | 'pending' | 'confirmed' | 'complete' | 'to_assign' | 'canceled';
   created_by: string;
   creator?: User;
   users?: User[];
+  mediaBooking?: MediaBooking | null;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
@@ -109,7 +110,7 @@ export interface MediaBooking {
   ac_required: boolean;
   spotlight_required: boolean;
   led_light_required: boolean;
-  status: 'pending' | 'to_assign' | 'confirmed' | 'canceled' | 'complete';
+  status: 'booking' | 'pending' | 'to_assign' | 'confirmed' | 'canceled' | 'complete';
   cancel_reason?: string | null;
   canceled_by?: 'customer' | 'coordinator' | null;
   assignment_id?: string | null;
@@ -1669,5 +1670,16 @@ export const mediaBookingAPI = {
 
   async getBooking(id: string): Promise<{ booking: MediaBooking }> {
     return apiCall(`/media-bookings/${id}`);
+  },
+
+  async approveBooking(bookingId: string): Promise<{ message: string; booking: MediaBooking }> {
+    return apiCall(`/media-bookings/${bookingId}/approve`, { method: 'POST' });
+  },
+
+  async rejectBooking(bookingId: string, reason: string): Promise<{ message: string; booking: MediaBooking }> {
+    return apiCall(`/media-bookings/${bookingId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
   },
 };

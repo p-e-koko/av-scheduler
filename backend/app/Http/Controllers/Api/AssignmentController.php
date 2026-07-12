@@ -41,7 +41,7 @@ class AssignmentController extends Controller
             Assignment::whereIn('id', $assignmentsToConfirm)->update(['status' => 'confirmed']);
         }
 
-        $query = Assignment::with(['creator', 'users']);
+        $query = Assignment::with(['creator', 'users', 'mediaBooking.customer']);
 
         // Add filtering by status
         if ($request->has('status')) {
@@ -118,7 +118,7 @@ class AssignmentController extends Controller
     public function show(Assignment $assignment): JsonResponse
     {
         // Load relationships
-        $assignment->load(['creator', 'users']);
+        $assignment->load(['creator', 'users', 'mediaBooking.customer']);
 
         return response()->json([
             'assignment' => new AssignmentResource($assignment)
@@ -230,7 +230,7 @@ class AssignmentController extends Controller
      */
     public function trashed(Request $request): JsonResponse
     {
-        $query = Assignment::onlyTrashed()->with(['creator', 'users']);
+        $query = Assignment::onlyTrashed()->with(['creator', 'users', 'mediaBooking.customer']);
 
         // Add search functionality for trashed items
         if ($request->has('search')) {

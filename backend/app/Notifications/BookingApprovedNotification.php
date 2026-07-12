@@ -9,7 +9,11 @@ use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class BookingCreatedCustomerNotification extends Notification
+/**
+ * Sent to the customer when a coordinator approves their booking.
+ * The booking moves from 'booking' to 'to_assign' (awaiting staff assignment).
+ */
+class BookingApprovedNotification extends Notification
 {
     use Queueable;
 
@@ -23,22 +27,21 @@ class BookingCreatedCustomerNotification extends Notification
     public function toWebPush(object $notifiable, $notification): WebPushMessage
     {
         return (new WebPushMessage)
-            ->title('Booking Received')
+            ->title('Booking Confirmed')
             ->icon('/icons/icon-192x192.png')
-            ->body('Your booking for "' . $this->booking->event_name . '" has been received. Please wait for confirmation.')
+            ->body('Your booking for "' . $this->booking->event_name . '" has been confirmed and is being assigned.')
             ->data(['url' => '/dashboard/customer?tab=my-bookings']);
     }
 
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Your Media Service Booking Has Been Received')
+            ->subject('Your Media Booking Has Been Confirmed: ' . $this->booking->event_name)
             ->greeting('Hello ' . $notifiable->name . '!')
-            ->line('Your booking has been successfully submitted.')
+            ->line('Good news! Your media service booking has been **confirmed** by our coordination team and is now being assigned to staff.')
             ->line('**Event Name:** ' . $this->booking->event_name)
             ->line('**Location:** ' . $this->booking->location)
             ->line('**Date & Time:** ' . $this->booking->start_datetime->format('D, d M Y H:i') . ' – ' . $this->booking->end_datetime->format('H:i'))
-            ->line('**Please wait for the confirmation.** Our coordination team will review your request and confirm it shortly.')
             ->action('View My Bookings', url('/dashboard/customer?tab=my-bookings'))
             ->line('Thank you for using our media service.');
     }
@@ -46,9 +49,9 @@ class BookingCreatedCustomerNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            'message'    => 'Your booking for "' . $this->booking->event_name . '" has been submitted. Please wait for confirmation.',
+            'message'    => 'Your booking for "' . $this->booking->event_name . '" has been confirmed and is being assigned.',
             'booking_id' => $this->booking->id,
-            'type'       => 'booking_created',
+            'type'       => 'booking_approved',
             'url'        => '/dashboard/customer?tab=my-bookings',
         ];
     }

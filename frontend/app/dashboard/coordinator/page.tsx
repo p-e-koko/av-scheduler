@@ -24,7 +24,10 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Eye
+  Eye,
+  Check,
+  XCircle,
+  User as UserIcon
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -77,6 +80,12 @@ function CoordinatorDashboard() {
     if (tab && ['assignments', 'students', 'schedules', 'positions', 'recycle-bin'].includes(tab)) {
       setActiveTab(tab as any)
     }
+    // Honor ?filter=... deep-link from booking notifications (e.g. filter=to_assign)
+    const filter = searchParams.get('filter')
+    if (filter && ['all', 'booking', 'to_assign', 'pending', 'confirmed', 'complete'].includes(filter)) {
+      setAssignmentFilter(filter as any)
+      setAssignmentCurrentPage(1)
+    }
   }, [searchParams])
 
   const handleTabChange = (tab: "assignments" | "students" | "schedules" | "positions" | "recycle-bin") => {
@@ -93,7 +102,7 @@ function CoordinatorDashboard() {
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null)
   const [isDeleteAssignmentConfirmationOpen, setIsDeleteAssignmentConfirmationOpen] = useState(false)
   const [assignmentToDelete, setAssignmentToDelete] = useState<number | null>(null)
-  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'to_assign' | 'pending' | 'confirmed' | 'complete'>('all')
+  const [assignmentFilter, setAssignmentFilter] = useState<'all' | 'booking' | 'to_assign' | 'pending' | 'confirmed' | 'complete'>('all')
   const [assignmentSearchQuery, setAssignmentSearchQuery] = useState("")
   const [positionFilter, setPositionFilter] = useState<string>('all')
   const [studentFilter, setStudentFilter] = useState<string>('all')
@@ -103,6 +112,10 @@ function CoordinatorDashboard() {
   // Customer Contact via media booking
   const [contactBooking, setContactBooking] = useState<MediaBooking | null>(null)
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+
+  // Booking approve/reject actions
+  const [rejectingAssignment, setRejectingAssignment] = useState<Assignment | null>(null)
+  const [bookingActionLoading, setBookingActionLoading] = useState(false)
 
   // Recycle Bin State
   const [trashedAssignments, setTrashedAssignments] = useState<Assignment[]>([])
@@ -277,6 +290,49 @@ function CoordinatorDashboard() {
   const handleViewAssignment = (assignment: Assignment) => {
     setSelectedAssignment(assignment)
     setIsDetailModalOpen(true)
+  }
+
+  // ── Booking approve / reject / contact handlers ────────────────────────────────
+  const handleApproveBooking = async (assignment: Assignment) => {
+    const booking = assignment.mediaBooking
+    if (!booking) return
+    setBookingActionLoading(true)
+    try {
+      await mediaBookingAPI.approveBooking(booking.id)
+      setBookingActionLoading(false)
+      setIsDetailModalOpen(false)
+      fetchData()
+    } catch (err) {
+      setError(formatAPIError(err))
+      setBookingActionLoading(false)
+    }
+  }
+
+  const handleRejectBooking = (assignment: Assignment) => {
+    setRejectingAssignment(assignment)
+  }
+
+  const handleRejectConfirm = async (reason: string) => {
+    if (!rejectingAssignment?.mediaBooking) return
+    setBookingActionLoading(true)
+    try {
+      await mediaBookingAPI.rejectBooking(rejectingAssignment.mediaBooking.id, reason)
+      setRejectingAssignment(null)
+      setBookingActionLoading(false)
+      setIsDetailModalOpen(false)
+      fetchData()
+    } catch (err) {
+      setError(formatAPIError(err))
+      setBookingActionLoading(false)
+    }
+  }
+
+  const handleContactCustomer = (assignment: Assignment) => {
+    const booking = assignment.mediaBooking
+    if (booking) {
+      setContactBooking(booking)
+      setIsContactModalOpen(true)
+    }
   }
 
   const handleCreateAssignment = () => {
@@ -539,6 +595,34 @@ function CoordinatorDashboard() {
                           variant="ghost"
                           size="sm"
                           onClick={() => {
+                            setAssignmentFilter('booking')
+                            setAssignmentCurrentPage(1)
+                          }}
+                          className={`transition-all duration-200 w-full sm:w-auto ${assignmentFilter === 'booking'
+                            ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                            }`}
+                        >
+                          Booking
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setAssignmentFilter('to_assign')
+                            setAssignmentCurrentPage(1)
+                          }}
+                          className={`transition-all duration-200 w-full sm:w-auto ${assignmentFilter === 'to_assign'
+                            ? 'bg-background text-primary dark:text-white shadow-sm font-medium'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                            }`}
+                        >
+                          To Assign
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
                             setAssignmentFilter('pending')
                             setAssignmentCurrentPage(1)
                           }}
@@ -635,6 +719,8 @@ function CoordinatorDashboard() {
                         .filter(assignment => {
                           // Filter by status
                           if (assignmentFilter !== 'all') {
+                            if (assignmentFilter === 'booking' && assignment.status !== 'booking') return false;
+                            if (assignmentFilter === 'to_assign' && assignment.status !== 'to_assign') return false;
                             if (assignmentFilter === 'complete' && assignment.status !== 'complete') return false;
                             if (assignmentFilter === 'confirmed' && assignment.status !== 'confirmed') return false;
                             if (assignmentFilter === 'pending' && assignment.status !== 'pending') return false;
@@ -688,12 +774,54 @@ function CoordinatorDashboard() {
                                 variant="secondary"
                                 className={`text-xs px-2 py-0.5 border-none ${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                                   assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white' :
+                                  assignment.status === 'booking' ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400' :
+                                  assignment.status === 'canceled' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
                                     'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                                   }`}
                               >
-                                {assignment.status}
+                                {assignment.status === 'booking' ? 'Booking' : assignment.status}
                               </Badge>
                               <div className="flex items-center gap-1">
+                                {/* Booking action buttons: Approve / Reject / Contact */}
+                                {assignment.status === 'booking' && assignment.mediaBooking && (
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleApproveBooking(assignment)
+                                      }}
+                                      disabled={bookingActionLoading}
+                                      className="h-8 px-2 text-xs text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30"
+                                    >
+                                      <Check className="w-3.5 h-3.5 mr-1" /> Approve
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleRejectBooking(assignment)
+                                      }}
+                                      disabled={bookingActionLoading}
+                                      className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30"
+                                    >
+                                      <XCircle className="w-3.5 h-3.5 mr-1" /> Reject
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleContactCustomer(assignment)
+                                      }}
+                                      className="h-8 px-2 text-xs text-muted-foreground hover:text-primary"
+                                    >
+                                      <UserIcon className="w-3.5 h-3.5 mr-1" /> Contact
+                                    </Button>
+                                  </>
+                                )}
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -1188,6 +1316,22 @@ function CoordinatorDashboard() {
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
         assignment={selectedAssignment}
+        onApproveBooking={selectedAssignment?.status === 'booking' ? () => handleApproveBooking(selectedAssignment) : undefined}
+        onRejectBooking={selectedAssignment?.status === 'booking' ? () => handleRejectBooking(selectedAssignment) : undefined}
+        onContactCustomer={selectedAssignment?.mediaBooking ? () => handleContactCustomer(selectedAssignment) : undefined}
+        bookingActionLoading={bookingActionLoading}
+      />
+      <CustomerContactModal
+        booking={contactBooking}
+        isOpen={isContactModalOpen}
+        onClose={() => { setIsContactModalOpen(false); setContactBooking(null) }}
+      />
+      <CancelBookingDialog
+        isOpen={!!rejectingAssignment}
+        onClose={() => setRejectingAssignment(null)}
+        onConfirm={handleRejectConfirm}
+        loading={bookingActionLoading}
+        title="Reject Booking"
       />
       <PositionModal
         isOpen={isPositionModalOpen}
