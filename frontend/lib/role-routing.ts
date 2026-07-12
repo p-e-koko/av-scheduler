@@ -1,4 +1,4 @@
-import { User } from './api';
+﻿import { User } from './api';
 
 // Helper to normalize roles input
 const normalizeRoles = (roleOrRoles: string | string[]): string[] => {
@@ -13,6 +13,7 @@ export const getRoleBasedDashboardPath = (role: string | string[]): string => {
   if (roles.includes('admin')) return '/dashboard/admin';
   if (roles.includes('supervisor')) return '/dashboard/supervisor';
   if (roles.includes('coordinator')) return '/dashboard/coordinator';
+  if (roles.includes('student')) return '/dashboard/student';
   if (roles.includes('customer')) return '/dashboard/customer';
 
   return '/dashboard/student';
@@ -83,3 +84,4 @@ export const getDashboardType = (pathname: string): string | null => {
   const match = pathname.match(/^\/dashboard\/(.+)$/);
   return match ? match[1] : null;
 };
+

@@ -528,7 +528,7 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
                 </div>
                 <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
                     <Info className="w-3 h-3" />
-                    Note: Celine light will be turned on automatically.
+                    Note: Ceiling light will be turned on automatically.
                 </p>
             </div>
 
@@ -581,7 +581,7 @@ export function BookingForm({ onSuccess, onCancel, editingBooking }: BookingForm
                                             : 'bg-muted text-muted-foreground'}`}>
                                     {isDone ? '✓' : num}
                                 </div>
-                                <span className="text-xs font-medium hidden sm:block">{label}</span>
+                                <span className="text-xs font-medium hidden sm:block dark:text-white">{label}</span>
                             </div>
                             {i < stepLabels.length - 1 && (
                                 <div className={`flex-1 h-px ${isDone ? 'bg-green-400' : 'bg-border'}`} />

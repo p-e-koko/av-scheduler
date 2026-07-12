@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -31,7 +31,7 @@ function SocialCallbackContent() {
           
           if (user) {
             // 3. Redirect based on Role
-            const redirectPath = getRoleBasedDashboardPath(user.role || 'student');
+            const redirectPath = getRoleBasedDashboardPath(user.roles?.length ? user.roles : user.role || 'student');
             window.location.href = redirectPath;
           } else {
              // Fallback
@@ -67,3 +67,5 @@ export default function SocialCallback() {
     </div>
   )
 }
+
+

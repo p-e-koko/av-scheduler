@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import {
   Dialog,
@@ -264,3 +264,4 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment, onApproveBo
     </Dialog>
   )
 }
+

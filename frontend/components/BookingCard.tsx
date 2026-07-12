@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,29 +11,23 @@ interface BookingCardProps {
     onEdit?: (booking: MediaBooking) => void
     onCancel?: (booking: MediaBooking) => void
     onContactCustomer?: (booking: MediaBooking) => void
-    showCustomer?: boolean   // for coordinator view
+    showCustomer?: boolean
     customerView?: boolean
     showActions?: boolean
 }
 
 const statusColors: Record<string, string> = {
-    booking: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400',
-    to_assign: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    pending: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-    confirmed: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
-    complete: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+    requested: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400',
+    approved: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
     canceled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    active: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+    completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
 }
 
 const statusLabels: Record<string, string> = {
-    booking: 'Awaiting Confirmation',
-    to_assign: 'To Assign',
-    pending: 'Pending',
-    confirmed: 'Confirmed',
-    complete: 'Complete',
+    requested: 'Requested',
+    approved: 'Approved',
     canceled: 'Canceled',
-    active: 'Active',
+    completed: 'Completed',
 }
 
 export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, showCustomer, customerView = false, showActions = true }: BookingCardProps) {
@@ -43,15 +37,22 @@ export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, show
 
     const startDate = new Date(booking.start_datetime)
     const endDate = new Date(booking.end_datetime)
-    const displayStatus = customerView && ['booking', 'to_assign', 'pending', 'confirmed'].includes(booking.status)
-        ? 'active'
+    const displayStatus = customerView
+        ? (booking.status === 'booking' || booking.status === 'to_assign' || booking.status === 'pending'
+            ? 'requested'
+            : booking.status === 'confirmed'
+                ? 'approved'
+                : booking.status === 'complete'
+                    ? 'completed'
+                    : booking.status === 'canceled'
+                        ? 'canceled'
+                        : booking.status)
         : booking.status
 
     const hasExtras = booking.ac_required || booking.spotlight_required || booking.led_light_required || booking.equipment_request || booking.cancel_reason
 
     return (
         <div className="flex flex-col p-4 bg-muted/50 rounded-lg gap-3 hover:bg-muted/70 transition-colors border border-border/50">
-            {/* Main row */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -79,13 +80,17 @@ export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, show
                             <User className="w-3 h-3" /> {booking.customer.name}
                         </p>
                     )}
+
+                    {customerView && displayStatus === 'canceled' && booking.cancel_reason && (
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                            {booking.canceled_by === 'coordinator' ? 'Rejected by coordinator' : 'Canceled by you'}: {booking.cancel_reason}
+                        </p>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                    {/* Expand toggle for extra details */}
                     {hasExtras && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"
-                            onClick={() => setExpanded(v => !v)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => setExpanded(v => !v)}>
                             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </Button>
                     )}
@@ -98,14 +103,12 @@ export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, show
                                 </Button>
                             )}
                             {onEdit && canEdit && (
-                                <Button variant="ghost" size="icon" onClick={() => onEdit(booking)}
-                                    className="h-8 w-8 text-muted-foreground hover:text-primary">
+                                <Button variant="ghost" size="icon" onClick={() => onEdit(booking)} className="h-8 w-8 text-muted-foreground hover:text-primary">
                                     <Edit className="w-4 h-4" />
                                 </Button>
                             )}
                             {onCancel && canCancel && (
-                                <Button variant="ghost" size="icon" onClick={() => onCancel(booking)}
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                                <Button variant="ghost" size="icon" onClick={() => onCancel(booking)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
                                     <X className="w-4 h-4" />
                                 </Button>
                             )}
@@ -114,7 +117,6 @@ export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, show
                 </div>
             </div>
 
-            {/* Expanded details */}
             {expanded && hasExtras && (
                 <div className="border-t border-border/50 pt-3 text-sm text-muted-foreground space-y-1.5">
                     {booking.equipment_request && (
@@ -131,10 +133,11 @@ export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, show
                         </p>
                     )}
                     {booking.cancel_reason && (
-                        <p><span className="font-medium text-destructive">Cancel reason:</span> {booking.cancel_reason}</p>
+                        <p><span className="font-medium text-destructive">Reason:</span> {booking.cancel_reason}</p>
                     )}
                 </div>
             )}
         </div>
     )
 }
+

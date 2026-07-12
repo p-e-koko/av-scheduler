@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -17,7 +17,7 @@ export default function DashboardRedirect() {
     }
     
     // Redirect to role-based dashboard
-    const dashboardPath = getRoleBasedDashboardPath(user.role)
+    const dashboardPath = getRoleBasedDashboardPath(user.roles?.length ? user.roles : user.role)
     router.push(dashboardPath)
   }, [router])
 
@@ -30,3 +30,4 @@ export default function DashboardRedirect() {
     </div>
   )
 }
+

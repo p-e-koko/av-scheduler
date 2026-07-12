@@ -1,4 +1,4 @@
-// API configuration and utilities
+﻿// API configuration and utilities
 // Prefer environment variable; fall back to same-origin /api instead of a hard-coded domain
 export let API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
@@ -898,6 +898,13 @@ export const userAPI = {
     }
   },
 
+  // Request AV assistant role
+  async requestAvAssistant(): Promise<{ message: string; user: User }> {
+    return apiCall<{ message: string; user: User }>(`/me/request-av-assistant`, {
+      method: 'POST',
+    });
+  },
+
   // Delete user (soft delete)
   async deleteUser(id: number | string): Promise<{ message: string }> {
     return apiCall<{ message: string }>(`/users/${id}`, {
@@ -1683,3 +1690,4 @@ export const mediaBookingAPI = {
     });
   },
 };
+

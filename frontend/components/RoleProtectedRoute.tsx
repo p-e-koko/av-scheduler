@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -11,10 +11,10 @@ interface RoleProtectedRouteProps {
   redirectTo?: string;
 }
 
-export function RoleProtectedRoute({ 
-  children, 
+export function RoleProtectedRoute({
+  children,
   allowedRoles,
-  redirectTo 
+  redirectTo,
 }: RoleProtectedRouteProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -23,12 +23,10 @@ export function RoleProtectedRoute({
 
   useEffect(() => {
     let active = true;
-    let intervalId: any;
 
     const checkAccess = async () => {
       const user = getStoredUser();
-      
-      // If no user is stored, redirect to login
+
       if (!user) {
         if (active) {
           router.push('/login');
@@ -36,13 +34,11 @@ export function RoleProtectedRoute({
         return;
       }
 
-      // If this is a dashboard route, check role-based access
       if (isDashboardPath(pathname)) {
         const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
         const userCanAccess = canAccessDashboard(userRoles, pathname);
-        
+
         if (!userCanAccess) {
-          // Redirect to user's appropriate dashboard
           const correctDashboard = getRoleBasedDashboardPath(userRoles);
           if (active) {
             router.push(correctDashboard);
@@ -51,14 +47,12 @@ export function RoleProtectedRoute({
         }
       }
 
-      // If specific roles are required, check them
       if (allowedRoles && allowedRoles.length > 0) {
         const userRoles = user.roles && user.roles.length > 0 ? user.roles : [user.role];
-        const hasRequiredRole = userRoles.some(r => allowedRoles.includes(r as any));
-        
+        const hasRequiredRole = userRoles.some(role => allowedRoles.includes(role));
+
         if (!hasRequiredRole) {
-          // Redirect to specified path or user's dashboard
-          const redirectPath = redirectTo || getRoleBasedDashboardPath(user.role);
+          const redirectPath = redirectTo || getRoleBasedDashboardPath(userRoles);
           if (active) {
             router.push(redirectPath);
           }
@@ -66,19 +60,20 @@ export function RoleProtectedRoute({
         }
       }
 
-      // User is authorized locally, allow rendering right away
       if (active) {
         setIsAuthorized(true);
         setIsLoading(false);
       }
 
-      // Verify session and details against the server
       try {
         const serverUser = await authAPI.getCurrentUser();
         if (!active) return;
 
-        // Compare critical fields to check if details have changed
-        const rolesChanged = JSON.stringify(user.roles || []) !== JSON.stringify(serverUser.roles || []);
+        const normalizeRoles = (roles: string[] = []) => [...new Set(roles.map(role => role.toLowerCase()).filter(Boolean))].sort();
+        const stripCustomer = (roles: string[] = []) => normalizeRoles(roles).filter(role => role !== 'customer');
+        const storedRoles = stripCustomer(user.roles && user.roles.length > 0 ? user.roles : [user.role]);
+        const serverRoles = stripCustomer(serverUser.roles && serverUser.roles.length > 0 ? serverUser.roles : [serverUser.role]);
+        const rolesChanged = JSON.stringify(storedRoles) !== JSON.stringify(serverRoles);
         const roleChanged = user.role !== serverUser.role;
         const approvedChanged = user.is_approved !== serverUser.is_approved;
         const emailChanged = user.email !== serverUser.email;
@@ -86,12 +81,11 @@ export function RoleProtectedRoute({
         const idChanged = user.id !== serverUser.id;
 
         if (roleChanged || rolesChanged || approvedChanged || emailChanged || nameChanged || idChanged) {
-          console.log('Account details changed, logging out.');
           removeAuthToken();
           try {
             await authAPI.logout();
-          } catch (e) {
-            // Ignore logout errors
+          } catch {
+            // Ignore logout errors.
           }
           if (active) {
             window.location.href = '/login?changed=true';
@@ -99,9 +93,7 @@ export function RoleProtectedRoute({
           return;
         }
 
-        // Update stored user with latest details
         setStoredUser(serverUser);
-
       } catch (error) {
         console.error('Session validation error:', error);
         removeAuthToken();
@@ -113,8 +105,7 @@ export function RoleProtectedRoute({
 
     checkAccess();
 
-    // Set up polling interval to check every 45 seconds while page is active
-    intervalId = setInterval(() => {
+    const intervalId = setInterval(() => {
       if (getStoredUser()) {
         checkAccess();
       }
@@ -122,11 +113,10 @@ export function RoleProtectedRoute({
 
     return () => {
       active = false;
-      if (intervalId) clearInterval(intervalId);
+      clearInterval(intervalId);
     };
   }, [pathname, router, allowedRoles, redirectTo]);
 
-  // Show loading state while checking permissions
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -138,7 +128,6 @@ export function RoleProtectedRoute({
     );
   }
 
-  // Only render children if authorized
   if (!isAuthorized) {
     return null;
   }
@@ -146,21 +135,13 @@ export function RoleProtectedRoute({
   return <>{children}</>;
 }
 
-// Hook to get current user role
 export function useUserRole() {
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [user, setUser] = useState(getStoredUser());
-
-  useEffect(() => {
-    const currentUser = getStoredUser();
-    setUser(currentUser);
-    setUserRole(currentUser?.role || null);
-  }, []);
+  const user = getStoredUser();
+  const userRole = user?.role || null;
 
   return { user, userRole };
 }
 
-// Hook to check if user has specific permissions
 export function usePermissions() {
   const { user, userRole } = useUserRole();
 
@@ -187,6 +168,7 @@ export function usePermissions() {
     hasRole,
     hasAnyRole,
     isAdmin,
-    canAccessPath
+    canAccessPath,
   };
 }
+

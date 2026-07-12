@@ -1,8 +1,8 @@
-"use client"
+﻿"use client"
 
 import { Suspense, useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Menu, RefreshCw, Search, X, CheckCircle, CalendarX } from "lucide-react"
+import { Menu, RefreshCw, Search, X, CheckCircle, CalendarX, Info } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,8 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
+    DialogFooter,
 } from "@/components/ui/dialog"
 
 import { CustomerSidebar } from "@/components/CustomerSidebar"
@@ -23,18 +25,21 @@ import {
     getStoredUser,
     hasAnyRole,
     formatAPIError,
+    authAPI,
     mediaBookingAPI,
+    userAPI,
     type MediaBooking,
 } from "@/lib/api"
 
-// ─── Status filter options ───────────────────────────────────────────────────
+// â”€â”€â”€ Status filter options â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const STATUS_FILTERS = [
-    { value: 'active', label: 'Active' },
-    { value: 'complete', label: 'Complete' },
+    { value: 'requested', label: 'Requested' },
+    { value: 'approved', label: 'Approved' },
     { value: 'canceled', label: 'Canceled' },
+    { value: 'completed', label: 'Completed' },
 ]
 
-// ─── Main Dashboard Component ────────────────────────────────────────────────
+// â”€â”€â”€ Main Dashboard Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function CustomerDashboardContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -42,6 +47,25 @@ function CustomerDashboardContent() {
     const currentUser = useMemo(() => getStoredUser(), [])
     const activeTab = searchParams.get('tab') === 'my-bookings' ? 'my-bookings' : 'book'
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+    const [showAssistantDialog, setShowAssistantDialog] = useState(false)
+    const [assistantRequestLoading, setAssistantRequestLoading] = useState(false)
+
+    const isPureCustomer = !!currentUser && ((currentUser.roles && currentUser.roles.length > 0 ? currentUser.roles : [currentUser.role]).filter(Boolean).every(role => role.toLowerCase() === 'customer'))
+
+    const handleRequestAvAssistant = async () => {
+        setAssistantRequestLoading(true)
+        try {
+            await userAPI.requestAvAssistant()
+            await authAPI.logout()
+            router.push(`/login?error=${encodeURIComponent('Your AV assistant request has been submitted and is pending admin approval.')}`)
+        } catch (err) {
+            console.error('Failed to submit AV assistant request:', err)
+            router.push(`/login?error=${encodeURIComponent('Your AV assistant request is pending admin approval.')}`)
+        } finally {
+            setAssistantRequestLoading(false)
+        }
+    }
+
 
     const handleTabChange = (tab: "book" | "my-bookings") => {
         const params = new URLSearchParams(searchParams.toString())
@@ -57,9 +81,8 @@ function CustomerDashboardContent() {
     }, [currentUser, router])
 
     if (!currentUser) {
-        return <div className="flex items-center justify-center h-screen text-muted-foreground">Loading…</div>
+        return <div className="flex items-center justify-center h-screen text-muted-foreground">Loadingâ€¦</div>
     }
-
     return (
         <div className="flex h-screen bg-background">
             <CustomerSidebar
@@ -92,6 +115,16 @@ function CustomerDashboardContent() {
                                         ? 'Submit a new media service booking request'
                                         : 'Track and manage your booking requests'}
                                 </p>
+                                {isPureCustomer && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="mt-3 border-primary/20 text-primary dark:text-white hover:bg-primary/10"
+                                        onClick={() => setShowAssistantDialog(true)}
+                                    >
+                                        Become an AV Assistant
+                                    </Button>
+                                )}
                             </div>
                         </div>
                         <NotificationDropdown />
@@ -104,11 +137,35 @@ function CustomerDashboardContent() {
                     {activeTab === 'my-bookings' && <MyBookingsTab />}
                 </main>
             </div>
+
+            <Dialog open={showAssistantDialog} onOpenChange={setShowAssistantDialog}>
+                <DialogContent className="max-w-[90vw] sm:max-w-sm bg-card text-card-foreground p-0 gap-0 rounded-2xl">
+                    <div className="m-3 sm:m-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 p-4 sm:p-5">
+                        <div className="flex gap-3">
+                            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                            <div className="space-y-2">
+                                <h3 className="font-semibold text-blue-900 dark:text-blue-100 text-sm sm:text-base">Become an AV Assistant</h3>
+                                <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                                    Make sure to apply for AV job on SARRA2 or contact the department director first before you proceed.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter className="flex-col sm:flex-row gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
+                        <Button variant="outline" onClick={() => setShowAssistantDialog(false)} disabled={assistantRequestLoading} className="flex-1">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleRequestAvAssistant} disabled={assistantRequestLoading} className="flex-1">
+                            {assistantRequestLoading ? 'Processing...' : 'Proceed'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
 
-// ─── Book Media Tab ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Book Media Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function BookMediaTab({ onBookingCreated }: { onBookingCreated: () => void }) {
     const [submitted, setSubmitted] = useState(false)
     const [createdBooking, setCreatedBooking] = useState<MediaBooking | null>(null)
@@ -152,12 +209,12 @@ function BookMediaTab({ onBookingCreated }: { onBookingCreated: () => void }) {
     )
 }
 
-// ─── My Bookings Tab ─────────────────────────────────────────────────────────
+// â”€â”€â”€ My Bookings Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function MyBookingsTab() {
     const [bookings, setBookings] = useState<MediaBooking[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [statusFilter, setStatusFilter] = useState('active')
+    const [statusFilter, setStatusFilter] = useState('requested')
     const [searchQuery, setSearchQuery] = useState('')
 
     // Edit booking
@@ -173,7 +230,7 @@ function MyBookingsTab() {
         setError(null)
         try {
             const res = await mediaBookingAPI.getBookings({
-                status: statusFilter === 'active' ? undefined : statusFilter,
+                status: statusFilter,
                 per_page: 50,
             })
             setBookings(res.data ?? res)
@@ -206,11 +263,25 @@ function MyBookingsTab() {
         fetchBookings()
     }
 
-    // Client-side search filter
+    const logicalStatusForBooking = (booking: MediaBooking) => {
+        switch (booking.status) {
+            case 'booking':
+            case 'to_assign':
+            case 'pending':
+                return 'requested'
+            case 'confirmed':
+                return 'approved'
+            case 'complete':
+                return 'completed'
+            case 'canceled':
+                return 'canceled'
+            default:
+                return booking.status
+        }
+    }
+
     const displayedBookings = bookings.filter(b => {
-        const matchesStatus = statusFilter === 'active'
-            ? ['booking', 'to_assign', 'pending', 'confirmed'].includes(b.status)
-            : b.status === statusFilter
+        const matchesStatus = logicalStatusForBooking(b) === statusFilter
 
         if (!matchesStatus) return false
 
@@ -222,35 +293,11 @@ function MyBookingsTab() {
         )
     })
 
-    // Stats
-    const stats = {
-        total: bookings.length,
-        active: bookings.filter(b => ['booking', 'to_assign', 'pending', 'confirmed'].includes(b.status)).length,
-        complete: bookings.filter(b => b.status === 'complete').length,
-        canceled: bookings.filter(b => b.status === 'canceled').length,
-    }
-
     return (
-        <div className="space-y-6 max-w-4xl mx-auto">
-            {/* Stats cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                    { label: 'Total', value: stats.total, color: 'text-foreground' },
-                    { label: 'Active', value: stats.active, color: 'text-slate-700 dark:text-slate-200' },
-                    { label: 'Complete', value: stats.complete, color: 'text-green-600 dark:text-green-400' },
-                    { label: 'Canceled', value: stats.canceled, color: 'text-red-600 dark:text-red-400' },
-                ].map(s => (
-                    <div key={s.label} className="bg-card/80 border border-border rounded-xl p-4 text-center">
-                        <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
-                    </div>
-                ))}
-            </div>
-
+        <div className="space-y-6 max-w-5xl mx-auto">
             {/* Filters */}
             <div className="bg-card/80 backdrop-blur-xl rounded-xl border border-border p-4">
                 <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
-                    {/* Status filter pills */}
                     <div className="flex flex-wrap gap-1">
                         {STATUS_FILTERS.map(f => (
                             <button
@@ -267,7 +314,6 @@ function MyBookingsTab() {
                         ))}
                     </div>
 
-                    {/* Search + Refresh */}
                     <div className="flex items-center gap-2 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -295,17 +341,14 @@ function MyBookingsTab() {
                     <div className="py-16 text-center space-y-3">
                         <CalendarX className="w-12 h-12 mx-auto text-muted-foreground/40" />
                         <p className="text-muted-foreground">No bookings found.</p>
-                        {statusFilter !== 'active' && (
-                            <Button variant="ghost" size="sm" onClick={() => setStatusFilter('active')}>
+                        {statusFilter !== 'requested' && (
+                            <Button variant="ghost" size="sm" onClick={() => setStatusFilter('requested')}>
                                 <X className="w-4 h-4 mr-1" /> Clear filter
                             </Button>
                         )}
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        <p className="text-sm text-muted-foreground mb-4">
-                            Showing {displayedBookings.length} booking{displayedBookings.length !== 1 ? 's' : ''}
-                        </p>
                         {displayedBookings.map(booking => (
                             <BookingCard
                                 key={booking.id}
@@ -347,11 +390,17 @@ function MyBookingsTab() {
     )
 }
 
-// ─── Page Export ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Page Export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function CustomerDashboardPage() {
     return (
-        <Suspense fallback={<div className="flex items-center justify-center h-screen text-muted-foreground">Loading…</div>}>
+        <Suspense fallback={<div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>}>
             <CustomerDashboardContent />
         </Suspense>
     )
 }
+
+
+
+
+
+
