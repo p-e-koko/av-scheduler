@@ -85,8 +85,8 @@ class MediaBookingController extends Controller
     private function resolveStatusFilter(string $status): array
     {
         return match ($status) {
-            'requested' => ['booking', 'to_assign', 'pending'],
-            'approved' => ['confirmed'],
+            'requested' => ['booking', 'pending'],
+            'approved' => ['to_assign', 'confirmed'],
             'canceled' => ['canceled'],
             'completed' => ['complete'],
             default => [],
@@ -192,14 +192,16 @@ class MediaBookingController extends Controller
                 $customer->notify(new BookingCreatedCustomerNotification($booking));
 
                 // 2. Notify all coordinators and supervisors
+                $bookingWithCustomer = $booking->fresh(['customer']);
                 $staff = User::role(['coordinator', 'supervisor'])->get();
                 foreach ($staff as $staffMember) {
-                    $staffMember->notify(new BookingCreatedStaffNotification($booking->fresh(['customer'])));
+                    $staffMember->notify(new BookingCreatedStaffNotification($bookingWithCustomer));
                 }
             } catch (\Throwable $notificationError) {
                 Log::warning('Media booking created but notification delivery failed.', [
                     'booking_id' => $booking->id,
                     'error' => $notificationError->getMessage(),
+                    'trace' => $notificationError->getTraceAsString(),
                 ]);
             }
 

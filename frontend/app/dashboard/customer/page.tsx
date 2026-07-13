@@ -266,9 +266,9 @@ function MyBookingsTab() {
     const logicalStatusForBooking = (booking: MediaBooking) => {
         switch (booking.status) {
             case 'booking':
-            case 'to_assign':
             case 'pending':
                 return 'requested'
+            case 'to_assign':
             case 'confirmed':
                 return 'approved'
             case 'complete':
