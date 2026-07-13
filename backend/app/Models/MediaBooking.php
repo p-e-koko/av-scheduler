@@ -51,6 +51,12 @@ class MediaBooking extends Model
         return $this->belongsTo(Assignment::class, 'assignment_id');
     }
 
+    /** Comments on this booking */
+    public function comments()
+    {
+        return $this->hasMany(BookingComment::class, 'media_booking_id');
+    }
+
     /**
      * Check if the given location + time slot is already booked.
      * Same location cannot have overlapping bookings.

@@ -82,8 +82,6 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->group(function () {
     Route::post('/refresh', [AuthController::class, 'refresh']);
 });
 
-Route::middleware(['auth:sanctum'])->post('/me/request-av-assistant', [UserController::class, 'requestAvAssistant']);
-
 // Protected User Management Routes - Role-Based Access Control
 Route::middleware(['auth:sanctum'])->group(function () {
 
@@ -297,6 +295,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/media-bookings/{mediaBooking}/approve', [\App\Http\Controllers\Api\MediaBookingController::class, 'approve']);
         Route::post('/media-bookings/{mediaBooking}/reject', [\App\Http\Controllers\Api\MediaBookingController::class, 'reject']);
     });
+
+    // Booking Comments — all authenticated users can view and create
+    Route::get('/media-bookings/{mediaBooking}/comments', [\App\Http\Controllers\Api\BookingCommentController::class, 'index']);
+    Route::post('/media-bookings/{mediaBooking}/comments', [\App\Http\Controllers\Api\BookingCommentController::class, 'store']);
+
+    // Coordinator / Supervisor / Admin: mark comments as done (hard delete all)
+    Route::middleware(['role:coordinator,supervisor,admin'])->delete('/media-bookings/{mediaBooking}/comments', [\App\Http\Controllers\Api\BookingCommentController::class, 'done']);
 
 }); // end auth:sanctum group
 

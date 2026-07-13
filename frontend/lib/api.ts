@@ -120,6 +120,18 @@ export interface MediaBooking {
   updated_at: string;
 }
 
+export interface BookingComment {
+  id: string;
+  content: string;
+  user_id: string;
+  user: {
+    id: string;
+    name: string;
+    role: string;
+  };
+  created_at: string;
+}
+
 export interface MediaBookingFormData {
   event_name: string;
   location: string;
@@ -896,13 +908,6 @@ export const userAPI = {
         body: JSON.stringify(userData),
       });
     }
-  },
-
-  // Request AV assistant role
-  async requestAvAssistant(): Promise<{ message: string; user: User }> {
-    return apiCall<{ message: string; user: User }>(`/me/request-av-assistant`, {
-      method: 'POST',
-    });
   },
 
   // Delete user (soft delete)
@@ -1687,6 +1692,24 @@ export const mediaBookingAPI = {
     return apiCall(`/media-bookings/${bookingId}/reject`, {
       method: 'POST',
       body: JSON.stringify({ reason }),
+    });
+  },
+
+  // Comment API
+  async getComments(bookingId: string): Promise<{ comments: BookingComment[] }> {
+    return apiCall(`/media-bookings/${bookingId}/comments`);
+  },
+
+  async addComment(bookingId: string, content: string): Promise<{ message: string; comment: BookingComment }> {
+    return apiCall(`/media-bookings/${bookingId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  },
+
+  async deleteAllComments(bookingId: string): Promise<{ message: string }> {
+    return apiCall(`/media-bookings/${bookingId}/comments`, {
+      method: 'DELETE',
     });
   },
 };

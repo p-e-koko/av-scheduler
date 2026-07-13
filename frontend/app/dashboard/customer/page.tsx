@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Menu, RefreshCw, Search, X, CheckCircle, CalendarX, Info } from "lucide-react"
+import { Menu, RefreshCw, Search, X, CheckCircle, CalendarX } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,14 +11,13 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogDescription,
-    DialogFooter,
 } from "@/components/ui/dialog"
 
 import { CustomerSidebar } from "@/components/CustomerSidebar"
 import { BookingForm } from "@/components/BookingForm"
 import { BookingCard } from "@/components/BookingCard"
 import { CancelBookingDialog } from "@/components/CancelBookingDialog"
+import { BookingCommentsModal } from "@/components/BookingCommentsModal"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 
 import {
@@ -27,7 +26,6 @@ import {
     formatAPIError,
     authAPI,
     mediaBookingAPI,
-    userAPI,
     type MediaBooking,
 } from "@/lib/api"
 
@@ -47,25 +45,6 @@ function CustomerDashboardContent() {
     const currentUser = useMemo(() => getStoredUser(), [])
     const activeTab = searchParams.get('tab') === 'my-bookings' ? 'my-bookings' : 'book'
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-    const [showAssistantDialog, setShowAssistantDialog] = useState(false)
-    const [assistantRequestLoading, setAssistantRequestLoading] = useState(false)
-
-    const isPureCustomer = !!currentUser && ((currentUser.roles && currentUser.roles.length > 0 ? currentUser.roles : [currentUser.role]).filter(Boolean).every(role => role.toLowerCase() === 'customer'))
-
-    const handleRequestAvAssistant = async () => {
-        setAssistantRequestLoading(true)
-        try {
-            await userAPI.requestAvAssistant()
-            await authAPI.logout()
-            router.push(`/login?error=${encodeURIComponent('Your AV assistant request has been submitted and is pending admin approval.')}`)
-        } catch (err) {
-            console.error('Failed to submit AV assistant request:', err)
-            router.push(`/login?error=${encodeURIComponent('Your AV assistant request is pending admin approval.')}`)
-        } finally {
-            setAssistantRequestLoading(false)
-        }
-    }
-
 
     const handleTabChange = (tab: "book" | "my-bookings") => {
         const params = new URLSearchParams(searchParams.toString())
@@ -115,16 +94,7 @@ function CustomerDashboardContent() {
                                         ? 'Submit a new media service booking request'
                                         : 'Track and manage your booking requests'}
                                 </p>
-                                {isPureCustomer && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="mt-3 border-primary/20 text-primary dark:text-white hover:bg-primary/10"
-                                        onClick={() => setShowAssistantDialog(true)}
-                                    >
-                                        Become an AV Assistant
-                                    </Button>
-                                )}
+
                             </div>
                         </div>
                         <NotificationDropdown />
@@ -138,29 +108,6 @@ function CustomerDashboardContent() {
                 </main>
             </div>
 
-            <Dialog open={showAssistantDialog} onOpenChange={setShowAssistantDialog}>
-                <DialogContent className="max-w-[90vw] sm:max-w-sm bg-card text-card-foreground p-0 gap-0 rounded-2xl">
-                    <div className="m-3 sm:m-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 p-4 sm:p-5">
-                        <div className="flex gap-3">
-                            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                            <div className="space-y-2">
-                                <h3 className="font-semibold text-blue-900 dark:text-blue-100 text-sm sm:text-base">Become an AV Assistant</h3>
-                                <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-                                    Make sure to apply for AV job on SARRA2 or contact the department director first before you proceed.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter className="flex-col sm:flex-row gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
-                        <Button variant="outline" onClick={() => setShowAssistantDialog(false)} disabled={assistantRequestLoading} className="flex-1">
-                            Cancel
-                        </Button>
-                        <Button onClick={handleRequestAvAssistant} disabled={assistantRequestLoading} className="flex-1">
-                            {assistantRequestLoading ? 'Processing...' : 'Proceed'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     )
 }
@@ -224,6 +171,10 @@ function MyBookingsTab() {
     // Cancel booking
     const [cancelingBooking, setCancelingBooking] = useState<MediaBooking | null>(null)
     const [cancelLoading, setCancelLoading] = useState(false)
+
+    // Comments
+    const [commentsBooking, setCommentsBooking] = useState<MediaBooking | null>(null)
+    const [commentsOpen, setCommentsOpen] = useState(false)
 
     const fetchBookings = useCallback(async () => {
         setLoading(true)
@@ -357,6 +308,7 @@ function MyBookingsTab() {
                                 customerView
                                 onEdit={b => { setEditingBooking(b); setEditDialogOpen(true) }}
                                 onCancel={b => setCancelingBooking(b)}
+                                onOpenComments={b => { setCommentsBooking(b); setCommentsOpen(true) }}
                             />
                         ))}
                     </div>
@@ -385,6 +337,14 @@ function MyBookingsTab() {
                 onClose={() => setCancelingBooking(null)}
                 onConfirm={handleCancelConfirm}
                 loading={cancelLoading}
+            />
+
+            {/* Comments Modal */}
+            <BookingCommentsModal
+                booking={commentsBooking}
+                isOpen={commentsOpen}
+                onClose={() => { setCommentsOpen(false); setCommentsBooking(null) }}
+                isStaff={false}
             />
         </div>
     )

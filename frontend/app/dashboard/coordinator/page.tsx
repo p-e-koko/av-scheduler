@@ -27,7 +27,8 @@ import {
   Eye,
   Check,
   XCircle,
-  User as UserIcon
+  User as UserIcon,
+  MessageSquare
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -44,6 +45,7 @@ import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { CoordinatorSidebar } from "@/components/CoordinatorSidebar"
 import { CustomerContactModal } from "@/components/CustomerContactModal"
+import { BookingCommentsModal } from "@/components/BookingCommentsModal"
 import { BookingCard } from "@/components/BookingCard"
 import { CancelBookingDialog } from "@/components/CancelBookingDialog"
 
@@ -113,6 +115,10 @@ function CoordinatorDashboard() {
   const [contactBooking, setContactBooking] = useState<MediaBooking | null>(null)
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
 
+  // Booking Comments
+  const [commentsBooking, setCommentsBooking] = useState<MediaBooking | null>(null)
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false)
+
   // Booking approve/reject actions
   const [rejectingAssignment, setRejectingAssignment] = useState<Assignment | null>(null)
   const [bookingActionLoading, setBookingActionLoading] = useState(false)
@@ -176,8 +182,14 @@ function CoordinatorDashboard() {
     }
 
     setCurrentUser(user)
-    setLoading(false)
   }, [])
+
+  // Fetch data on mount and when dependencies change
+  useEffect(() => {
+    if (currentUser) {
+      fetchData()
+    }
+  }, [currentUser, activeTab, selectedDate])
 
   // Fetch data function
   const fetchData = async () => {
@@ -418,11 +430,6 @@ function CoordinatorDashboard() {
       setPositionToDelete(null)
     }
   }
-
-  // Initial load and tab change
-  useEffect(() => {
-    fetchData()
-  }, [currentUser, activeTab, selectedDate])
 
   // Student pagination change
   useEffect(() => {
@@ -816,9 +823,21 @@ function CoordinatorDashboard() {
                                         e.stopPropagation()
                                         handleContactCustomer(assignment)
                                       }}
-                                      className="h-8 px-2 text-xs text-muted-foreground hover:text-primary"
+                                      className="h-8 px-2 text-xs text-muted-foreground hover:text-primary dark:hover:text-white"
                                     >
                                       <UserIcon className="w-3.5 h-3.5 mr-1" /> Contact
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setCommentsBooking(assignment.mediaBooking!)
+                                        setIsCommentsModalOpen(true)
+                                      }}
+                                      className="h-8 px-2 text-xs text-muted-foreground hover:text-primary dark:hover:text-white"
+                                    >
+                                      <MessageSquare className="w-3.5 h-3.5 mr-1" /> Comments
                                     </Button>
                                   </>
                                 )}
@@ -829,7 +848,7 @@ function CoordinatorDashboard() {
                                     e.stopPropagation()
                                     handleViewAssignment(assignment)
                                   }}
-                                  className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                  className="h-8 w-8 text-muted-foreground hover:text-primary dark:hover:text-white"
                                 >
                                   <Eye className="w-4 h-4" />
                                 </Button>
@@ -840,7 +859,7 @@ function CoordinatorDashboard() {
                                     e.stopPropagation()
                                     handleEditAssignment(assignment)
                                   }}
-                                  className="h-8 w-8 text-muted-foreground hover:text-primary"
+                                  className="h-8 w-8 text-muted-foreground hover:text-primary dark:hover:text-white"
                                 >
                                   <Edit className="w-4 h-4" />
                                 </Button>
@@ -851,7 +870,7 @@ function CoordinatorDashboard() {
                                     e.stopPropagation()
                                     handleDeleteAssignment(assignment.id)
                                   }}
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive dark:hover:text-red-400"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -1319,6 +1338,7 @@ function CoordinatorDashboard() {
         onApproveBooking={selectedAssignment?.status === 'booking' ? () => handleApproveBooking(selectedAssignment) : undefined}
         onRejectBooking={selectedAssignment?.status === 'booking' ? () => handleRejectBooking(selectedAssignment) : undefined}
         onContactCustomer={selectedAssignment?.mediaBooking ? () => handleContactCustomer(selectedAssignment) : undefined}
+        onOpenComments={selectedAssignment?.mediaBooking ? () => { setCommentsBooking(selectedAssignment!.mediaBooking!); setIsCommentsModalOpen(true); setIsDetailModalOpen(false) } : undefined}
         bookingActionLoading={bookingActionLoading}
       />
       <CustomerContactModal
@@ -1375,6 +1395,12 @@ function CoordinatorDashboard() {
         confirmText="Delete Forever"
         cancelText="Cancel"
         variant="destructive"
+      />
+      <BookingCommentsModal
+        booking={commentsBooking}
+        isOpen={isCommentsModalOpen}
+        onClose={() => { setIsCommentsModalOpen(false); setCommentsBooking(null) }}
+        isStaff={true}
       />
     </div>
   )

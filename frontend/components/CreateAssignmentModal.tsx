@@ -245,14 +245,17 @@ export function CreateAssignmentModal({ isOpen, onClose, onAssignmentCreated, as
       const event_start_datetime = `${startDate}T${startTimeWithSeconds}`
       const event_end_datetime = `${endDate}T${endTimeWithSeconds}`
 
-      const payload = {
+      const payload: Record<string, string> = {
         assignment_name: eventName,
         event_name: eventName,
         event_location: eventLocation,
         event_start_datetime,
         event_end_datetime,
         description,
-        status: 'pending' as const
+      }
+
+      if (!assignmentToEdit) {
+        payload.status = 'pending'
       }
 
       let assignmentId: number

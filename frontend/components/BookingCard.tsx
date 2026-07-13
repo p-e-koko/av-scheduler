@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MapPin, Clock, Edit, X, User, ChevronDown, ChevronUp } from "lucide-react"
+import { MapPin, Clock, Edit, X, User, ChevronDown, ChevronUp, MessageSquare } from "lucide-react"
 import { type MediaBooking } from "@/lib/api"
 import { useState } from "react"
 
@@ -11,6 +11,7 @@ interface BookingCardProps {
     onEdit?: (booking: MediaBooking) => void
     onCancel?: (booking: MediaBooking) => void
     onContactCustomer?: (booking: MediaBooking) => void
+    onOpenComments?: (booking: MediaBooking) => void
     showCustomer?: boolean
     customerView?: boolean
     showActions?: boolean
@@ -30,7 +31,7 @@ const statusLabels: Record<string, string> = {
     completed: 'Completed',
 }
 
-export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, showCustomer, customerView = false, showActions = true }: BookingCardProps) {
+export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, onOpenComments, showCustomer, customerView = false, showActions = true }: BookingCardProps) {
     const canEdit = ['booking', 'to_assign', 'pending'].includes(booking.status)
     const canCancel = !['canceled', 'complete'].includes(booking.status)
     const [expanded, setExpanded] = useState(false)
@@ -38,9 +39,9 @@ export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, show
     const startDate = new Date(booking.start_datetime)
     const endDate = new Date(booking.end_datetime)
     const displayStatus = customerView
-        ? (booking.status === 'booking' || booking.status === 'to_assign' || booking.status === 'pending'
+        ? (booking.status === 'booking' || booking.status === 'pending'
             ? 'requested'
-            : booking.status === 'confirmed'
+            : booking.status === 'to_assign' || booking.status === 'confirmed'
                 ? 'approved'
                 : booking.status === 'complete'
                     ? 'completed'
@@ -97,18 +98,23 @@ export function BookingCard({ booking, onEdit, onCancel, onContactCustomer, show
 
                     {showActions && (
                         <>
+                            {onOpenComments && (
+                                <Button variant="ghost" size="sm" onClick={() => onOpenComments(booking)} className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground dark:hover:text-white">
+                                    <MessageSquare className="w-3.5 h-3.5 mr-1" /> Comments
+                                </Button>
+                            )}
                             {onContactCustomer && booking.status === 'to_assign' && (
                                 <Button variant="outline" size="sm" onClick={() => onContactCustomer(booking)}>
                                     <User className="w-4 h-4 mr-1" /> Contact Customer
                                 </Button>
                             )}
                             {onEdit && canEdit && (
-                                <Button variant="ghost" size="icon" onClick={() => onEdit(booking)} className="h-8 w-8 text-muted-foreground hover:text-primary">
+                                <Button variant="ghost" size="icon" onClick={() => onEdit(booking)} className="h-8 w-8 text-muted-foreground hover:text-primary dark:hover:text-white">
                                     <Edit className="w-4 h-4" />
                                 </Button>
                             )}
                             {onCancel && canCancel && (
-                                <Button variant="ghost" size="icon" onClick={() => onCancel(booking)} className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                                <Button variant="ghost" size="icon" onClick={() => onCancel(booking)} className="h-8 w-8 text-muted-foreground hover:text-destructive dark:hover:text-red-400">
                                     <X className="w-4 h-4" />
                                 </Button>
                             )}

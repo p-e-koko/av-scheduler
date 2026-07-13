@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, MapPin, Clock, User, FileText, CheckCircle, AlertCircle, HelpCircle, Check, XCircle } from "lucide-react"
+import { Calendar, MapPin, Clock, User, FileText, CheckCircle, AlertCircle, HelpCircle, Check, XCircle, MessageSquare } from "lucide-react"
 import { type Assignment } from "@/lib/api"
 
 interface AssignmentDetailModalProps {
@@ -21,10 +21,11 @@ interface AssignmentDetailModalProps {
   onApproveBooking?: () => void
   onRejectBooking?: () => void
   onContactCustomer?: () => void
+  onOpenComments?: () => void
   bookingActionLoading?: boolean
 }
 
-export function AssignmentDetailModal({ isOpen, onClose, assignment, onApproveBooking, onRejectBooking, onContactCustomer, bookingActionLoading }: AssignmentDetailModalProps) {
+export function AssignmentDetailModal({ isOpen, onClose, assignment, onApproveBooking, onRejectBooking, onContactCustomer, onOpenComments, bookingActionLoading }: AssignmentDetailModalProps) {
   if (!assignment) return null;
 
   const getStatusBadge = (status: string) => {
@@ -233,6 +234,11 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment, onApproveBo
             {onContactCustomer && (
               <Button variant="outline" size="sm" onClick={onContactCustomer}>
                 <User className="w-4 h-4 mr-1" /> Contact Customer
+              </Button>
+            )}
+            {onOpenComments && (
+              <Button variant="outline" size="sm" onClick={onOpenComments}>
+                <MessageSquare className="w-4 h-4 mr-1" /> Comments
               </Button>
             )}
           </div>

@@ -304,40 +304,6 @@ class UserController extends Controller
     }
 
     /**
-     * Submit a request to become an AV assistant.
-     */
-    public function requestAvAssistant(Request $request): JsonResponse
-    {
-        /** @var User $user */
-        $user = $request->user();
-
-        if (!$user) {
-            return response()->json(['message' => 'Unauthenticated'], 401);
-        }
-
-        $nonCustomerRoles = array_values(array_diff($user->getRoleNames()->toArray(), ['customer']));
-        if (!empty($nonCustomerRoles)) {
-            return response()->json(['message' => 'Only customer accounts can request AV assistant approval.'], 422);
-        }
-
-        if ($user->is_approved === false) {
-            return response()->json(['message' => 'Your AV assistant request is already pending approval.'], 422);
-        }
-
-        $user->update(['is_approved' => false]);
-        $this->applyRoles($user, ['customer']);
-
-        AuditLogger::log('AV Assistant Request Submitted', [
-            'user_id' => $user->id,
-            'email' => $user->email,
-        ]);
-
-        return response()->json([
-            'message' => 'Your AV assistant request has been submitted and is pending admin approval.',
-            'user' => new UserResource($user->fresh()),
-        ]);
-    }
-    /**
      * Remove the specified resource from storage (soft delete).
      */
     public function destroy(User $user): JsonResponse
