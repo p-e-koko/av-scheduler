@@ -83,6 +83,38 @@ class AssignmentResource extends JsonResource
                 });
             }),
 
+            'mediaBooking' => $this->whenLoaded('mediaBooking', function () {
+                return [
+                    'id' => $this->mediaBooking->id,
+                    'customer_id' => $this->mediaBooking->customer_id,
+                    'event_name' => $this->mediaBooking->event_name,
+                    'location' => $this->mediaBooking->location,
+                    'start_datetime' => $this->mediaBooking->start_datetime?->toISOString(),
+                    'end_datetime' => $this->mediaBooking->end_datetime?->toISOString(),
+                    'equipment_request' => $this->mediaBooking->equipment_request,
+                    'ac_required' => $this->mediaBooking->ac_required,
+                    'spotlight_required' => $this->mediaBooking->spotlight_required,
+                    'led_light_required' => $this->mediaBooking->led_light_required,
+                    'status' => $this->mediaBooking->status,
+                    'cancel_reason' => $this->mediaBooking->cancel_reason,
+                    'canceled_by' => $this->mediaBooking->canceled_by,
+                    'assignment_id' => $this->mediaBooking->assignment_id,
+                    'created_at' => $this->mediaBooking->created_at?->toISOString(),
+                    'updated_at' => $this->mediaBooking->updated_at?->toISOString(),
+                    'customer' => $this->when(
+                        $this->mediaBooking->relationLoaded('customer') && $this->mediaBooking->customer,
+                        function () {
+                            return [
+                                'id' => $this->mediaBooking->customer->id,
+                                'name' => $this->mediaBooking->customer->name,
+                                'email' => $this->mediaBooking->customer->email,
+                                'phone_number' => $this->mediaBooking->customer->phone_number,
+                            ];
+                        }
+                    ),
+                ];
+            }),
+
             // User-specific data if authenticated user is assigned
             'current_user_assignment' => $this->getCurrentUserAssignment($request),
 

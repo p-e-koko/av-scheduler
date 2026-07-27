@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import {
   Dialog,
@@ -11,17 +11,22 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, MapPin, Clock, User, FileText, CheckCircle, AlertCircle, HelpCircle } from "lucide-react"
+import { Calendar, MapPin, Clock, User, FileText, CheckCircle, AlertCircle, HelpCircle, Check, XCircle, MessageSquare } from "lucide-react"
 import { type Assignment } from "@/lib/api"
 
 interface AssignmentDetailModalProps {
   isOpen: boolean
   onClose: () => void
   assignment: Assignment | null
+  onApproveBooking?: () => void
+  onRejectBooking?: () => void
+  onContactCustomer?: () => void
+  onOpenComments?: () => void
+  bookingActionLoading?: boolean
 }
 
-export function AssignmentDetailModal({ isOpen, onClose, assignment }: AssignmentDetailModalProps) {
-  if (!assignment) return null
+export function AssignmentDetailModal({ isOpen, onClose, assignment, onApproveBooking, onRejectBooking, onContactCustomer, onOpenComments, bookingActionLoading }: AssignmentDetailModalProps) {
+  if (!assignment) return null;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -31,6 +36,12 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment }: Assignmen
         return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200">Active</Badge>
       case 'pending':
         return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200 border-orange-200">Pending</Badge>
+      case 'booking':
+        return <Badge className="bg-sky-100 text-sky-800 hover:bg-sky-200 border-sky-200">Booking</Badge>
+      case 'to_assign':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200">To Assign</Badge>
+      case 'canceled':
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200 border-red-200">Canceled</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -116,6 +127,40 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment }: Assignmen
             )}
           </div>
 
+          {/* Linked Media Booking Info */}
+          {assignment.mediaBooking && (
+            <div className="border-t border-border pt-4">
+              <h4 className="text-sm font-medium text-muted-foreground flex items-center mb-3">
+                <FileText className="w-4 h-4 mr-2" />
+                Media Booking
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Status</span>
+                  {getStatusBadge(assignment.mediaBooking.status)}
+                </div>
+                {assignment.mediaBooking.customer && (
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-muted-foreground">Requested By</span>
+                      <span className="text-foreground font-medium text-right">{assignment.mediaBooking.customer.name}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-muted-foreground">Email</span>
+                      <span className="text-foreground text-right break-all">{assignment.mediaBooking.customer.email}</span>
+                    </div>
+                  </div>
+                )}
+                {assignment.mediaBooking.equipment_request && (
+                  <div className="flex items-start justify-between text-sm gap-4">
+                    <span className="text-muted-foreground">Equipment</span>
+                    <span className="text-foreground text-right">{assignment.mediaBooking.equipment_request}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Assigned Students */}
           <div className="border-t border-border pt-4">
             <div className="flex items-center justify-between mb-2">
@@ -184,10 +229,45 @@ export function AssignmentDetailModal({ isOpen, onClose, assignment }: Assignmen
           </div>
         </div>
 
-        <DialogFooter>
-          <Button onClick={onClose}>Close</Button>
+        <DialogFooter className="flex-col sm:flex-row gap-2 sm:justify-between">
+          <div className="flex gap-2 order-2 sm:order-1">
+            {onContactCustomer && (
+              <Button variant="outline" size="sm" onClick={onContactCustomer}>
+                <User className="w-4 h-4 mr-1" /> Contact Customer
+              </Button>
+            )}
+            {onOpenComments && (
+              <Button variant="outline" size="sm" onClick={onOpenComments}>
+                <MessageSquare className="w-4 h-4 mr-1" /> Comments
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2 order-1 sm:order-2">
+            {onApproveBooking && (
+              <Button
+                size="sm"
+                onClick={onApproveBooking}
+                disabled={bookingActionLoading}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Check className="w-4 h-4 mr-1" /> Approve
+              </Button>
+            )}
+            {onRejectBooking && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={onRejectBooking}
+                disabled={bookingActionLoading}
+              >
+                <XCircle className="w-4 h-4 mr-1" /> Reject
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   )
 }
+

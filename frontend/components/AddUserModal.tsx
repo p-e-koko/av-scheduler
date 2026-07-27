@@ -327,7 +327,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               Roles *
             </Label>
             <div className="flex flex-wrap gap-4 p-3 bg-background/80 backdrop-blur-xl border border-input rounded-md">
-              {['student', 'coordinator', 'supervisor', 'admin'].map((roleOption) => (
+              {['customer', 'student', 'coordinator', 'supervisor', 'admin'].map((roleOption) => (
                 <label key={roleOption} className="flex items-center space-x-2 cursor-pointer">
                   <input
                     type="checkbox"

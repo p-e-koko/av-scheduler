@@ -292,4 +292,10 @@ class Assignment extends Model
 
         return round(($elapsedDuration / $totalDuration) * 100, 2);
     }
+
+    /** Linked media booking if this assignment came from a booking */
+    public function mediaBooking()
+    {
+        return $this->hasOne(\App\Models\MediaBooking::class, 'assignment_id');
+    }
 }

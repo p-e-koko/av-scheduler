@@ -78,7 +78,7 @@ class UpdateAssignmentRequest extends FormRequest
             'status' => [
                 'sometimes',
                 'required',
-                'in:pending,confirmed,complete',
+                'in:pending,confirmed,complete,to_assign,canceled',
                 function ($attribute, $value, $fail) {
                     $assignment = $this->route('assignment');
 
@@ -144,7 +144,7 @@ class UpdateAssignmentRequest extends FormRequest
             'description.max' => 'The description may not be greater than 1000 characters.',
 
             'status.required' => 'The status field is required.',
-            'status.in' => 'The selected status is invalid. Must be one of: pending, confirmed, complete.',
+            'status.in' => 'The selected status is invalid. Must be one of: pending, confirmed, complete, to_assign, canceled.',
         ];
     }
 

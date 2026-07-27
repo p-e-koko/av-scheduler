@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import { useState, Suspense } from "react"
@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Button } from "@/components/ui/button"
 import { authAPI, testConnection, removeAuthToken, API_BASE_URL, formatAPIError } from "@/lib/api"
+import { getRoleBasedDashboardPath } from "@/lib/role-routing"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useSearchParams } from "next/navigation"
@@ -67,14 +68,11 @@ function LoginPageContent() {
     try {
       const response = await authAPI.login({ email, password });
 
-      // Based on user role, redirect to appropriate dashboard
+      // Redirect based on the user's full role set
       const user = response.user;
       if (user) {
-        const role = user.role;
-        if (role === 'admin') router.push('/dashboard/admin');
-        else if (role === 'coordinator') router.push('/dashboard/coordinator');
-        else if (role === 'supervisor') router.push('/dashboard/supervisor');
-        else router.push('/dashboard/student');
+        const dashboardPath = getRoleBasedDashboardPath(user.roles?.length ? user.roles : user.role);
+        router.push(dashboardPath);
       }
     } catch (err) {
       setError(formatAPIError(err));
@@ -212,3 +210,7 @@ export default function LoginPage() {
     </Suspense>
   )
 }
+
+
+
+

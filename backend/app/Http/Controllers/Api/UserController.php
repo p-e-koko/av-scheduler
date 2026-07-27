@@ -80,18 +80,7 @@ class UserController extends Controller
 
         $user = User::create($userData);
 
-        if (isset($userData['roles'])) {
-            $user->assignRole($userData['roles']);
-            // Sync main role for backward compatibility
-            if (!empty($userData['roles'])) {
-                $user->role = $userData['roles'][0];
-                $user->save();
-            }
-        } elseif (isset($userData['role'])) {
-            $user->assignRole($userData['role']);
-        } else {
-             $user->assignRole('student');
-        }
+        $this->applyRoles($user, $userData['roles'] ?? null, $userData['role'] ?? null);
 
         AuditLogger::log('User Created', ['user_id' => $user->id, 'email' => $user->email]);
 
@@ -125,18 +114,7 @@ class UserController extends Controller
 
         $user = User::create($userData);
 
-        if (isset($userData['roles'])) {
-            $user->assignRole($userData['roles']);
-            // Sync main role for backward compatibility
-            if (!empty($userData['roles'])) {
-                $user->role = $userData['roles'][0];
-                $user->save();
-            }
-        } elseif (isset($userData['role'])) {
-            $user->assignRole($userData['role']);
-        } else {
-             $user->assignRole('student');
-        }
+        $this->applyRoles($user, $userData['roles'] ?? null, $userData['role'] ?? null);
 
         AuditLogger::log('User Created', ['user_id' => $user->id, 'email' => $user->email]);
 
@@ -191,15 +169,15 @@ class UserController extends Controller
 
         $user->update($userData);
 
-         if (isset($userData['roles'])) {
-            $user->syncRoles($userData['roles']);
-             // Sync main role for backward compatibility
-            if (!empty($userData['roles'])) {
-                $user->role = $userData['roles'][0];
-                $user->save();
+        if (isset($userData['roles']) || isset($userData['role'])) {
+            $this->applyRoles($user, $userData['roles'] ?? null, $userData['role'] ?? null);
+        }
+
+        if (array_key_exists('is_approved', $userData) && $userData['is_approved'] === true) {
+            $existingNonCustomerRoles = array_values(array_diff($user->getRoleNames()->toArray(), ['customer']));
+            if (empty($existingNonCustomerRoles)) {
+                $this->applyRoles($user, ['student']);
             }
-        } elseif (isset($userData['role'])) {
-            $user->syncRoles([$userData['role']]);
         }
 
         // Refresh model to get updated role
@@ -259,21 +237,12 @@ class UserController extends Controller
 
         $user->update($userData);
 
-        // Handle multiple roles update
-        if ($request->has('roles')) {
-            $roles = $request->input('roles');
-            // Sync roles using Spatie permission package
-            $user->syncRoles($roles);
-            
-            // Update the legacy single 'role' column to match the first role in the list
-            // This ensures backward compatibility with parts of the app using the single column
-            if (!empty($roles)) {
-                $primaryRole = is_array($roles) ? $roles[0] : $roles;
-                if ($user->role !== $primaryRole) {
-                    $user->role = $primaryRole;
-                    $user->save();
-                }
-            }
+        if ($request->has('roles') || $request->has('role')) {
+            $this->applyRoles($user, $request->input('roles'), $request->input('role'));
+        }
+
+        if ($request->boolean('is_approved') && empty(array_diff($user->getRoleNames()->toArray(), ['customer']))) {
+            $this->applyRoles($user, ['student']);
         }
 
         // Always recalculate remaining hours for students to ensure consistency
@@ -296,6 +265,42 @@ class UserController extends Controller
             'message' => 'User updated successfully',
             'user' => new UserResource($user->fresh())
         ]);
+    }
+
+    private function applyRoles(User $user, ?array $roles = null, ?string $role = null): void
+    {
+        $normalizedRoles = [];
+
+        if (is_array($roles)) {
+            $normalizedRoles = array_values(array_filter($roles, fn ($value) => is_string($value) && $value !== ''));
+        } elseif (is_string($roles) && $roles !== '') {
+            $normalizedRoles = [$roles];
+        }
+
+        if ($role && $role !== '') {
+            $normalizedRoles[] = $role;
+        }
+
+        $normalizedRoles[] = 'customer';
+        $normalizedRoles = array_values(array_unique($normalizedRoles));
+
+        $user->syncRoles($normalizedRoles);
+
+        $primaryRole = collect($normalizedRoles)->first(fn ($value) => $value !== 'customer') ?? 'customer';
+        $user->role = $primaryRole;
+        $user->save();
+    }
+
+    private function ensureCustomerRole(User $user): void
+    {
+        if (!$user->hasRole('customer')) {
+            $user->assignRole('customer');
+        }
+
+        if (!$user->role) {
+            $user->role = 'customer';
+            $user->save();
+        }
     }
 
     /**
@@ -387,3 +392,4 @@ class UserController extends Controller
         $user->save();
     }
 }
+

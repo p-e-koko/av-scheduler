@@ -326,7 +326,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
               Roles *
             </Label>
             <div className="flex flex-wrap gap-4 p-3 bg-muted/50 backdrop-blur-xl border border-input rounded-md">
-              {['student', 'coordinator', 'supervisor', 'admin'].map((roleOption) => (
+              {['customer', 'student', 'coordinator', 'supervisor', 'admin'].map((roleOption) => (
                 <label key={roleOption} className="flex items-center space-x-2 cursor-pointer">
                   <input
                     type="checkbox"

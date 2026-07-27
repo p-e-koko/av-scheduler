@@ -107,6 +107,18 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Availability::class, 'student_id');
     }
 
+    /** Media bookings made by this customer */
+    public function mediaBookings()
+    {
+        return $this->hasMany(MediaBooking::class, 'customer_id');
+    }
+
+    /** Check if user is a customer */
+    public function isCustomer(): bool
+    {
+        return $this->hasRole('customer');
+    }
+
     /**
      * Get the equipment checkouts for the user.
      */

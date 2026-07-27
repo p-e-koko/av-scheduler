@@ -21,10 +21,12 @@ class DatabaseSeeder extends Seeder
 
         $password = Hash::make('password'); // Default password is 'password'
 
-        // 1. Admin User
+        // 1. Admin User — dev account with all staff roles for multi-role testing
         $adminEmail = 'pekkodev@gmail.com';
-        if (!\App\Models\User::withTrashed()->where('email', $adminEmail)->exists()) {
-             $admin = \App\Models\User::create([
+        $adminRoles = ['admin', 'coordinator', 'supervisor', 'student'];
+        $admin = \App\Models\User::withTrashed()->where('email', $adminEmail)->first();
+        if (!$admin) {
+            $admin = \App\Models\User::create([
                 'id' => (string) \Illuminate\Support\Str::uuid(),
                 'email' => $adminEmail,
                 'name' => 'Admin User',
@@ -32,8 +34,8 @@ class DatabaseSeeder extends Seeder
                 'role' => 'admin',
                 'email_verified_at' => now(),
             ]);
-            $admin->assignRole('admin');
         }
+        $admin->syncRoles($adminRoles);
 
         // 2. Coordinator User
         $coordEmail = 'panneikoko1221@gmail.com';
@@ -75,6 +77,20 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]);
             $student->assignRole('student');
+        }
+
+        // 5. Customer User (Media booking test user)
+        $customerEmail = 'customer@apiu.edu';
+        if (!\App\Models\User::withTrashed()->where('email', $customerEmail)->exists()) {
+            $customer = \App\Models\User::create([
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'email' => $customerEmail,
+                'name' => 'Customer User',
+                'password' => $password,
+                'role' => 'customer',
+                'email_verified_at' => now(),
+            ]);
+            $customer->assignRole('customer');
         }
     }
 }

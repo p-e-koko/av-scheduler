@@ -1,4 +1,4 @@
-import { User } from './api';
+﻿import { User } from './api';
 
 // Helper to normalize roles input
 const normalizeRoles = (roleOrRoles: string | string[]): string[] => {
@@ -13,6 +13,8 @@ export const getRoleBasedDashboardPath = (role: string | string[]): string => {
   if (roles.includes('admin')) return '/dashboard/admin';
   if (roles.includes('supervisor')) return '/dashboard/supervisor';
   if (roles.includes('coordinator')) return '/dashboard/coordinator';
+  if (roles.includes('student')) return '/dashboard/student';
+  if (roles.includes('customer')) return '/dashboard/customer';
 
   return '/dashboard/student';
 };
@@ -30,7 +32,8 @@ export const canAccessDashboard = (userRole: string | string[], dashboardPath: s
   const rolePathMap: Record<string, string[]> = {
     'coordinator': ['/dashboard/coordinator', '/dashboard/inventory', '/dashboard/keys'],
     'student': ['/dashboard/student', '/dashboard/inventory', '/dashboard/keys'],
-    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys']
+    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys'],
+    'customer': ['/dashboard/customer'],
   };
 
   return roles.some(role => {
@@ -58,7 +61,8 @@ export const getAllowedDashboards = (userRole: string | string[]): string[] => {
   const rolePathMap: Record<string, string[]> = {
     'coordinator': ['/dashboard/coordinator', '/dashboard/inventory', '/dashboard/keys'],
     'student': ['/dashboard/student', '/dashboard/inventory', '/dashboard/keys'],
-    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys']
+    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys'],
+    'customer': ['/dashboard/customer'],
   };
 
   const allowed = new Set<string>();
@@ -80,3 +84,4 @@ export const getDashboardType = (pathname: string): string | null => {
   const match = pathname.match(/^\/dashboard\/(.+)$/);
   return match ? match[1] : null;
 };
+

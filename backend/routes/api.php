@@ -270,6 +270,39 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/keys/{id}/checkout', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'checkout']);
     Route::post('/keys/{id}/return', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'return']);
 
+    // -------------------------------------------------------------------------
+    // Media Booking Routes
+    // -------------------------------------------------------------------------
+
+    // Read-only routes — all authenticated users (customers see own, others see all)
+    // IMPORTANT: specific sub-routes must be registered BEFORE {mediaBooking} wildcard
+    Route::get('/media-bookings/locations', [\App\Http\Controllers\Api\MediaBookingController::class, 'locations']);
+    Route::get('/media-bookings/availability', [\App\Http\Controllers\Api\MediaBookingController::class, 'checkAvailability']);
+    Route::get('/media-bookings', [\App\Http\Controllers\Api\MediaBookingController::class, 'index']);
+    Route::get('/media-bookings/{mediaBooking}', [\App\Http\Controllers\Api\MediaBookingController::class, 'show']);
+
+    // Customer: submit and manage own bookings
+    Route::middleware(['role:customer'])->group(function () {
+        Route::post('/media-bookings', [\App\Http\Controllers\Api\MediaBookingController::class, 'store']);
+        Route::put('/media-bookings/{mediaBooking}', [\App\Http\Controllers\Api\MediaBookingController::class, 'update']);
+        Route::post('/media-bookings/{mediaBooking}/cancel', [\App\Http\Controllers\Api\MediaBookingController::class, 'cancel']);
+    });
+
+    // Coordinator / Supervisor / Admin: cancel any booking + contact customer + approve/reject
+    Route::middleware(['role:coordinator,supervisor,admin'])->group(function () {
+        Route::post('/media-bookings/{mediaBooking}/cancel', [\App\Http\Controllers\Api\MediaBookingController::class, 'cancel']);
+        Route::get('/media-bookings/{mediaBooking}/customer-info', [\App\Http\Controllers\Api\MediaBookingController::class, 'customerInfo']);
+        Route::post('/media-bookings/{mediaBooking}/approve', [\App\Http\Controllers\Api\MediaBookingController::class, 'approve']);
+        Route::post('/media-bookings/{mediaBooking}/reject', [\App\Http\Controllers\Api\MediaBookingController::class, 'reject']);
+    });
+
+    // Booking Comments — all authenticated users can view and create
+    Route::get('/media-bookings/{mediaBooking}/comments', [\App\Http\Controllers\Api\BookingCommentController::class, 'index']);
+    Route::post('/media-bookings/{mediaBooking}/comments', [\App\Http\Controllers\Api\BookingCommentController::class, 'store']);
+
+    // Coordinator / Supervisor / Admin: mark comments as done (hard delete all)
+    Route::middleware(['role:coordinator,supervisor,admin'])->delete('/media-bookings/{mediaBooking}/comments', [\App\Http\Controllers\Api\BookingCommentController::class, 'done']);
+
 }); // end auth:sanctum group
 
 // Feedback Route (Accessible to authenticated users, or public if needed? Requirement implies user feedback, so likely auth)
@@ -306,3 +339,4 @@ Route::middleware('auth:sanctum')->group(function () {
     */
 
 });
+

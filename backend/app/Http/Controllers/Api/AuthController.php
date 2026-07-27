@@ -112,6 +112,16 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // Ensure every account has the baseline customer role
+        if (!$user->hasRole('customer')) {
+            $user->assignRole('customer');
+        }
+
+        if (!$user->role) {
+            $user->role = 'customer';
+            $user->save();
+        }
+
         // Login the user with session
         Auth::login($user);
         $request->session()->regenerate();
@@ -340,9 +350,8 @@ class AuthController extends Controller
             return redirect(config('app.frontend_url') . '/login?error=Unable to login with ' . $provider . ': ' . $errorMessage);
         }
 
-    $user = User::withTrashed()->where('email', $socialUser->getEmail())->first();
-
-    $isNewUser = !$user;
+        $user = User::withTrashed()->where('email', $socialUser->getEmail())->first();
+        $isNewUser = !$user;
 
         $updateData = [
             'provider' => $provider,
@@ -356,12 +365,11 @@ class AuthController extends Controller
             $updateData['microsoft_token_expires_at'] = now()->addSeconds($socialUser->expiresIn);
         }
 
-           if ($user) {
+        if ($user) {
             if ($user->trashed()) {
-                 $user->restore();
+                $user->restore();
             }
 
-            // Ensure email verified is set if not already
             if (!$user->email_verified_at) {
                 $updateData['email_verified_at'] = now();
             }
@@ -372,21 +380,26 @@ class AuthController extends Controller
                 'name' => $socialUser->getName(),
                 'email' => $socialUser->getEmail(),
                 'password' => null,
-                'role' => 'student',
+                'role' => 'customer',
                 'email_verified_at' => now(),
-                'is_approved' => false,
+                'is_approved' => true,
             ], $updateData);
 
             $user = User::create($createData);
+            $user->assignRole('customer');
             AuditLogger::log('User Registered (Microsoft)', ['email' => $user->email, 'role' => $user->role]);
         }
 
-        // Require admin approval for new Microsoft accounts
-        if ($isNewUser && !$user->is_approved) {
-            return redirect(config('app.frontend_url') . '/login?error=' . urlencode('Your account has been created and is pending admin approval.'));
+        if (!$user->hasRole('customer')) {
+            $user->assignRole('customer');
         }
 
-        // Block login for unapproved existing users
+        if (!$user->role) {
+            $user->role = 'customer';
+            $user->save();
+        }
+
+        // Only accounts that are explicitly pending should be blocked.
         if (!$user->is_approved) {
             return redirect(config('app.frontend_url') . '/login?error=' . urlencode('Your account is pending admin approval.'));
         }
@@ -401,3 +414,4 @@ class AuthController extends Controller
         return redirect(config('app.frontend_url') . '/auth/social-callback?token=' . $token);
     }
 }
+

@@ -132,8 +132,15 @@ class RoleAndPermissionSeeder extends Seeder
             'manage system settings',
         ]);
 
+        // Customer Role - Media Booking Only
+        $customerRole = Role::firstOrCreate(['name' => 'customer']);
+        $customerRole->givePermissionTo([
+            'view own profile',
+            'edit own profile',
+        ]);
+
         $this->command->info('Roles and permissions created successfully!');
-        $this->command->info('Created roles: student, coordinator, supervisor, admin');
+        $this->command->info('Created roles: student, coordinator, supervisor, admin, customer');
         $this->command->info('Created ' . count($permissions) . ' permissions');
     }
 }

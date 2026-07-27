@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -30,7 +30,7 @@ export default function Home() {
 
   const handleNavigateToDashboard = () => {
     if (user) {
-      const dashboardPath = getRoleBasedDashboardPath(user.role)
+      const dashboardPath = getRoleBasedDashboardPath(user.roles?.length ? user.roles : user.role)
       router.push(dashboardPath)
     } else {
       router.push('/login')
@@ -159,3 +159,5 @@ export default function Home() {
     </div>
   )
 }
+
+
