@@ -54,7 +54,9 @@ export const getAllowedDashboards = (userRole: string | string[]): string[] => {
       '/dashboard/coordinator',
       '/dashboard/student',
       '/dashboard/supervisor',
-      '/dashboard/inventory'
+      '/dashboard/inventory',
+      '/dashboard/customer',
+      '/dashboard/keys'
     ];
   }
 

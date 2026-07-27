@@ -155,7 +155,7 @@ export function CustomerSidebar({ activeTab, onTabChange, isOpen, onClose, user 
                 </nav>
 
                 {/* Switch View Section */}
-                {currentUser && !hasOnlyCustomerRole && getAllowedDashboards(currentUser.roles || []).filter(path => !path.includes('/dashboard/customer') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys')).length > 0 && (
+                {currentUser && !hasOnlyCustomerRole && getAllowedDashboards(userRoles).filter(path => !path.includes('/dashboard/customer') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys')).length > 0 && (
                     <>
                         <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
                             {(!sidebarCollapsed || isMobile) ? (
@@ -166,7 +166,7 @@ export function CustomerSidebar({ activeTab, onTabChange, isOpen, onClose, user 
                                 <div className="h-px w-8 mx-auto bg-border" />
                             )}
                         </div>
-                        {getAllowedDashboards(currentUser.roles || [])
+                        {getAllowedDashboards(userRoles)
                             .filter(path => !path.includes('/dashboard/customer') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys'))
                             .map(path => {
                                 const label = path.split('/').pop();

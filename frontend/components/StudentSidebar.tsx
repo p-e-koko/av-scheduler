@@ -202,7 +202,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
           </div>
 
           {/* Switch Dashboard Section */}
-          {currentUser && !hasOnlyStudentRole && getAllowedDashboards(currentUser.roles || []).filter(path => !path.includes('/dashboard/student') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys')).length > 0 && (
+          {currentUser && !hasOnlyStudentRole && getAllowedDashboards(userRoles).filter(path => !path.includes('/dashboard/student') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys')).length > 0 && (
             <>
               <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
                 {(!sidebarCollapsed || isMobile) ? (
@@ -213,7 +213,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
                   <div className="h-px w-8 mx-auto bg-border" />
                 )}
               </div>
-              {getAllowedDashboards(currentUser.roles || [])
+              {getAllowedDashboards(userRoles)
                 .filter(path => !path.includes('/dashboard/student') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys'))
                 .map(path => {
                   const label = path.split('/').pop();

@@ -89,6 +89,8 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
 
   if (!currentUser) return null
 
+  const userRoles = currentUser.roles && currentUser.roles.length > 0 ? currentUser.roles : [currentUser.role];
+
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <div className="bg-card/80 backdrop-blur-xl border-r border-border shadow-lg shadow-gray-100/50 dark:shadow-none h-full flex flex-col">
       {/* Sidebar Header - App Branding */}
@@ -224,7 +226,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
           </div>
 
           {/* Switch Dashboard Section */}
-          {currentUser && getAllowedDashboards(currentUser.roles || []).filter(path => !path.includes('/dashboard/supervisor') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys')).length > 0 && (
+          {currentUser && getAllowedDashboards(userRoles).filter(path => !path.includes('/dashboard/supervisor') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys')).length > 0 && (
             <>
               <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
                 {(!sidebarCollapsed || isMobile) ? (
@@ -235,7 +237,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
                   <div className="h-px w-8 mx-auto bg-border" />
                 )}
               </div>
-              {getAllowedDashboards(currentUser.roles || [])
+              {getAllowedDashboards(userRoles)
                 .filter(path => !path.includes('/dashboard/supervisor') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys'))
                 .map(path => {
                   const label = path.split('/').pop();
