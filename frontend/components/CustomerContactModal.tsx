@@ -61,7 +61,7 @@ export function CustomerContactModal({ booking, isOpen, onClose }: CustomerConta
                         <div className="space-y-2 pl-1">
                             <a
                                 href={`mailto:${customer.email}`}
-                                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary dark:hover:text-white transition-colors"
                             >
                                 <Mail className="w-4 h-4 shrink-0" />
                                 {customer.email}
@@ -69,7 +69,7 @@ export function CustomerContactModal({ booking, isOpen, onClose }: CustomerConta
                             {customer.phone && (
                                 <a
                                     href={`tel:${customer.phone}`}
-                                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary dark:hover:text-white transition-colors"
                                 >
                                     <Phone className="w-4 h-4 shrink-0" />
                                     {customer.phone}

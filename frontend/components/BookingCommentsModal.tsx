@@ -86,6 +86,8 @@ export function BookingCommentsModal({ booking, isOpen, onClose, isStaff = false
         return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
     }
 
+    const isCompleted = booking?.status === 'complete' || (booking?.status as string) === 'completed';
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="bg-card/95 backdrop-blur-xl border border-border sm:max-w-lg rounded-2xl p-0 gap-0 max-h-[85vh] flex flex-col">
@@ -133,20 +135,21 @@ export function BookingCommentsModal({ booking, isOpen, onClose, isStaff = false
                         <Textarea
                             value={newComment}
                             onChange={e => setNewComment(e.target.value)}
-                            placeholder="Write a comment…"
+                            placeholder={isCompleted ? "Comments are disabled for completed bookings" : "Write a comment…"}
                             className="min-h-[2.5rem] max-h-24 text-sm bg-background/50 resize-none"
                             rows={1}
                             onKeyDown={e => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
+                                if (e.key === 'Enter' && !e.shiftKey && !isCompleted) {
                                     e.preventDefault()
                                     handleSend()
                                 }
                             }}
+                            disabled={isCompleted}
                         />
                         <Button
                             size="icon"
                             onClick={handleSend}
-                            disabled={sending || !newComment.trim()}
+                            disabled={sending || !newComment.trim() || isCompleted}
                             className="shrink-0 self-end"
                         >
                             <Send className="w-4 h-4" />

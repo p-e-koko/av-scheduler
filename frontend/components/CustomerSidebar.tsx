@@ -154,41 +154,41 @@ export function CustomerSidebar({ activeTab, onTabChange, isOpen, onClose, user 
                     ))}
                 </nav>
 
-                    {/* Switch View Section */}
-                    {currentUser && !hasOnlyCustomerRole && getAllowedDashboards(currentUser.roles || []).filter(path => !path.includes('/dashboard/customer')).length > 0 && (
-                        <>
-                            <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
-                                {(!sidebarCollapsed || isMobile) ? (
-                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                        Switch View
-                                    </p>
-                                ) : (
-                                    <div className="h-px w-8 mx-auto bg-border" />
-                                )}
-                            </div>
-                            {getAllowedDashboards(currentUser.roles || [])
-                                .filter(path => !path.includes('/dashboard/customer'))
-                                .map(path => {
-                                    const label = path.split('/').pop();
-                                    return (
-                                        <div
-                                            key={path}
-                                            onClick={() => {
-                                                router.push(path);
-                                                if (isMobile && onClose) onClose();
-                                            }}
-                                            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
-                                            title={sidebarCollapsed && !isMobile ? `Switch to ${label}` : undefined}
-                                        >
-                                            <LayoutDashboard className="w-5 h-5 flex-shrink-0" />
-                                            {(!sidebarCollapsed || isMobile) && (
-                                                <span className="font-medium capitalize">{label}</span>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                        </>
-                    )}
+                {/* Switch View Section */}
+                {currentUser && !hasOnlyCustomerRole && getAllowedDashboards(currentUser.roles || []).filter(path => !path.includes('/dashboard/customer') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys')).length > 0 && (
+                    <>
+                        <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
+                            {(!sidebarCollapsed || isMobile) ? (
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    Switch View
+                                </p>
+                            ) : (
+                                <div className="h-px w-8 mx-auto bg-border" />
+                            )}
+                        </div>
+                        {getAllowedDashboards(currentUser.roles || [])
+                            .filter(path => !path.includes('/dashboard/customer') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys'))
+                            .map(path => {
+                                const label = path.split('/').pop();
+                                return (
+                                    <div
+                                        key={path}
+                                        onClick={() => {
+                                            router.push(path);
+                                            if (isMobile && onClose) onClose();
+                                        }}
+                                        className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
+                                        title={sidebarCollapsed && !isMobile ? `Switch to ${label}` : undefined}
+                                    >
+                                        <LayoutDashboard className="w-5 h-5 flex-shrink-0" />
+                                        {(!sidebarCollapsed || isMobile) && (
+                                            <span className="font-medium capitalize">{label}</span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                    </>
+                )}
             </div>
 
             {/* Footer */}
