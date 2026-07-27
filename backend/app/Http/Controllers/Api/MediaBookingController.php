@@ -193,7 +193,7 @@ class MediaBookingController extends Controller
 
                 // 2. Notify all coordinators and supervisors
                 $bookingWithCustomer = $booking->fresh(['customer']);
-                $staff = User::role(['coordinator', 'supervisor'])->get();
+                $staff = $this->getNotifiableStaff();
                 foreach ($staff as $staffMember) {
                     $staffMember->notify(new BookingCreatedStaffNotification($bookingWithCustomer));
                 }
@@ -268,7 +268,7 @@ class MediaBookingController extends Controller
         }
 
         // Notify coordinators and supervisors
-        $staff = User::role(['coordinator', 'supervisor'])->get();
+        $staff = $this->getNotifiableStaff();
         foreach ($staff as $staffMember) {
             $staffMember->notify(new BookingUpdatedNotification($mediaBooking->fresh(['customer']), 'edited', null, false));
         }
@@ -323,7 +323,7 @@ class MediaBookingController extends Controller
         }
 
         // Always notify all coordinators and supervisors
-        $staff = User::role(['coordinator', 'supervisor'])->get();
+        $staff = $this->getNotifiableStaff();
         foreach ($staff as $staffMember) {
             $staffMember->notify(
                 new BookingUpdatedNotification($bookingWithCustomer, 'canceled', $request->reason, false)
@@ -359,7 +359,7 @@ class MediaBookingController extends Controller
             $mediaBooking->customer->notify(new BookingApprovedNotification($bookingWithCustomer));
 
             // Notify other coordinators/supervisors for visibility
-            $staff = User::role(['coordinator', 'supervisor'])->get();
+            $staff = $this->getNotifiableStaff();
             foreach ($staff as $staffMember) {
                 $staffMember->notify(new BookingApprovedNotification($bookingWithCustomer));
             }
@@ -411,7 +411,7 @@ class MediaBookingController extends Controller
             );
 
             // Notify coordinators/supervisors
-            $staff = User::role(['coordinator', 'supervisor'])->get();
+            $staff = $this->getNotifiableStaff();
             foreach ($staff as $staffMember) {
                 $staffMember->notify(
                     new BookingUpdatedNotification($bookingWithCustomer, 'canceled', $request->reason, false)
@@ -449,6 +449,17 @@ class MediaBookingController extends Controller
                 'phone' => $customer->phone_number,
             ]
         ]);
+    }
+
+    /**
+     * Get all staff who should receive booking notifications.
+     */
+    private function getNotifiableStaff()
+    {
+        return User::whereIn('role', ['coordinator', 'supervisor'])
+            ->orWhereHas('roles', function($q) {
+                $q->whereIn('name', ['coordinator', 'supervisor']);
+            })->get();
     }
 
     /** Build a description string from booking details */
