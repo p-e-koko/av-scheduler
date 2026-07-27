@@ -4,8 +4,8 @@ namespace App\Notifications;
 
 use App\Models\MediaBooking;
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Mail\BookingCreatedStaff;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
@@ -29,19 +29,10 @@ class BookingCreatedStaffNotification extends Notification
             ->data(['url' => '/dashboard/coordinator?tab=assignments&filter=booking']);
     }
 
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(object $notifiable): BookingCreatedStaff
     {
-        $customer = $this->booking->customer;
-        return (new MailMessage)
-            ->subject('New Media Booking: ' . $this->booking->event_name)
-            ->greeting('Hello ' . $notifiable->name . ',')
-            ->line('A new media service booking has been submitted and is awaiting your approval.')
-            ->line('**Event Name:** ' . $this->booking->event_name)
-            ->line('**Location:** ' . $this->booking->location)
-            ->line('**Date & Time:** ' . $this->booking->start_datetime->format('D, d M Y H:i') . ' – ' . $this->booking->end_datetime->format('H:i'))
-            ->line('**Requested By:** ' . $customer->name . ' (' . $customer->email . ')')
-            ->line('**Equipment Request:** ' . ($this->booking->equipment_request ?? 'None'))
-            ->action('Review Booking', url('/dashboard/coordinator?tab=assignments&filter=booking'));
+        return (new BookingCreatedStaff($this->booking, $notifiable))
+                    ->to($notifiable->email);
     }
 
     public function toArray(object $notifiable): array

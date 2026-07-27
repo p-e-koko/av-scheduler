@@ -4,8 +4,8 @@ namespace App\Notifications;
 
 use App\Models\MediaBooking;
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Mail\BookingCreatedCustomer;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
@@ -29,18 +29,10 @@ class BookingCreatedCustomerNotification extends Notification
             ->data(['url' => '/dashboard/customer?tab=my-bookings']);
     }
 
-    public function toMail(object $notifiable): MailMessage
+    public function toMail(object $notifiable): BookingCreatedCustomer
     {
-        return (new MailMessage)
-            ->subject('Your Media Service Booking Has Been Received')
-            ->greeting('Hello ' . $notifiable->name . '!')
-            ->line('Your booking has been successfully submitted.')
-            ->line('**Event Name:** ' . $this->booking->event_name)
-            ->line('**Location:** ' . $this->booking->location)
-            ->line('**Date & Time:** ' . $this->booking->start_datetime->format('D, d M Y H:i') . ' – ' . $this->booking->end_datetime->format('H:i'))
-            ->line('**Please wait for the confirmation.** Our coordination team will review your request and confirm it shortly.')
-            ->action('View My Bookings', url('/dashboard/customer?tab=my-bookings'))
-            ->line('Thank you for using our media service.');
+        return (new BookingCreatedCustomer($this->booking, $notifiable))
+                    ->to($notifiable->email);
     }
 
     public function toArray(object $notifiable): array
