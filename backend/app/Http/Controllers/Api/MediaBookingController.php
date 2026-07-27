@@ -357,12 +357,6 @@ class MediaBookingController extends Controller
         try {
             // Notify the customer that their booking has been confirmed
             $mediaBooking->customer->notify(new BookingApprovedNotification($bookingWithCustomer));
-
-            // Notify other coordinators/supervisors for visibility
-            $staff = $this->getNotifiableStaff();
-            foreach ($staff as $staffMember) {
-                $staffMember->notify(new BookingApprovedNotification($bookingWithCustomer));
-            }
         } catch (\Throwable $e) {
             Log::warning('Booking approved but notification delivery failed.', [
                 'booking_id' => $mediaBooking->id,
@@ -409,14 +403,6 @@ class MediaBookingController extends Controller
             $mediaBooking->customer->notify(
                 new BookingRejectedNotification($bookingWithCustomer, $request->reason)
             );
-
-            // Notify coordinators/supervisors
-            $staff = $this->getNotifiableStaff();
-            foreach ($staff as $staffMember) {
-                $staffMember->notify(
-                    new BookingUpdatedNotification($bookingWithCustomer, 'canceled', $request->reason, false)
-                );
-            }
         } catch (\Throwable $e) {
             Log::warning('Booking rejected but notification delivery failed.', [
                 'booking_id' => $mediaBooking->id,
