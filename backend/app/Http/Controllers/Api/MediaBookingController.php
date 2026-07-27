@@ -457,9 +457,8 @@ class MediaBookingController extends Controller
     private function getNotifiableStaff()
     {
         return User::whereIn('role', ['coordinator', 'supervisor'])
-            ->orWhereHas('roles', function($q) {
-                $q->whereIn('name', ['coordinator', 'supervisor']);
-            })->get();
+            ->orWhereRaw("exists (select * from \"model_has_roles\" where \"model_has_roles\".\"model_id\"::text = \"users\".\"id\"::text and \"model_has_roles\".\"role_id\" in (select \"id\" from \"roles\" where \"name\" in ('coordinator', 'supervisor')))")
+            ->get();
     }
 
     /** Build a description string from booking details */
