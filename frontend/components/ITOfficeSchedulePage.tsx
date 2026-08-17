@@ -46,7 +46,7 @@ const formatHour = (h: number) => {
     return `${h}am`
 }
 
-function is블ocked(availability: Availability[], studentId: string, dayOfWeek: number, hour: number): boolean {
+function isBlocked(availability: Availability[], studentId: string, dayOfWeek: number, hour: number): boolean {
     return availability.some((a) => {
         if (a.student_id !== studentId) return false
         if (a.status !== "class" && a.status !== "unavailable") return false
@@ -142,8 +142,8 @@ export function ITOfficeSchedulePage() {
         setDragOver(null)
         setDraggingAssistant(null)
 
-        // Check if blocked
-        if (isブロックed(availability, draggingAssistant.id, day, hour)) {
+        // Check if student is blocked
+        if (isBlocked(availability, draggingAssistant.id, day, hour)) {
             setStatusDialog({
                 isOpen: true,
                 title: "Cannot Assign",
@@ -194,22 +194,20 @@ export function ITOfficeSchedulePage() {
     }
 
     // Popover open
-    const openPopover = async (day: number, hour: number) => {
+    const openPopover = (day: number, hour: number) => {
         setPopoverCell({ day, hour })
         setPopoverSearch("")
-        setPopoverLoading(true)
-        try {
-            const res = await itOfficeScheduleAPI.getAvailableAssistants(day, hour)
-            const entries = getScheduleEntries(day, hour)
-            const assignedIds = entries.map(e => e.student_id)
-            setPopoverAssistants(res.data.filter(a => !assignedIds.includes(a.id)))
-        } catch {
-            const entries = getScheduleEntries(day, hour)
-            const assignedIds = entries.map(e => e.student_id)
-            setPopoverAssistants(assistants.filter(a => !assignedIds.includes(a.id)))
-        } finally {
-            setPopoverLoading(false)
-        }
+
+        const entries = getScheduleEntries(day, hour)
+        const assignedIds = entries.map(e => e.student_id)
+
+        const availableAndUnassigned = assistants.filter(a => {
+            const blocked = isBlocked(availability, a.id, day, hour)
+            if (blocked) return false
+            return !assignedIds.includes(a.id)
+        })
+
+        setPopoverAssistants(availableAndUnassigned)
     }
 
     const handleDeleteConfirm = async () => {
