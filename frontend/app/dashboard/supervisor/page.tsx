@@ -120,6 +120,7 @@ function SupervisorDashboard() {
   const [studentPagination, setStudentPagination] = useState<any>(null)
   const [studentCurrentPage, setStudentCurrentPage] = useState(1)
   const [showPendingOnly, setShowPendingOnly] = useState(false)
+  const [showAllStudents, setShowAllStudents] = useState(false)
   const [processingStudents, setProcessingStudents] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -416,10 +417,11 @@ function SupervisorDashboard() {
   const paginatedStudents = React.useMemo(() => {
     // Only paginate for 'students' tab if viewMode is card/list
     if (activeTab === 'dashboard') return filteredStudents;
+    if (showAllStudents) return filteredStudents;
 
     const startIndex = (studentCurrentPage - 1) * itemsPerPage;
     return filteredStudents.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredStudents, studentCurrentPage, activeTab]);
+  }, [filteredStudents, studentCurrentPage, activeTab, showAllStudents]);
 
   // Helper to get student assignments count
   const getStudentAssignmentCount = (studentId: string) => {
@@ -592,6 +594,15 @@ function SupervisorDashboard() {
                     >
                       <UserX className="w-4 h-4 mr-1" />
                       Pending
+                    </Button>
+                    <Button
+                      variant={showAllStudents ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowAllStudents(prev => !prev)}
+                      className={showAllStudents ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                    >
+                      <List className="w-4 h-4 mr-1" />
+                      Show All
                     </Button>
                   </div>
                 </div>
@@ -771,9 +782,8 @@ function SupervisorDashboard() {
                     </div>
                   )}
 
-                  {/* Pagination */}
-                  {/* Pagination */}
-                  {filteredStudents.length > itemsPerPage && (
+                  {/* Pagination Controls */}
+                  {!loading && filteredStudents.length > itemsPerPage && !showAllStudents && (
                     <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
                       <div className="text-sm text-gray-500">
                         Showing {(studentCurrentPage - 1) * itemsPerPage + 1} to {Math.min(studentCurrentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length} results

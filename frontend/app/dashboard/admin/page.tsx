@@ -62,7 +62,7 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showPendingOnly, setShowPendingOnly] = useState(false)
-  // pagination removed
+  const [showAllUsers, setShowAllUsers] = useState(false)
 
   // Sync state to URL
   useEffect(() => {
@@ -183,9 +183,10 @@ function AdminDashboard() {
 
   const itemsPerPage = 10;
   const paginatedUsers = React.useMemo(() => {
+    if (showAllUsers) return filteredUsers;
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredUsers, currentPage]);
+  }, [filteredUsers, currentPage, showAllUsers]);
 
   const getInitials = (name: string) => {
     return name
@@ -351,6 +352,15 @@ function AdminDashboard() {
               >
                 <UserX className="w-4 h-4 mr-1" />
                 Pending
+              </Button>
+              <Button
+                variant={showAllUsers ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setShowAllUsers(prev => !prev)}
+                className={`flex-1 md:flex-none ${showAllUsers ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <List className="w-4 h-4 mr-1" />
+                Show All
               </Button>
             </div>
           </div>
@@ -621,7 +631,7 @@ function AdminDashboard() {
             )}
 
             {/* Pagination */}
-            {filteredUsers.length > itemsPerPage && (
+            {!loading && filteredUsers.length > itemsPerPage && !showAllUsers && (
               <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4 sm:gap-0">
                 <div className="text-sm text-gray-500">
                   Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredUsers.length)} of {filteredUsers.length} results

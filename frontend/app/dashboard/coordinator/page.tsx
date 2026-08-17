@@ -141,6 +141,7 @@ function CoordinatorDashboard() {
   const [studentSearchQuery, setStudentSearchQuery] = useState("")
   const [studentPagination, setStudentPagination] = useState<any>(null)
   const [studentCurrentPage, setStudentCurrentPage] = useState(1)
+  const [showAllStudents, setShowAllStudents] = useState(false)
 
   // Assignment Pagination
   const [assignmentPagination, setAssignmentPagination] = useState<any>(null)
@@ -499,9 +500,10 @@ function CoordinatorDashboard() {
 
   const itemsPerPage = 10;
   const paginatedStudents = React.useMemo(() => {
+    if (showAllStudents) return filteredStudents;
     const start = (studentCurrentPage - 1) * itemsPerPage;
     return filteredStudents.slice(start, start + itemsPerPage);
-  }, [filteredStudents, studentCurrentPage]);
+  }, [filteredStudents, studentCurrentPage, showAllStudents]);
 
   // Reset page when search changes is handled by useEffect at line 363 (but we need to verify it logic)
   // Existing debounce logic sets page to 1. Which is fine.
@@ -781,9 +783,9 @@ function CoordinatorDashboard() {
                                 variant="secondary"
                                 className={`text-xs px-2 py-0.5 border-none ${assignment.status === 'complete' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                                   assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-white' :
-                                  assignment.status === 'booking' ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400' :
-                                  assignment.status === 'canceled' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                                    'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                                    assignment.status === 'booking' ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400' :
+                                      assignment.status === 'canceled' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                                        'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
                                   }`}
                               >
                                 {assignment.status === 'booking' ? 'Booking' : assignment.status}
@@ -936,13 +938,22 @@ function CoordinatorDashboard() {
                       Cards
                     </Button>
                     <Button
-                      variant={viewMode === "list" ? "default" : "ghost"}
+                      variant={viewMode === "list" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setViewMode("list")}
                       className={viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
                     >
                       <List className="w-4 h-4 mr-1" />
                       List
+                    </Button>
+                    <Button
+                      variant={showAllStudents ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowAllStudents(prev => !prev)}
+                      className={showAllStudents ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}
+                    >
+                      <List className="w-4 h-4 mr-1" />
+                      Show All
                     </Button>
                   </div>
                 </div>
@@ -1087,10 +1098,9 @@ function CoordinatorDashboard() {
                     </div>
                   )}
 
-                  {/* Pagination */}
-                  {/* Pagination */}
-                  {filteredStudents.length > itemsPerPage && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+                  {/* Pagination Controls */}
+                  {!loading && filteredStudents.length > itemsPerPage && !showAllStudents && (
+                    <div className="flex items-center justify-between border-t border-border mt-6 pt-4">
                       <div className="text-sm text-gray-500">
                         Showing {(studentCurrentPage - 1) * itemsPerPage + 1} to {Math.min(studentCurrentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length} results
                       </div>
