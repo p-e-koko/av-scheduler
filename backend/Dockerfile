@@ -4,7 +4,16 @@
 FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-scripts --no-interaction --no-progress --ignore-platform-reqs
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV COMPOSER_MEMORY_LIMIT=-1
+RUN composer install \
+    --no-dev \
+    --prefer-dist \
+    --no-scripts \
+    --no-interaction \
+    --no-progress \
+    --ignore-platform-reqs \
+    --optimize-autoloader
 
 # -----------------------
 # Stage 2: Final Runtime
