@@ -49,8 +49,10 @@ export function ITOfficeScheduleAssistantView() {
         fetchSchedules()
     }, [fetchSchedules])
 
+    const mySchedules = currentUser ? schedules.filter(s => s.student_id === currentUser.id) : []
+
     const getScheduleEntry = (day: number, hour: number) => {
-        return schedules.find(
+        return mySchedules.find(
             (s) =>
                 s.day_of_week === day &&
                 parseInt(s.start_time.split(":")[0]) === hour
@@ -59,20 +61,20 @@ export function ITOfficeScheduleAssistantView() {
 
     // Group by day for the list view
     const byDay: Record<number, ITOfficeSchedule[]> = {}
-    schedules.forEach((s) => {
+    mySchedules.forEach((s) => {
         if (!byDay[s.day_of_week]) byDay[s.day_of_week] = []
         byDay[s.day_of_week].push(s)
     })
 
     // Next upcoming shift
     const getNextShift = () => {
-        if (schedules.length === 0) return null
+        if (mySchedules.length === 0) return null
         const now = new Date()
         const currentDay = now.getDay()
         const currentHour = now.getHours()
 
         // Try to find a shift later today
-        let todaysRemaining = schedules.filter(
+        let todaysRemaining = mySchedules.filter(
             (s) => s.day_of_week === currentDay && parseInt(s.start_time.split(":")[0]) > currentHour
         )
 
@@ -85,7 +87,7 @@ export function ITOfficeScheduleAssistantView() {
         for (let i = 1; i <= 7; i++) {
             const targetDay = (currentDay + i) % 7
             if (targetDay === 6) continue // Sat skipped
-            let daySlots = schedules.filter((s) => s.day_of_week === targetDay)
+            let daySlots = mySchedules.filter((s) => s.day_of_week === targetDay)
             if (daySlots.length > 0) {
                 daySlots.sort((a, b) => a.start_time.localeCompare(b.start_time))
                 const dayStr = i === 1 ? "Tomorrow" : DAYS[targetDay]
@@ -117,7 +119,7 @@ export function ITOfficeScheduleAssistantView() {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Assigned Weekly Hours</p>
-                                <p className="text-2xl font-bold">{schedules.length}h</p>
+                                <p className="text-2xl font-bold">{mySchedules.length}h</p>
                             </div>
                         </div>
                     </CardContent>
@@ -191,7 +193,7 @@ export function ITOfficeScheduleAssistantView() {
                     <CardTitle className="text-lg font-semibold">Weekly View</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {schedules.length === 0 ? (
+                    {mySchedules.length === 0 ? (
                         <p className="text-muted-foreground text-sm">You have no scheduled IT Office hours.</p>
                     ) : (
                         <div className="space-y-4">

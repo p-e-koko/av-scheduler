@@ -50,13 +50,18 @@ function isBlocked(availability: Availability[], studentId: string, dayOfWeek: n
     return availability.some((a) => {
         if (a.student_id !== studentId) return false
         if (a.status !== "class" && a.status !== "unavailable") return false
-        // The availability table stores dates with a specific date, but we check day_of_week pattern
-        // We use the day_of_week derived from the date
-        const date = new Date(a.date)
-        const avDow = date.getDay() === 0 ? 0 : date.getDay() // 0=Sun
+
+        // Safely parse "YYYY-MM-DD" local time to avoid timezone bleeding over to adjacent days
+        const parts = a.date.split("-")
+        if (parts.length !== 3) return false
+        const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
+
+        const avDow = date.getDay()
         if (avDow !== dayOfWeek) return false
+
         const [startH] = a.start_time.split(":").map(Number)
         const [endH] = a.end_time.split(":").map(Number)
+
         return hour >= startH && hour < endH
     })
 }
