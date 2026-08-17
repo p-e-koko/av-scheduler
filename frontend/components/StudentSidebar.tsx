@@ -15,7 +15,8 @@ import {
   X,
   Loader2,
   LayoutDashboard,
-  Key
+  Key,
+  Monitor
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -31,8 +32,8 @@ import {
 } from "@/components/ui/dialog"
 
 interface StudentSidebarProps {
-  activeTab: "profile" | "assignments" | "schedule"
-  onTabChange: (tab: "profile" | "assignments" | "schedule") => void
+  activeTab: "profile" | "assignments" | "schedule" | "it-office-schedule"
+  onTabChange: (tab: "profile" | "assignments" | "schedule" | "it-office-schedule") => void
   isOpen?: boolean
   onClose?: () => void
 }
@@ -88,6 +89,9 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
   }
 
   if (!currentUser) return null
+
+  const isITOnly = currentUser.is_it_only === true
+  const isIT = currentUser.is_IT === true
 
   const userRoles = currentUser.roles && currentUser.roles.length > 0 ? currentUser.roles : [currentUser.role];
   const hasOnlyStudentRole = userRoles.length === 1 && userRoles[0].toLowerCase() === 'student';
@@ -152,20 +156,23 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
             <User className="w-5 h-5 flex-shrink-0" />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Profile</span>}
           </div>
-          <div
-            onClick={() => {
-              onTabChange("assignments")
-              if (isMobile && onClose) onClose()
-            }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "assignments"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
-              : 'text-muted-foreground hover:bg-accent'
-              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
-              }`}
-          >
-            <CheckCircle className="w-5 h-5 flex-shrink-0" />
-            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Assignments</span>}
-          </div>
+          {/* Assignments — hidden for IT-only */}
+          {!isITOnly && (
+            <div
+              onClick={() => {
+                onTabChange("assignments")
+                if (isMobile && onClose) onClose()
+              }}
+              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "assignments"
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+                : 'text-muted-foreground hover:bg-accent'
+                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
+                }`}
+            >
+              <CheckCircle className="w-5 h-5 flex-shrink-0" />
+              {(!sidebarCollapsed || isMobile) && <span className="font-medium">Assignments</span>}
+            </div>
+          )}
           <div
             onClick={() => {
               onTabChange("schedule")
@@ -180,26 +187,49 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
             <Clock className="w-5 h-5 flex-shrink-0" />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">My Schedule</span>}
           </div>
-          <div
-            onClick={() => {
-              router.push('/dashboard/inventory')
-              if (isMobile && onClose) onClose()
-            }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
-          >
-            <Package className="w-5 h-5 flex-shrink-0" />
-            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Inventory</span>}
-          </div>
-          <div
-            onClick={() => {
-              router.push('/dashboard/keys')
-              if (isMobile && onClose) onClose()
-            }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
-          >
-            <Key className="w-5 h-5 flex-shrink-0" />
-            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Keys</span>}
-          </div>
+          {/* Inventory — hidden for IT-only */}
+          {!isITOnly && (
+            <div
+              onClick={() => {
+                router.push('/dashboard/inventory')
+                if (isMobile && onClose) onClose()
+              }}
+              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
+            >
+              <Package className="w-5 h-5 flex-shrink-0" />
+              {(!sidebarCollapsed || isMobile) && <span className="font-medium">Inventory</span>}
+            </div>
+          )}
+          {/* Keys — hidden for IT-only */}
+          {!isITOnly && (
+            <div
+              onClick={() => {
+                router.push('/dashboard/keys')
+                if (isMobile && onClose) onClose()
+              }}
+              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
+            >
+              <Key className="w-5 h-5 flex-shrink-0" />
+              {(!sidebarCollapsed || isMobile) && <span className="font-medium">Keys</span>}
+            </div>
+          )}
+          {/* IT Office Schedule — shown only for IT Assistants */}
+          {isIT && (
+            <div
+              onClick={() => {
+                onTabChange("it-office-schedule")
+                if (isMobile && onClose) onClose()
+              }}
+              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "it-office-schedule"
+                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+                : 'text-muted-foreground hover:bg-accent'
+                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "it-office-schedule" ? 'border-primary/20' : 'border-transparent'
+                }`}
+            >
+              <Monitor className="w-5 h-5 flex-shrink-0" />
+              {(!sidebarCollapsed || isMobile) && <span className="font-medium">IT Office Schedule</span>}
+            </div>
+          )}
 
           {/* Switch Dashboard Section */}
           {currentUser && !hasOnlyStudentRole && getAllowedDashboards(userRoles).filter(path => !path.includes('/dashboard/student') && !path.includes('/dashboard/inventory') && !path.includes('/dashboard/keys')).length > 0 && (

@@ -391,5 +391,23 @@ class UserController extends Controller
         $user->remaining_hours_this_week = max(0, $user->promised_hours_per_week - $workedHours);
         $user->save();
     }
+
+    /**
+     * Get all IT Assistants (users where is_IT = true).
+     */
+    public function getITAssistants(Request $request): JsonResponse
+    {
+        $assistants = User::where('is_IT', true)
+            ->orderBy('created_at')
+            ->get();
+
+        // Attach color_index based on sorted position
+        $result = $assistants->values()->map(function ($assistant, $index) {
+            return array_merge($assistant->toArray(), ['color_index' => $index]);
+        });
+
+        return response()->json(['data' => $result]);
+    }
 }
+
 

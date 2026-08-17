@@ -12,7 +12,8 @@ import {
   X,
   AlertCircle,
   User,
-  Phone
+  Phone,
+  Loader2
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -21,6 +22,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComponent"
 
 import {
@@ -50,6 +53,11 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
   const [calendarView, setCalendarView] = useState<"month" | "week" | "day">("month")
   const [currentDate, setCurrentDate] = useState(new Date())
 
+  const [isUpdatingIT, setIsUpdatingIT] = useState(false)
+  const [showITConfirm, setShowITConfirm] = useState(false)
+  const currentUser = getStoredUser()
+  const canUpdateITSettings = currentUser?.role === "admin" || currentUser?.role === "supervisor" || currentUser?.role === "coordinator"
+
   const [isEditingPhone, setIsEditingPhone] = useState(false)
   const [phoneNumberInput, setPhoneNumberInput] = useState("")
 
@@ -75,6 +83,30 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  const handleITUpdateBoth = async (isIT: boolean, isItOnly: boolean) => {
+    if (!student) return
+    setIsUpdatingIT(true)
+    setError(null)
+    try {
+      const res = await userAPI.updateUser(student.id, { is_IT: isIT, is_it_only: isItOnly })
+      setStudent(res.user) // Updates UI instantly
+    } catch (err: any) {
+      setError(err.message || 'Failed to update IT status')
+    } finally {
+      setIsUpdatingIT(false)
+    }
+  }
+
+  const handleITCheckboxChange = (checked: boolean) => {
+    if (checked) {
+      // Prompt user about IT Only mode instead of updating directly
+      setShowITConfirm(true)
+    } else {
+      // Instantly uncheck both
+      handleITUpdateBoth(false, false)
+    }
+  }
 
   // Fetch student data and initial assignments
   useEffect(() => {
@@ -408,6 +440,71 @@ export function StudentProfileContent({ studentId }: StudentProfileContentProps)
                         <span className="text-lg font-semibold text-foreground">{student.promised_hours_per_week || '0'}h</span>
                       </div>
                     </div>
+
+                    {/* IT Assistant Settings for Admin/Supervisor */}
+                    {canUpdateITSettings && (
+                      <div className="border-t pt-4 mt-4 space-y-3">
+                        <h4 className="text-sm font-semibold flex items-center">
+                          IT Assistant Settings
+                          {isUpdatingIT && <Loader2 className="w-3 h-3 ml-2 animate-spin text-muted-foreground" />}
+                        </h4>
+                        <div className="flex flex-col md:flex-row gap-4">
+                          <div className="flex items-center space-x-2 bg-muted/30 p-3 rounded-lg border border-border/50">
+                            <Checkbox
+                              id="is-it"
+                              checked={student.is_IT === true}
+                              onCheckedChange={(checked) => handleITCheckboxChange(checked === true)}
+                              disabled={isUpdatingIT}
+                            />
+                            <Label htmlFor="is-it" className="text-sm cursor-pointer opacity-90 hover:opacity-100 flex flex-col">
+                              <span>IT Assistant</span>
+                              {student.is_IT && student.is_it_only && (
+                                <span className="text-xs text-muted-foreground mt-0.5">(IT Only mode active)</span>
+                              )}
+                            </Label>
+                          </div>
+                        </div>
+
+                        <Dialog open={showITConfirm} onOpenChange={setShowITConfirm}>
+                          <DialogContent className="bg-card/95 backdrop-blur-xl border border-border sm:max-w-md">
+                            <DialogHeader>
+                              <DialogTitle>Configure IT Assistant</DialogTitle>
+                              <DialogDescription>
+                                IT Assistant only? Checking "Yes" will hide other student tabs for this user.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter className="flex gap-2 sm:justify-end">
+                              <Button
+                                variant="outline"
+                                onClick={() => setShowITConfirm(false)}
+                                disabled={isUpdatingIT}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                onClick={() => {
+                                  setShowITConfirm(false)
+                                  handleITUpdateBoth(true, false)
+                                }}
+                                disabled={isUpdatingIT}
+                              >
+                                No
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  setShowITConfirm(false)
+                                  handleITUpdateBoth(true, true)
+                                }}
+                                disabled={isUpdatingIT}
+                              >
+                                Yes
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

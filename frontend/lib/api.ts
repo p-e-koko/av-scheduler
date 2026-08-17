@@ -53,6 +53,9 @@ export interface User {
   role: 'admin' | 'supervisor' | 'coordinator' | 'student' | 'customer';
   roles?: string[];
   is_approved?: boolean;
+  is_IT?: boolean;
+  is_it_only?: boolean;
+  color_index?: number;
   permissions?: string[];
   profile_picture?: string;
   profile_picture_url?: string;
@@ -1713,4 +1716,53 @@ export const mediaBookingAPI = {
     });
   },
 };
+// ----------------------------------------------------------------------------
+// IT Office Schedule
+// ----------------------------------------------------------------------------
 
+export interface ITOfficeSchedule {
+  id: string;
+  student_id: string;
+  created_by: string;
+  day_of_week: number; // 0=Sun ... 5=Fri
+  start_time: string;
+  end_time: string;
+  student?: User;
+  creator?: User;
+  created_at: string;
+  updated_at: string;
+}
+
+export const itOfficeScheduleAPI = {
+  async getSchedules(): Promise<{ data: ITOfficeSchedule[] }> {
+    return apiCall('/it-office-schedules');
+  },
+
+  async createSchedule(data: Partial<ITOfficeSchedule>): Promise<{ data: ITOfficeSchedule }> {
+    return apiCall('/it-office-schedules', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async updateSchedule(id: string, data: Partial<ITOfficeSchedule>): Promise<{ data: ITOfficeSchedule }> {
+    return apiCall(`/it-office-schedules/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  async deleteSchedule(id: string): Promise<{ message: string }> {
+    return apiCall(`/it-office-schedules/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async getAvailableAssistants(day: number, hour: number): Promise<{ data: User[] }> {
+    return apiCall(`/it-office-schedules/available-assistants?day=${day}&hour=${hour}`);
+  },
+
+  async getITAssistants(): Promise<{ data: User[] }> {
+    return apiCall('/users/it-assistants');
+  },
+};

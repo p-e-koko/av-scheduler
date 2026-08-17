@@ -35,6 +35,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'avatar',
         'role',
         'is_approved',
+        'is_IT',
+        'is_it_only',
         'profile_picture',
         'promised_hours_per_week',
         'remaining_hours_this_week',
@@ -76,6 +78,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'promised_hours_per_week' => 'decimal:2',
             'remaining_hours_this_week' => 'decimal:2',
             'is_approved' => 'boolean',
+            'is_IT' => 'boolean',
+            'is_it_only' => 'boolean',
             'microsoft_token_expires_at' => 'datetime',
         ];
     }
@@ -111,6 +115,30 @@ class User extends Authenticatable implements MustVerifyEmail
     public function mediaBookings()
     {
         return $this->hasMany(MediaBooking::class, 'customer_id');
+    }
+
+    /**
+     * Get the IT office schedule entries for this IT assistant.
+     */
+    public function itOfficeSchedules()
+    {
+        return $this->hasMany(ITOfficeSchedule::class, 'student_id');
+    }
+
+    /**
+     * Check if this user is an IT Assistant.
+     */
+    public function isITAssistant(): bool
+    {
+        return (bool) $this->is_IT;
+    }
+
+    /**
+     * Check if this user is IT-only (restricted access).
+     */
+    public function isITOnly(): bool
+    {
+        return (bool) $this->is_it_only;
     }
 
     /** Check if user is a customer */

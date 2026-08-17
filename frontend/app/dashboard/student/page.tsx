@@ -72,21 +72,22 @@ import { LoadingDialog } from "@/components/LoadingDialog"
 import { StatusDialog } from "@/components/StatusDialog"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import { ModifiedAssignmentModal } from "@/components/ModifiedAssignmentModal"
+import { ITOfficeScheduleAssistantView } from "@/components/ITOfficeScheduleAssistantView"
 
 function StudentDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [currentUser, setCurrentUser] = useState<UserType | null>(null)
-  const [activeTab, setActiveTab] = useState<"profile" | "assignments" | "schedule">("profile")
+  const [activeTab, setActiveTab] = useState<"profile" | "assignments" | "schedule" | "it-office-schedule">("profile")
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab && ['profile', 'assignments', 'schedule'].includes(tab)) {
+    if (tab && ['profile', 'assignments', 'schedule', 'it-office-schedule'].includes(tab)) {
       setActiveTab(tab as any)
     }
   }, [searchParams])
 
-  const handleTabChange = (tab: "profile" | "assignments" | "schedule") => {
+  const handleTabChange = (tab: "profile" | "assignments" | "schedule" | "it-office-schedule") => {
     const params = new URLSearchParams(searchParams.toString())
     params.set('tab', tab)
     router.push(`/dashboard/student?${params.toString()}`)
@@ -797,11 +798,13 @@ function StudentDashboard() {
                   {activeTab === "profile" && "My Profile"}
                   {activeTab === "assignments" && "My Assignments"}
                   {activeTab === "schedule" && "My Schedule"}
+                  {activeTab === "it-office-schedule" && "IT Office Schedule"}
                 </h1>
                 <p className="text-muted-foreground mt-1">
                   {activeTab === "profile" && "Manage your profile and skills"}
                   {activeTab === "assignments" && "View and track your assignments"}
                   {activeTab === "schedule" && "Manage your availability"}
+                  {activeTab === "it-office-schedule" && "Your assigned IT Office working hours"}
                 </p>
               </div>
             </div>
@@ -841,6 +844,11 @@ function StudentDashboard() {
 
         {/* Content Area */}
         <main className="flex-1 overflow-auto p-4 md:p-6">
+          {/* IT Office Schedule Tab */}
+          {activeTab === "it-office-schedule" && (
+            <ITOfficeScheduleAssistantView />
+          )}
+
           {/* Profile Tab */}
           {activeTab === "profile" && (
             <div className="flex flex-col space-y-6">

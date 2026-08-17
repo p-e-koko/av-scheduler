@@ -24,6 +24,8 @@ class UserResource extends JsonResource
             'role' => $this->role,
             'roles' => $this->getRoleNames(),
             'is_approved' => $this->is_approved,
+            'is_IT' => $this->is_IT,
+            'is_it_only' => $this->is_it_only,
             'profile_picture' => $this->profile_picture,
             'profile_picture_url' => $this->getProfilePictureUrlAttribute(),
             'promised_hours_per_week' => $this->promised_hours_per_week,

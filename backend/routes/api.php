@@ -92,6 +92,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/trashed', [UserController::class, 'trashed']);
         Route::post('/{id}/restore', [UserController::class, 'restore']);
         Route::delete('/{id}/force', [UserController::class, 'forceDelete']);
+        Route::get('/it-assistants', [UserController::class, 'getITAssistants'])->middleware('role:supervisor,coordinator,admin');
     });
     Route::apiResource('users', UserController::class);
 
@@ -302,6 +303,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Coordinator / Supervisor / Admin: mark comments as done (hard delete all)
     Route::middleware(['role:coordinator,supervisor,admin'])->delete('/media-bookings/{mediaBooking}/comments', [\App\Http\Controllers\Api\BookingCommentController::class, 'done']);
+
+    // -------------------------------------------------------------------------
+    // IT Office Schedule Routes
+    // -------------------------------------------------------------------------
+
+    // IT Office Schedule — supervisor/coordinator/admin: full CRUD; IT assistant students: read own
+    // IMPORTANT: specific sub-routes must be registered BEFORE {id} wildcard
+    Route::get('/it-office-schedules/available-assistants', [\App\Http\Controllers\Api\ITOfficeScheduleController::class, 'availableAssistants']);
+    Route::get('/it-office-schedules', [\App\Http\Controllers\Api\ITOfficeScheduleController::class, 'index']);
+    Route::post('/it-office-schedules', [\App\Http\Controllers\Api\ITOfficeScheduleController::class, 'store']);
+    Route::put('/it-office-schedules/{id}', [\App\Http\Controllers\Api\ITOfficeScheduleController::class, 'update']);
+    Route::delete('/it-office-schedules/{id}', [\App\Http\Controllers\Api\ITOfficeScheduleController::class, 'destroy']);
 
 }); // end auth:sanctum group
 

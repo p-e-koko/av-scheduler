@@ -39,6 +39,8 @@ import { CalendarComponent, type CalendarEvent } from "@/components/CalendarComp
 import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import { DailyAvailabilityView } from "@/components/DailyAvailabilityView"
+import { ITOfficeSchedulePage } from "@/components/ITOfficeSchedulePage"
+import { ITOfficeAssistantsPage } from "@/components/ITOfficeAssistantsPage"
 
 import {
   authAPI,
@@ -60,16 +62,16 @@ function SupervisorDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [activeTab, setActiveTab] = useState<"dashboard" | "student-schedules" | "assignment-schedules" | "students">("dashboard")
+  const [activeTab, setActiveTab] = useState<"dashboard" | "student-schedules" | "assignment-schedules" | "students" | "it-office-schedule" | "it-office-assistants">("dashboard")
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab && ['dashboard', 'student-schedules', 'assignment-schedules', 'students'].includes(tab)) {
+    if (tab && ['dashboard', 'student-schedules', 'assignment-schedules', 'students', 'it-office-schedule', 'it-office-assistants'].includes(tab)) {
       setActiveTab(tab as any)
     }
   }, [searchParams])
 
-  const handleTabChange = (tab: "dashboard" | "student-schedules" | "assignment-schedules" | "students") => {
+  const handleTabChange = (tab: "dashboard" | "student-schedules" | "assignment-schedules" | "students" | "it-office-schedule" | "it-office-assistants") => {
     const params = new URLSearchParams(searchParams.toString())
     params.set('tab', tab)
     router.push(`/dashboard/supervisor?${params.toString()}`)
@@ -537,12 +539,16 @@ function SupervisorDashboard() {
                   {activeTab === "students" && "View Students"}
                   {activeTab === "student-schedules" && "Student Schedule"}
                   {activeTab === "assignment-schedules" && "Assignment Schedule"}
+                  {activeTab === "it-office-schedule" && "IT Office Schedule"}
+                  {activeTab === "it-office-assistants" && "IT Office Assistants"}
                 </h1>
                 <p className="text-sm text-muted-foreground mt-1">
                   {activeTab === "dashboard" && "Overview of student assignment hours and performance"}
                   {activeTab === "students" && "View and manage student information"}
                   {activeTab === "student-schedules" && "View student availability and schedules"}
                   {activeTab === "assignment-schedules" && "View assignment timelines and schedules"}
+                  {activeTab === "it-office-schedule" && "Manage IT Assistant weekly work schedule"}
+                  {activeTab === "it-office-assistants" && "View IT Assistant availability from their schedules"}
                 </p>
               </div>
             </div>
@@ -1040,6 +1046,20 @@ function SupervisorDashboard() {
                   isMobile={isMobile}
                 />
               </div>
+            </div>
+          )}
+
+          {/* IT Office Schedule Tab */}
+          {activeTab === "it-office-schedule" && (
+            <div className="space-y-6">
+              <ITOfficeSchedulePage />
+            </div>
+          )}
+
+          {/* IT Office Assistants Tab */}
+          {activeTab === "it-office-assistants" && (
+            <div className="space-y-6">
+              <ITOfficeAssistantsPage />
             </div>
           )}
         </main>

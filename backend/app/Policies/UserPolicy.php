@@ -36,7 +36,7 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
-        return $user->hasRole('admin') || $user->id === $model->id;
+        return $user->hasAnyRole(['admin', 'coordinator', 'supervisor']) || $user->id === $model->id;
     }
 
     /**

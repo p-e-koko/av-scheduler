@@ -14,7 +14,9 @@ import {
   Loader2,
   Package,
   LayoutDashboard,
-  Key
+  Key,
+  Monitor,
+  UserCheck
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -30,8 +32,8 @@ import {
 } from "@/components/ui/dialog"
 
 interface SupervisorSidebarProps {
-  activeTab: "dashboard" | "student-schedules" | "assignment-schedules" | "students"
-  onTabChange: (tab: "dashboard" | "student-schedules" | "assignment-schedules" | "students") => void
+  activeTab: "dashboard" | "student-schedules" | "assignment-schedules" | "students" | "it-office-schedule" | "it-office-assistants"
+  onTabChange: (tab: "dashboard" | "student-schedules" | "assignment-schedules" | "students" | "it-office-schedule" | "it-office-assistants") => void
   isOpen?: boolean
   onClose?: () => void
 }
@@ -223,6 +225,38 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
           >
             <Key className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/keys') ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Keys</span>}
+          </div>
+
+          {/* IT Office Schedule */}
+          <div
+            onClick={() => {
+              onTabChange("it-office-schedule")
+              if (isMobile && onClose) onClose()
+            }}
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "it-office-schedule"
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "it-office-schedule" ? 'border-primary/20' : 'border-transparent'
+              }`}
+          >
+            <Monitor className={`w-5 h-5 ${activeTab === "it-office-schedule" ? 'text-primary dark:text-white' : ''}`} />
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">IT Office Schedule</span>}
+          </div>
+
+          {/* IT Office Assistants */}
+          <div
+            onClick={() => {
+              onTabChange("it-office-assistants")
+              if (isMobile && onClose) onClose()
+            }}
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "it-office-assistants"
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "it-office-assistants" ? 'border-primary/20' : 'border-transparent'
+              }`}
+          >
+            <UserCheck className={`w-5 h-5 ${activeTab === "it-office-assistants" ? 'text-primary dark:text-white' : ''}`} />
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">IT Office Assistants</span>}
           </div>
 
           {/* Switch Dashboard Section */}
