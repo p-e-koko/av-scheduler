@@ -69,7 +69,26 @@ export function ITOfficeAssistantsPage() {
             setAssistants(assistantsRes.data)
             if (assistantsRes.data.length > 0) {
                 const ids = assistantsRes.data.map(a => a.id)
-                const availRes = await availabilityAPI.getAvailability({ per_page: 10000 })
+
+                const now = new Date()
+                const currentDay = now.getDay()
+                const startOfWeek = new Date(now)
+                startOfWeek.setDate(now.getDate() - currentDay)
+                const endOfWeek = new Date(startOfWeek)
+                endOfWeek.setDate(startOfWeek.getDate() + 6)
+
+                const formatDate = (date: Date) => {
+                    const y = date.getFullYear()
+                    const m = String(date.getMonth() + 1).padStart(2, '0')
+                    const dd = String(date.getDate()).padStart(2, '0')
+                    return `${y}-${m}-${dd}`
+                }
+
+                const availRes = await availabilityAPI.getAvailability({
+                    per_page: 10000,
+                    date_from: formatDate(startOfWeek),
+                    date_to: formatDate(endOfWeek)
+                })
                 setAvailability(availRes.data.filter(a => ids.includes(a.student_id)))
             }
         } catch (err) {
