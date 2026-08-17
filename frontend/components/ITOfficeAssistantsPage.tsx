@@ -16,8 +16,10 @@ import {
 } from "@/components/ui/table"
 import {
     itOfficeScheduleAPI,
+    availabilityAPI,
     type User,
     type ITOfficeSchedule,
+    type Availability,
 } from "@/lib/api"
 import { getITAssistantColor } from "@/lib/it-assistant-colors"
 
@@ -33,21 +35,37 @@ const formatHour = (h: number) => {
 const getInitials = (name: string) =>
     name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 
+function isBlocked(availability: Availability[], studentId: string, dayOfWeek: number, hour: number): boolean {
+    return availability.some((a) => {
+        if (a.student_id !== studentId) return false
+        if (a.status !== "class" && a.status !== "unavailable") return false
+        const date = new Date(a.date)
+        const avDow = date.getDay() === 0 ? 0 : date.getDay()
+        if (avDow !== dayOfWeek) return false
+        const [startH] = a.start_time.split(":").map(Number)
+        const [endH] = a.end_time.split(":").map(Number)
+        return hour >= startH && hour < endH
+    })
+}
+
 export function ITOfficeAssistantsPage() {
     const [assistants, setAssistants] = useState<User[]>([])
-    const [schedules, setSchedules] = useState<ITOfficeSchedule[]>([])
+    const [availability, setAvailability] = useState<Availability[]>([])
     const [search, setSearch] = useState("")
     const [loading, setLoading] = useState(true)
 
     const fetchAll = useCallback(async () => {
         try {
             setLoading(true)
-            const [assistantsRes, schedulesRes] = await Promise.all([
+            const [assistantsRes] = await Promise.all([
                 itOfficeScheduleAPI.getITAssistants(),
-                itOfficeScheduleAPI.getSchedules(),
             ])
             setAssistants(assistantsRes.data)
-            setSchedules(schedulesRes.data)
+            if (assistantsRes.data.length > 0) {
+                const ids = assistantsRes.data.map(a => a.id)
+                const availRes = await availabilityAPI.getAvailability({ per_page: 10000 })
+                setAvailability(availRes.data.filter(a => ids.includes(a.student_id)))
+            }
         } catch (err) {
             console.error("Failed to load IT Assistants", err)
         } finally {
@@ -59,13 +77,7 @@ export function ITOfficeAssistantsPage() {
         fetchAll()
     }, [fetchAll])
 
-    const getAssistantSchedules = (assistantId: string) =>
-        schedules.filter((s) => s.student_id === assistantId)
 
-    const getScheduledHoursPerWeek = (assistantId: string) => {
-        const entries = getAssistantSchedules(assistantId)
-        return entries.length // each entry is 1 hour
-    }
 
     const filteredAssistants = assistants.filter(
         (a) =>
@@ -74,18 +86,13 @@ export function ITOfficeAssistantsPage() {
             a.email.toLowerCase().includes(search.toLowerCase())
     )
 
-    // Build grid data: for each (day, hour), list assigned assistants
-    const getAssistantsForCell = (day: number, hour: number) => {
-        return schedules
-            .filter(
-                (s) =>
-                    s.day_of_week === day &&
-                    parseInt(s.start_time.split(":")[0]) === hour
-            )
-            .map((s) => {
-                const assistant = assistants.find((a) => a.id === s.student_id)
-                const idx = assistants.findIndex((a) => a.id === s.student_id)
-                return { schedule: s, assistant, colorIndex: idx >= 0 ? idx : 0 }
+    // Build grid data: list available assistants
+    const getAvailableAssistantsForCell = (day: number, hour: number) => {
+        return assistants
+            .filter((a) => !isBlocked(availability, a.id, day, hour))
+            .map((assistant) => {
+                const idx = assistants.findIndex((a) => a.id === assistant.id)
+                return { assistant, schedule: null, colorIndex: idx >= 0 ? idx : 0 }
             })
     }
 
@@ -99,28 +106,13 @@ export function ITOfficeAssistantsPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header + Search */}
-            <div className="flex items-center gap-3">
-                <div className="relative flex-1 max-w-xs">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search assistants..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10"
-                    />
-                </div>
-                <Badge variant="secondary" className="text-sm px-3 py-1">
-                    <Users className="w-3 h-3 mr-1" />
-                    {assistants.length} IT Assistants
-                </Badge>
-            </div>
+
 
             {/* Weekly Overview Grid */}
             <Card className="bg-card/90 backdrop-blur-xl border-border shadow-lg overflow-hidden">
                 <CardHeader>
-                    <CardTitle className="text-lg">Weekly IT Office Coverage</CardTitle>
-                    <p className="text-sm text-muted-foreground">Overview of all IT Assistants across the week</p>
+                    <CardTitle className="text-lg">IT Assistants Availability Matrix</CardTitle>
+                    <p className="text-sm text-muted-foreground">Overview of available IT Assistants for each time slot</p>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
@@ -140,20 +132,25 @@ export function ITOfficeAssistantsPage() {
                                     <TableRow key={day}>
                                         <TableCell className="font-semibold text-center text-muted-foreground">{day}</TableCell>
                                         {HOURS.map((hour) => {
-                                            const cellAssistants = getAssistantsForCell(dayIdx, hour)
+                                            const cellAssistants = getAvailableAssistantsForCell(dayIdx, hour)
                                             return (
-                                                <TableCell key={hour} className="text-center p-1">
-                                                    <div className="flex flex-wrap gap-1 justify-center">
+                                                <TableCell key={hour} className="p-1 border align-top">
+                                                    <div className="flex flex-col gap-1 min-h-[40px] items-start justify-start p-0.5">
                                                         {cellAssistants.map(({ schedule, assistant, colorIndex }) => {
                                                             const color = getITAssistantColor(colorIndex)
                                                             return (
                                                                 <div
-                                                                    key={schedule.id}
+                                                                    key={assistant?.id || Math.random().toString()}
+                                                                    className="flex items-center gap-1.5 w-full py-1 px-1.5 bg-background/50 border border-border/50 rounded-sm shadow-sm hover:bg-muted/50 transition-colors"
                                                                     title={assistant?.name || "Unknown"}
-                                                                    className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold"
-                                                                    style={{ background: color.bg, color: color.text }}
                                                                 >
-                                                                    {assistant ? getInitials(assistant.name) : "?"}
+                                                                    <div
+                                                                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                                                        style={{ backgroundColor: color.bg }}
+                                                                    />
+                                                                    <span className="text-[10px] text-foreground font-medium truncate leading-tight">
+                                                                        {assistant ? assistant.name : "?"}
+                                                                    </span>
                                                                 </div>
                                                             )
                                                         })}
@@ -169,18 +166,57 @@ export function ITOfficeAssistantsPage() {
                 </CardContent>
             </Card>
 
-            {/* Per-Assistant Schedule */}
+            {/* Per-Assistant Availability */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4 pt-4">
+                <div className="flex flex-col gap-1">
+                    <h3 className="text-lg font-semibold">Per-Assistant Availability Detail</h3>
+                    <p className="text-sm text-muted-foreground">List of exact available time windows for each IT assistant</p>
+                </div>
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search assistants..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-10"
+                        />
+                    </div>
+                    <Badge variant="secondary" className="text-sm px-3 py-1">
+                        <Users className="w-3 h-3 mr-1" />
+                        {assistants.length}
+                    </Badge>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredAssistants.map((assistant, idx) => {
                     const color = getITAssistantColor(idx)
-                    const assistantSchedules = getAssistantSchedules(assistant.id)
-                    const hoursPerWeek = getScheduledHoursPerWeek(assistant.id)
 
-                    // Group by day
-                    const byDay: Record<number, ITOfficeSchedule[]> = {}
-                    assistantSchedules.forEach((s) => {
-                        if (!byDay[s.day_of_week]) byDay[s.day_of_week] = []
-                        byDay[s.day_of_week].push(s)
+                    // Group availability by day dynamically
+                    const assistantAvailBlocks: Record<number, { start: number, end: number }[]> = {}
+                    let totalAvailHours = 0
+
+                    DAYS.forEach((_, dayIdx) => {
+                        const blocks: { start: number, end: number }[] = []
+                        let currentStart: number | null = null;
+
+                        HOURS.forEach((hour, i) => {
+                            const isAvail = !isBlocked(availability, assistant.id, dayIdx, hour)
+                            if (isAvail) {
+                                totalAvailHours++
+                                if (currentStart === null) currentStart = hour
+                                if (i === HOURS.length - 1) {
+                                    blocks.push({ start: currentStart, end: hour + 1 })
+                                }
+                            } else {
+                                if (currentStart !== null) {
+                                    blocks.push({ start: currentStart, end: hour })
+                                    currentStart = null
+                                }
+                            }
+                        })
+                        if (blocks.length > 0) assistantAvailBlocks[dayIdx] = blocks
                     })
 
                     return (
@@ -207,32 +243,30 @@ export function ITOfficeAssistantsPage() {
                                         className="text-xs border-0"
                                         style={{ background: color.bg, color: color.text }}
                                     >
-                                        {hoursPerWeek}h/week
+                                        {totalAvailHours}h avail
                                     </Badge>
                                 </div>
 
-                                {assistantSchedules.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground italic">No schedule assigned yet.</p>
+                                {totalAvailHours === 0 ? (
+                                    <p className="text-xs text-muted-foreground italic">No availability found.</p>
                                 ) : (
                                     <div className="space-y-1">
                                         {DAYS.map((dayName, dayIdx) => {
-                                            const daySlots = byDay[dayIdx]
-                                            if (!daySlots || daySlots.length === 0) return null
+                                            const dayBlocks = assistantAvailBlocks[dayIdx]
+                                            if (!dayBlocks || dayBlocks.length === 0) return null
                                             return (
                                                 <div key={dayIdx} className="flex items-center gap-2">
                                                     <span className="text-xs font-medium text-muted-foreground w-8">{dayName}</span>
                                                     <div className="flex flex-wrap gap-1">
-                                                        {daySlots
-                                                            .sort((a, b) => a.start_time.localeCompare(b.start_time))
-                                                            .map((slot) => (
-                                                                <Badge
-                                                                    key={slot.id}
-                                                                    variant="outline"
-                                                                    className="text-[10px] px-1.5 py-0.5 font-normal"
-                                                                >
-                                                                    {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)}
-                                                                </Badge>
-                                                            ))}
+                                                        {dayBlocks.map((block, bIdx) => (
+                                                            <Badge
+                                                                key={bIdx}
+                                                                variant="outline"
+                                                                className="text-[10px] px-1.5 py-0.5 font-normal"
+                                                            >
+                                                                {formatHour(block.start).replace(':00', '')}–{formatHour(block.end).replace(':00', '')}
+                                                            </Badge>
+                                                        ))}
                                                     </div>
                                                 </div>
                                             )

@@ -112,7 +112,7 @@ export function ITOfficeScheduleAssistantView() {
                 <Card className="bg-card/90 backdrop-blur-xl border-border shadow">
                     <CardContent className="p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-white/10 flex items-center justify-center text-primary dark:text-white">
                                 <Monitor className="w-5 h-5" />
                             </div>
                             <div>
@@ -168,10 +168,10 @@ export function ITOfficeScheduleAssistantView() {
                                         return (
                                             <TableCell
                                                 key={hour}
-                                                className={`text-center p-1 border ${entry ? "bg-primary/10 border-primary/20" : "border-transparent"}`}
+                                                className={`text-center p-1 border ${entry ? "bg-primary/10 dark:bg-primary/20 border-primary/20 dark:border-primary/30" : "border-transparent"}`}
                                             >
                                                 {entry && (
-                                                    <div className="w-full h-8 flex items-center justify-center rounded bg-primary/20 text-primary font-medium text-xs">
+                                                    <div className="w-full h-8 flex items-center justify-center rounded bg-primary/20 dark:bg-primary/40 text-primary dark:text-white font-medium text-xs">
                                                         Shift
                                                     </div>
                                                 )}
@@ -205,7 +205,7 @@ export function ITOfficeScheduleAssistantView() {
                                             {daySlots
                                                 .sort((a, b) => a.start_time.localeCompare(b.start_time))
                                                 .map((slot) => (
-                                                    <Badge key={slot.id} variant="secondary" className="px-2 py-1 font-normal bg-primary/10 text-primary hover:bg-primary/20">
+                                                    <Badge key={slot.id} variant="secondary" className="px-2 py-1 font-normal bg-primary/10 dark:bg-primary/20 text-primary dark:text-white hover:bg-primary/20 dark:hover:bg-primary/30">
                                                         {formatHour(parseInt(slot.start_time.split(":")[0]))} – {formatHour(parseInt(slot.end_time.split(":")[0]))}
                                                     </Badge>
                                                 ))}

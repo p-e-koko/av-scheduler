@@ -117,9 +117,9 @@ export function ITOfficeSchedulePage() {
         fetchAll()
     }, [fetchAll])
 
-    // Get schedule entry for a cell
-    const getScheduleEntry = (day: number, hour: number): ITOfficeSchedule | undefined => {
-        return schedules.find(
+    // Get schedule entries for a cell
+    const getScheduleEntries = (day: number, hour: number): ITOfficeSchedule[] => {
+        return schedules.filter(
             (s) =>
                 s.day_of_week === day &&
                 parseInt(s.start_time.split(":")[0]) === hour
@@ -153,12 +153,13 @@ export function ITOfficeSchedulePage() {
             return
         }
 
-        // Check if slot already occupied
-        if (getScheduleEntry(day, hour)) {
+        // Check if student already in this slot
+        const entries = getScheduleEntries(day, hour)
+        if (entries.some(e => e.student_id === draggingAssistant.id)) {
             setStatusDialog({
                 isOpen: true,
-                title: "Slot Occupied",
-                description: "This slot already has an assigned IT Assistant. Please remove them first.",
+                title: "Already Assigned",
+                description: `${draggingAssistant.name} is already assigned to this slot.`,
                 type: "error",
             })
             return
@@ -194,15 +195,18 @@ export function ITOfficeSchedulePage() {
 
     // Popover open
     const openPopover = async (day: number, hour: number) => {
-        if (getScheduleEntry(day, hour)) return // Already occupied
         setPopoverCell({ day, hour })
         setPopoverSearch("")
         setPopoverLoading(true)
         try {
             const res = await itOfficeScheduleAPI.getAvailableAssistants(day, hour)
-            setPopoverAssistants(res.data)
+            const entries = getScheduleEntries(day, hour)
+            const assignedIds = entries.map(e => e.student_id)
+            setPopoverAssistants(res.data.filter(a => !assignedIds.includes(a.id)))
         } catch {
-            setPopoverAssistants(assistants)
+            const entries = getScheduleEntries(day, hour)
+            const assignedIds = entries.map(e => e.student_id)
+            setPopoverAssistants(assistants.filter(a => !assignedIds.includes(a.id)))
         } finally {
             setPopoverLoading(false)
         }
@@ -307,7 +311,7 @@ export function ITOfficeSchedulePage() {
                                     <TableRow key={day}>
                                         <TableCell className="font-semibold text-center text-muted-foreground text-sm">{day}</TableCell>
                                         {HOURS.map((hour) => {
-                                            const entry = getScheduleEntry(dayIdx, hour)
+                                            const entries = getScheduleEntries(dayIdx, hour)
                                             const isDragHover = dragOver?.day === dayIdx && dragOver?.hour === hour
                                             const dragBlocked = draggingAssistant ? isブロックed(availability, draggingAssistant.id, dayIdx, hour) : false
                                             const isPopoverOpen = popoverCell?.day === dayIdx && popoverCell?.hour === hour
@@ -322,42 +326,55 @@ export function ITOfficeSchedulePage() {
                                             return (
                                                 <TableCell
                                                     key={hour}
-                                                    className={`text-center p-1 cursor-pointer transition-colors border ${cellBg || "border-transparent hover:bg-muted/30"} relative`}
+                                                    className={`text-center p-1 cursor-pointer transition-colors border ${cellBg || "border-transparent hover:bg-muted/30"} relative align-top`}
                                                     onDragOver={(e) => handleDragOver(e, dayIdx, hour)}
                                                     onDragLeave={() => setDragOver(null)}
                                                     onDrop={(e) => handleDrop(e, dayIdx, hour)}
-                                                    onClick={() => !entry && openPopover(dayIdx, hour)}
+                                                    onClick={() => openPopover(dayIdx, hour)}
                                                 >
-                                                    {entry ? (
-                                                        <div className="relative group">
-                                                            {(() => {
-                                                                const color = getAssistantColorByIndex(entry.student_id)
-                                                                return (
-                                                                    <Badge
-                                                                        className="text-xs px-2 py-1 border-0 w-full justify-center"
-                                                                        style={{ background: color.bg, color: color.text }}
-                                                                    >
-                                                                        {entry.student ? getInitials(entry.student.name) : "?"}
-                                                                    </Badge>
-                                                                )
-                                                            })()}
-                                                            <button
-                                                                className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    setDeleteTarget(entry)
-                                                                    setShowDeleteConfirm(true)
-                                                                }}
-                                                                title="Remove"
-                                                            >
-                                                                ×
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="w-full h-6 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                                            <Plus className="w-3 h-3 text-muted-foreground" />
-                                                        </div>
-                                                    )}
+                                                    <div className="flex flex-col gap-1 min-h-[40px] items-start justify-start p-0.5">
+                                                        {entries.length > 0 ? (
+                                                            <>
+                                                                {entries.map(entry => {
+                                                                    const color = getAssistantColorByIndex(entry.student_id)
+                                                                    return (
+                                                                        <div key={entry.id} className="relative group w-full">
+                                                                            <div
+                                                                                className="flex items-center gap-1.5 w-full py-1 px-1.5 bg-background/50 border border-border/50 rounded-sm shadow-sm hover:bg-muted/50 transition-colors"
+                                                                                title={entry.student?.name}
+                                                                            >
+                                                                                <div
+                                                                                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                                                                    style={{ backgroundColor: color.bg }}
+                                                                                />
+                                                                                <span className="text-[10px] text-foreground font-medium truncate leading-tight">
+                                                                                    {entry.student ? entry.student.name : "?"}
+                                                                                </span>
+                                                                            </div>
+                                                                            <button
+                                                                                className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center opacity-0 group-[&:hover]:opacity-100 transition-opacity z-10 shadow-sm"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation()
+                                                                                    setDeleteTarget(entry)
+                                                                                    setShowDeleteConfirm(true)
+                                                                                }}
+                                                                                title="Remove"
+                                                                            >
+                                                                                ×
+                                                                            </button>
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                                <div className="w-full flex justify-center mt-0.5 opacity-0 hover:opacity-100 transition-opacity pb-0.5">
+                                                                    <Plus className="w-3 h-3 text-muted-foreground" />
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <div className="w-full h-full min-h-[30px] flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                                <Plus className="w-3 h-3 text-muted-foreground" />
+                                                            </div>
+                                                        )}
+                                                    </div>
 
                                                     {/* Click-to-assign Popover */}
                                                     {isPopoverOpen && (
