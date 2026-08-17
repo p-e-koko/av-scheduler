@@ -8,12 +8,15 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_MEMORY_LIMIT=-1
 RUN composer install \
     --no-dev \
-    --prefer-dist \
+    --prefer-source \
     --no-scripts \
     --no-interaction \
     --no-progress \
     --ignore-platform-reqs \
     --optimize-autoloader
+
+# Clean up git folders from source installations to reduce image size
+RUN find vendor -name ".git" -type d -prune -exec rm -rf '{}' + || true
 
 # -----------------------
 # Stage 2: Final Runtime
