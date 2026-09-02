@@ -11,6 +11,7 @@ class AuditLog extends Model
         'user_id',
         'user_name',
         'role',
+        'department',
         'action',
         'details',
         'ip_address',
@@ -24,5 +25,10 @@ class AuditLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function scopeForDepartment($query, string $department)
+    {
+        return $query->where('department', $department);
     }
 }

@@ -166,17 +166,31 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           </div>
           <div
             onClick={() => {
-              router.push('/dashboard/admin/audit-logs')
+              router.push('/dashboard/admin/audit-logs/av-it')
               if (isMobile && onClose) onClose()
             }}
-            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname === '/dashboard/admin/audit-logs'
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.includes('/dashboard/admin/audit-logs/av-it')
               ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
               : 'text-muted-foreground hover:bg-accent'
-              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname === '/dashboard/admin/audit-logs' ? 'border-primary/20' : 'border-transparent'
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.includes('/dashboard/admin/audit-logs/av-it') ? 'border-primary/20' : 'border-transparent'
               }`}
           >
             <FileText className="w-5 h-5 flex-shrink-0" />
-            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Audit Logs</span>}
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">AV-IT Audit</span>}
+          </div>
+          <div
+            onClick={() => {
+              router.push('/dashboard/admin/audit-logs/marketing')
+              if (isMobile && onClose) onClose()
+            }}
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.includes('/dashboard/admin/audit-logs/marketing')
+              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              : 'text-muted-foreground hover:bg-accent'
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.includes('/dashboard/admin/audit-logs/marketing') ? 'border-primary/20' : 'border-transparent'
+              }`}
+          >
+            <FileText className="w-5 h-5 flex-shrink-0" />
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Marketing Audit</span>}
           </div>
           <div
             onClick={() => {

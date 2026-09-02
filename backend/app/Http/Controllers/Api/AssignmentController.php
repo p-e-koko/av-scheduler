@@ -41,7 +41,14 @@ class AssignmentController extends Controller
             Assignment::whereIn('id', $assignmentsToConfirm)->update(['status' => 'confirmed']);
         }
 
+        $user  = $request->user();
         $query = Assignment::with(['creator', 'users', 'mediaBooking.customer']);
+
+        // ── Department scoping ─────────────────────────────────────────────
+        if (!$user->hasRole('admin')) {
+            $dept = $user->getDepartment();
+            $query->where('department', $dept);
+        }
 
         // Add filtering by status
         if ($request->has('status')) {
@@ -98,6 +105,10 @@ class AssignmentController extends Controller
     {
         $assignmentData = $request->validated();
         $assignmentData['created_by'] = auth()->id();
+
+        // Auto-determine department from the creating user's role
+        $creator = $request->user();
+        $assignmentData['department'] = $creator->getDepartment();
 
         $assignment = Assignment::create($assignmentData);
 
@@ -515,6 +526,13 @@ class AssignmentController extends Controller
      */
     public function rejectAssignment(Request $request, Assignment $assignment): JsonResponse
     {
+        // Student ambassadors cannot reject assignments
+        if (auth()->user()->hasRole('student_ambassador')) {
+            return response()->json([
+                'message' => 'Student ambassadors cannot reject assignments. You may only accept.'
+            ], 403);
+        }
+
         $request->validate([
             'reason' => 'required|string|max:1000',
         ]);

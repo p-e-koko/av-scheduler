@@ -31,6 +31,7 @@ class Assignment extends Model
         'event_end_datetime',
         'description',
         'status',
+        'department',
         'created_by',
     ];
 
@@ -297,5 +298,46 @@ class Assignment extends Model
     public function mediaBooking()
     {
         return $this->hasOne(\App\Models\MediaBooking::class, 'assignment_id');
+    }
+
+    /**
+     * Marketing equipment assigned to this assignment.
+     */
+    public function marketingEquipment()
+    {
+        return $this->belongsToMany(
+            \App\Models\MarketingEquipment::class,
+            'marketing_assignment_equipment',
+            'assignment_id',
+            'marketing_equipment_id'
+        )->withPivot('quantity_used')->withTimestamps();
+    }
+
+    // -------------------------------------------------------------------------
+    // Department Scopes
+    // -------------------------------------------------------------------------
+
+    /**
+     * Scope to AV-IT assignments only.
+     */
+    public function scopeAvIt($query)
+    {
+        return $query->where('department', 'av_it');
+    }
+
+    /**
+     * Scope to Marketing assignments only.
+     */
+    public function scopeMarketing($query)
+    {
+        return $query->where('department', 'marketing');
+    }
+
+    /**
+     * Scope by a specific department string.
+     */
+    public function scopeForDepartment($query, string $department)
+    {
+        return $query->where('department', $department);
     }
 }

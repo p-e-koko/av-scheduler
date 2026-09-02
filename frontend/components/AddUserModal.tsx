@@ -60,10 +60,10 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
       } else {
         newRoles = newRoles.filter(r => r !== role);
       }
-      
+
       // Ensure at least one role is selected or handle empty? 
       // User must have at least one role usually.
-      
+
       const newData = { ...prev, roles: newRoles };
 
       // If student role added and no promised hours, default to 1
@@ -120,7 +120,7 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
       submitData.append('phone_number', formData.phone_number)
       submitData.append('student_id', formData.student_id)
       submitData.append('username', formData.username)
-      
+
       // Append roles array
       formData.roles.forEach((role, index) => {
         submitData.append(`roles[${index}]`, role)
@@ -326,25 +326,47 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
             <Label className="text-sm font-medium text-foreground">
               Roles *
             </Label>
-            <div className="flex flex-wrap gap-4 p-3 bg-background/80 backdrop-blur-xl border border-input rounded-md">
-              {['customer', 'student', 'coordinator', 'supervisor', 'admin'].map((roleOption) => (
-                <label key={roleOption} className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.roles.includes(roleOption)}
-                    onChange={(e) => handleRoleChange(roleOption, e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm capitalize">{roleOption}</span>
-                </label>
-              ))}
+            <div className="flex flex-col gap-2 p-3 bg-background/80 backdrop-blur-xl border border-input rounded-md">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">AV / IT Department</p>
+              <div className="flex flex-wrap gap-4">
+                {['customer', 'student', 'coordinator', 'supervisor', 'admin'].map((roleOption) => (
+                  <label key={roleOption} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.roles.includes(roleOption)}
+                      onChange={(e) => handleRoleChange(roleOption, e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm capitalize">{roleOption}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="h-px bg-border my-1" />
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Marketing Department</p>
+              <div className="flex flex-wrap gap-4">
+                {[
+                  { value: 'marketing_supervisor', label: 'Marketing Supervisor' },
+                  { value: 'marketing_coordinator', label: 'Marketing Coordinator' },
+                  { value: 'student_ambassador', label: 'Student Ambassador' },
+                ].map(({ value, label }) => (
+                  <label key={value} className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.roles.includes(value)}
+                      onChange={(e) => handleRoleChange(value, e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                    />
+                    <span className="text-sm">{label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Promised Hours */}
           <div className="space-y-2">
             <Label htmlFor="promised_hours_per_week" className="text-sm font-medium text-foreground">
-              Promised Hours per Week {formData.roles.includes('student') && '*'}
+              Promised Hours per Week {(formData.roles.includes('student') || formData.roles.includes('student_ambassador')) && '*'}
             </Label>
             <Input
               id="promised_hours_per_week"
@@ -356,16 +378,17 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
               value={formData.promised_hours_per_week}
               onChange={handleInputChange}
               disabled={loading}
-              required={formData.roles.includes('student')}
+              required={formData.roles.includes('student') || formData.roles.includes('student_ambassador')}
               className="bg-background/80 backdrop-blur-xl border-input focus:border-primary placeholder:text-muted-foreground text-foreground"
-              placeholder={formData.roles.includes('student') ? "Required for students (1-20 hours)" : "0-20 hours"}
+              placeholder={(formData.roles.includes('student') || formData.roles.includes('student_ambassador')) ? "Required (1-20 hours)" : "0-20 hours"}
             />
-            {formData.roles.includes('student') ? (
-              <p className="text-xs text-muted-foreground">Students must promise 1-20 hours per week</p>
+            {(formData.roles.includes('student') || formData.roles.includes('student_ambassador')) ? (
+              <p className="text-xs text-muted-foreground">Students/Ambassadors must promise 1-20 hours per week</p>
             ) : (
               <p className="text-xs text-muted-foreground">Maximum 20 hours per week</p>
             )}
           </div>
+
 
           {/* Profile Picture */}
           <div className="space-y-2">

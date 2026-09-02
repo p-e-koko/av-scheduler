@@ -1304,6 +1304,7 @@ export const auditLogAPI = {
     role?: string;
     start_date?: string;
     end_date?: string;
+    department?: string;
   }): Promise<AuditLogsResponse> => {
     const queryParams = new URLSearchParams();
     if (params.page) queryParams.append('page', params.page.toString());
@@ -1311,6 +1312,7 @@ export const auditLogAPI = {
     if (params.role) queryParams.append('role', params.role);
     if (params.start_date) queryParams.append('start_date', params.start_date);
     if (params.end_date) queryParams.append('end_date', params.end_date);
+    if (params.department) queryParams.append('department', params.department);
 
     return apiCall<AuditLogsResponse>(`/audit-logs?${queryParams.toString()}`);
   },

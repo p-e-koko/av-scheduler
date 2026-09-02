@@ -10,8 +10,24 @@ class AuditLogController extends Controller
 {
     public function index(Request $request)
     {
+        $user  = $request->user();
         $query = AuditLog::query();
 
+        // ── Department scoping ────────────────────────────────────────────────
+        if ($user->hasRole('admin')) {
+            // Admin can filter by a specific department or see all
+            if ($request->filled('department')) {
+                $query->where('department', $request->input('department'));
+            }
+            // No filter = all departments
+        } elseif ($user->hasAnyRole(['marketing_supervisor', 'marketing_coordinator'])) {
+            $query->where('department', 'marketing');
+        } else {
+            // AV-IT roles (supervisor, coordinator)
+            $query->where('department', 'av_it');
+        }
+
+        // ── Text search ───────────────────────────────────────────────────────
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -33,7 +49,7 @@ class AuditLogController extends Controller
              $query->whereDate('created_at', '<=', $request->input('end_date'));
         }
 
-        $logs = $query->latest()->paginate(10);
+        $logs = $query->latest()->paginate(15);
 
         return response()->json($logs);
     }

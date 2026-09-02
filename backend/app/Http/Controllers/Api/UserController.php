@@ -25,6 +25,17 @@ class UserController extends Controller
 
         $query = User::query()->select('users.*');
 
+        $currentUser = $request->user();
+
+        if ($currentUser->hasAnyRole(['marketing_supervisor', 'marketing_coordinator'])) {
+            // Only allow seeing marketing users
+            $query->whereRaw("exists (select * from \"model_has_roles\" where \"model_has_roles\".\"model_id\"::uuid = \"users\".\"id\" and \"model_has_roles\".\"role_id\" in (select \"id\" from \"roles\" where \"name\" in ('marketing_supervisor', 'marketing_coordinator', 'student_ambassador')))");
+        } elseif ($currentUser->hasAnyRole(['supervisor', 'coordinator'])) {
+            // Only allow seeing AV-IT users
+            $query->whereRaw("exists (select * from \"model_has_roles\" where \"model_has_roles\".\"model_id\"::uuid = \"users\".\"id\" and \"model_has_roles\".\"role_id\" in (select \"id\" from \"roles\" where \"name\" in ('supervisor', 'coordinator', 'student', 'customer')))");
+        }
+
+
         if ($request->has('role')) {
             $role = $request->role;
             // Use whereRaw to force UUID casting for Postgres compatibility

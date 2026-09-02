@@ -15,6 +15,10 @@ export const getRoleBasedDashboardPath = (role: string | string[]): string => {
   if (roles.includes('coordinator')) return '/dashboard/coordinator';
   if (roles.includes('student')) return '/dashboard/student';
   if (roles.includes('customer')) return '/dashboard/customer';
+  // Marketing roles
+  if (roles.includes('marketing_supervisor')) return '/dashboard/marketing-supervisor';
+  if (roles.includes('marketing_coordinator')) return '/dashboard/marketing-coordinator';
+  if (roles.includes('student_ambassador')) return '/dashboard/student-ambassador';
 
   return '/dashboard/student';
 };
@@ -34,6 +38,10 @@ export const canAccessDashboard = (userRole: string | string[], dashboardPath: s
     'student': ['/dashboard/student', '/dashboard/inventory', '/dashboard/keys'],
     'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys'],
     'customer': ['/dashboard/customer'],
+    // Marketing roles — isolated from AV-IT paths
+    'marketing_supervisor': ['/dashboard/marketing-supervisor'],
+    'marketing_coordinator': ['/dashboard/marketing-coordinator'],
+    'student_ambassador': ['/dashboard/student-ambassador'],
   };
 
   return roles.some(role => {
@@ -56,7 +64,10 @@ export const getAllowedDashboards = (userRole: string | string[]): string[] => {
       '/dashboard/supervisor',
       '/dashboard/inventory',
       '/dashboard/customer',
-      '/dashboard/keys'
+      '/dashboard/keys',
+      '/dashboard/marketing-supervisor',
+      '/dashboard/marketing-coordinator',
+      '/dashboard/student-ambassador',
     ];
   }
 
@@ -65,6 +76,10 @@ export const getAllowedDashboards = (userRole: string | string[]): string[] => {
     'student': ['/dashboard/student', '/dashboard/inventory', '/dashboard/keys'],
     'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys'],
     'customer': ['/dashboard/customer'],
+    // Marketing roles
+    'marketing_supervisor': ['/dashboard/marketing-supervisor'],
+    'marketing_coordinator': ['/dashboard/marketing-coordinator'],
+    'student_ambassador': ['/dashboard/student-ambassador'],
   };
 
   const allowed = new Set<string>();
@@ -87,3 +102,12 @@ export const getDashboardType = (pathname: string): string | null => {
   return match ? match[1] : null;
 };
 
+// Helper to determine which department a role belongs to
+export const getRoleDepartment = (role: string): 'av_it' | 'marketing' | 'admin' | null => {
+  const marketingRoles = ['marketing_supervisor', 'marketing_coordinator', 'student_ambassador'];
+  const avItRoles = ['supervisor', 'coordinator', 'student'];
+  if (role === 'admin') return 'admin';
+  if (marketingRoles.includes(role)) return 'marketing';
+  if (avItRoles.includes(role)) return 'av_it';
+  return null;
+};

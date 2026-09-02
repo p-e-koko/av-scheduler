@@ -126,6 +126,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get marketing supervisor schedule entries for this supervisor.
+     */
+    public function marketingSupervisorSchedules()
+    {
+        return $this->hasMany(MarketingSupervisorSchedule::class, 'user_id');
+    }
+
+    /**
      * Check if this user is an IT Assistant.
      */
     public function isITAssistant(): bool
@@ -196,6 +204,61 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isStudent(): bool
     {
         return $this->hasRole('student');
+    }
+
+    /**
+     * Check if user is a marketing supervisor.
+     */
+    public function isMarketingSupervisor(): bool
+    {
+        return $this->hasRole('marketing_supervisor');
+    }
+
+    /**
+     * Check if user is a marketing coordinator.
+     */
+    public function isMarketingCoordinator(): bool
+    {
+        return $this->hasRole('marketing_coordinator');
+    }
+
+    /**
+     * Check if user is a student ambassador (marketing student).
+     */
+    public function isStudentAmbassador(): bool
+    {
+        return $this->hasRole('student_ambassador');
+    }
+
+    /**
+     * Get the department this user belongs to.
+     * Returns 'marketing' for all marketing roles, 'av_it' for all others.
+     */
+    public function getDepartment(): string
+    {
+        $marketingRoles = ['marketing_supervisor', 'marketing_coordinator', 'student_ambassador'];
+        foreach ($marketingRoles as $role) {
+            if ($this->hasRole($role)) {
+                return 'marketing';
+            }
+        }
+        return 'av_it';
+    }
+
+    /**
+     * Check if this user belongs to the marketing department.
+     */
+    public function isMarketingDepartment(): bool
+    {
+        return $this->getDepartment() === 'marketing';
+    }
+
+    /**
+     * Check if this user belongs to the AV-IT department.
+     */
+    public function isAvItDepartment(): bool
+    {
+        return $this->getDepartment() === 'av_it';
     }
 
     /**
