@@ -177,7 +177,7 @@ export function CreateMarketingAssignmentModal({ isOpen, onClose, onAssignmentCr
                         equipment_ids: selectedEquipment.map(e => e.id),
                         start_datetime: event_start_datetime,
                         end_datetime: event_end_datetime,
-                        exclude_assignment_id: assignmentToEdit?.id
+                        exclude_assignment: assignmentToEdit?.id
                     })
                 } catch (conflictErr: any) {
                     throw new Error(conflictErr.response?.data?.message || 'Equipment conflict detected.')
@@ -214,7 +214,7 @@ export function CreateMarketingAssignmentModal({ isOpen, onClose, onAssignmentCr
             const toRemoveEq = currentEq.filter(e => !newEqIds.has(e.id))
 
             await Promise.all([
-                ...toAddEq.map(e => api.post(`/assignments/${assignmentId}/marketing-equipment/assign`, { marketing_equipment_id: e.id, quantity_used: 1 })),
+                ...toAddEq.map(e => api.post(`/assignments/${assignmentId}/marketing-equipment/assign`, { equipment_ids: [e.id], quantity_used: 1 })),
                 ...toRemoveEq.map(e => api.delete(`/assignments/${assignmentId}/marketing-equipment/${e.id}`))
             ])
 
