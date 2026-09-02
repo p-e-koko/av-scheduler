@@ -145,7 +145,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "dashboard"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "dashboard" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -160,7 +160,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "students"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "students" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -175,7 +175,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "student-schedules"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "student-schedules" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -190,7 +190,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "assignment-schedules"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "assignment-schedules" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -204,7 +204,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/inventory')
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/inventory') ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -218,7 +218,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/keys')
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/keys') ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -234,7 +234,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "it-office-schedule"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "it-office-schedule" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -250,7 +250,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "it-office-assistants"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "it-office-assistants" ? 'border-primary/20' : 'border-transparent'
               }`}

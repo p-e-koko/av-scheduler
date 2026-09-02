@@ -5,14 +5,14 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Custom color scheme - Blue palette */
-  --primary: #052659;
+  /* Custom color scheme - AV-IT Blue palette */
+  --primary: #17365f;
   --primary-foreground: #ffffff;
-  --primary-dark: #021024;
-  --primary-medium: #5483B3;
-  --primary-light: #7DA0CA;
-  --primary-accent: #C1E8FF;
-  
+  --primary-dark: #0d1e35;
+  --primary-medium: #275c9e;
+  --primary-light: #588ecf;
+  --primary-accent: #aed1f9;
+
   /* Base colors */
   --background: #ffffff;
   --foreground: #021024;
@@ -36,43 +36,61 @@
 
 .dark {
   /* Dark mode colors - SmartCribs / Zinc Palette */
-  --primary: #091022; /* Darker Blue (Blue 700) */
+  --primary: #091022;
+  /* Darker Blue (Blue 700) */
   --primary-foreground: #ffffff;
   --primary-dark: #1e3a8a;
   --primary-medium: #2563eb;
   --primary-light: #3b82f6;
   --primary-accent: #172554;
 
-  --background: #09090b; /* Zinc 950 - Deep Black */
-  --foreground: #fafafa; /* Zinc 50 - White */
-  --card: #18181b; /* Zinc 900 - Dark Grey */
+  --background: #09090b;
+  /* Zinc 950 - Deep Black */
+  --foreground: #fafafa;
+  /* Zinc 50 - White */
+  --card: #18181b;
+  /* Zinc 900 - Dark Grey */
   --card-foreground: #fafafa;
   --popover: #18181b;
   --popover-foreground: #fafafa;
-  --secondary: #27272a; /* Zinc 800 */
+  --secondary: #27272a;
+  /* Zinc 800 */
   --secondary-foreground: #fafafa;
   --muted: #27272a;
-  --muted-foreground: #a1a1aa; /* Zinc 400 */
+  --muted-foreground: #a1a1aa;
+  /* Zinc 400 */
   --accent: #27272a;
   --accent-foreground: #fafafa;
   --destructive: #7f1d1d;
   --destructive-foreground: #fef2f2;
-  --border: #27272a; /* Zinc 800 */
+  --border: #27272a;
+  /* Zinc 800 */
   --input: #27272a;
   --ring: var(--primary);
 }
 
 @theme inline {
-  --color-marketing-50: #fcf2f5;
-  --color-marketing-100: #f8e1e7;
-  --color-marketing-200: #f1c3d0;
-  --color-marketing-300: #e69eaa;
-  --color-marketing-400: #d96f83;
-  --color-marketing-500: #cb445d;
-  --color-marketing-600: #c01f48;
-  --color-marketing-700: #a31637;
-  --color-marketing-800: #881531;
-  --color-marketing-900: #73152d;
+  --color-primary-50: #f0f4f9;
+  --color-primary-100: #dce8f1;
+  --color-primary-200: #bed2e6;
+  --color-primary-300: #92b5d4;
+  --color-primary-400: #6292c2;
+  --color-primary-500: #3f74aa;
+  --color-primary-600: #2c5a89;
+  --color-primary-700: #244870;
+  --color-primary-800: #203e5e;
+  --color-primary-900: #17365f;
+
+  --color-marketing-50: #fdf8eb;
+  --color-marketing-100: #f9ebd0;
+  --color-marketing-200: #f4d8a1;
+  --color-marketing-300: #efc06d;
+  --color-marketing-400: #edae48;
+  --color-marketing-500: #e4971c;
+  --color-marketing-600: #f0ab20;
+  --color-marketing-700: #a86c10;
+  --color-marketing-800: #875512;
+  --color-marketing-900: #6f4514;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

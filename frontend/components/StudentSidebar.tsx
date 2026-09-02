@@ -148,7 +148,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "profile"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "profile" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -164,7 +164,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
                 if (isMobile && onClose) onClose()
               }}
               className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "assignments"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+                ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
                 : 'text-muted-foreground hover:bg-accent'
                 } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
                 }`}
@@ -179,7 +179,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "schedule"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "schedule" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -221,7 +221,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
                 if (isMobile && onClose) onClose()
               }}
               className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "it-office-schedule"
-                ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+                ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
                 : 'text-muted-foreground hover:bg-accent'
                 } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "it-office-schedule" ? 'border-primary/20' : 'border-transparent'
                 }`}

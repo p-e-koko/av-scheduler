@@ -150,7 +150,7 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "assignments"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "assignments" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -165,7 +165,7 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "students"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "students" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -180,7 +180,7 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "schedules"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "schedules" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -195,7 +195,7 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "positions"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "positions" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -210,7 +210,7 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === "recycle-bin"
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === "recycle-bin" ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -224,7 +224,7 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/inventory')
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/inventory') ? 'border-primary/20' : 'border-transparent'
               }`}
@@ -238,7 +238,7 @@ export function CoordinatorSidebar({ activeTab, onTabChange, isOpen, onClose, us
               if (isMobile && onClose) onClose()
             }}
             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/keys')
-              ? 'text-primary dark:text-white bg-primary/10 border-primary/20'
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
               : 'text-muted-foreground hover:bg-accent'
               } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/keys') ? 'border-primary/20' : 'border-transparent'
               }`}
