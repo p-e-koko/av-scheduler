@@ -109,12 +109,12 @@ export function MarketingAssignmentDetailModal({
                     {/* Basic info */}
                     <div className="space-y-3">
                         {[
-                            { icon: <FileText className="w-4 h-4 text-pink-500" />, label: 'Event Name', value: assignment.event_name },
-                            { icon: <MapPin className="w-4 h-4 text-pink-500" />, label: 'Location', value: assignment.event_location },
-                            { icon: <HelpCircle className="w-4 h-4 text-pink-500" />, label: 'Description', value: assignment.description },
+                            { icon: <FileText className="w-4 h-4 text-marketing-500" />, label: 'Event Name', value: assignment.event_name },
+                            { icon: <MapPin className="w-4 h-4 text-marketing-500" />, label: 'Location', value: assignment.event_location },
+                            { icon: <HelpCircle className="w-4 h-4 text-marketing-500" />, label: 'Description', value: assignment.description },
                         ].filter(r => r.value).map(row => (
                             <div key={row.label} className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-pink-50 dark:bg-pink-900/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <div className="w-8 h-8 rounded-lg bg-marketing-50 dark:bg-marketing-900/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                                     {row.icon}
                                 </div>
                                 <div>
@@ -124,8 +124,8 @@ export function MarketingAssignmentDetailModal({
                             </div>
                         ))}
                         <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-pink-50 dark:bg-pink-900/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <Calendar className="w-4 h-4 text-pink-500" />
+                            <div className="w-8 h-8 rounded-lg bg-marketing-50 dark:bg-marketing-900/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <Calendar className="w-4 h-4 text-marketing-500" />
                             </div>
                             <div>
                                 <p className="text-xs font-medium text-muted-foreground">Date & Time</p>
@@ -140,7 +140,7 @@ export function MarketingAssignmentDetailModal({
                     {/* Equipment */}
                     <div className="border-t border-border pt-4">
                         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                            <Package className="w-4 h-4 text-pink-500" />
+                            <Package className="w-4 h-4 text-marketing-500" />
                             Equipment
                         </h4>
                         {eqLoading ? (
@@ -164,20 +164,20 @@ export function MarketingAssignmentDetailModal({
                     {/* Assigned Ambassadors */}
                     <div className="border-t border-border pt-4">
                         <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                            <User className="w-4 h-4 text-pink-500" />
+                            <User className="w-4 h-4 text-marketing-500" />
                             Assigned Ambassadors ({assignment.users?.length || 0})
                         </h4>
                         {assignment.users && assignment.users.length > 0 ? (
                             <div className="space-y-2">
                                 {(assignment.users as any[]).map((u: any) => (
-                                    <div key={u.id} className={`flex items-center justify-between p-3 rounded-lg border ${u.id === currentUserId ? 'border-pink-300/60 bg-pink-50/40 dark:bg-pink-900/10' : 'border-border bg-muted/40'}`}>
+                                    <div key={u.id} className={`flex items-center justify-between p-3 rounded-lg border ${u.id === currentUserId ? 'border-marketing-300/60 bg-marketing-50/40 dark:bg-marketing-900/10' : 'border-border bg-muted/40'}`}>
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8">
                                                 <AvatarImage src={u.profile_picture || u.profile_picture_url} />
-                                                <AvatarFallback className="text-xs bg-pink-100 text-pink-700">{u.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                                <AvatarFallback className="text-xs bg-marketing-100 text-marketing-700">{u.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p className="text-sm font-medium text-foreground">{u.name} {u.id === currentUserId && <span className="text-xs text-pink-500">(you)</span>}</p>
+                                                <p className="text-sm font-medium text-foreground">{u.name} {u.id === currentUserId && <span className="text-xs text-marketing-500">(you)</span>}</p>
                                                 <p className="text-xs text-muted-foreground">{u.email}</p>
                                             </div>
                                         </div>

@@ -48,6 +48,14 @@ class MarketingEquipment extends Model
         return $this->hasMany(MarketingAssignmentEquipment::class, 'marketing_equipment_id');
     }
 
+    /**
+     * Pre-bookings for this equipment by student ambassadors.
+     */
+    public function bookings()
+    {
+        return $this->hasMany(MarketingEquipmentBooking::class, 'marketing_equipment_id');
+    }
+
     // -------------------------------------------------------------------------
     // Scopes
     // -------------------------------------------------------------------------
@@ -73,10 +81,18 @@ class MarketingEquipment extends Model
     public function refreshStatus(): void
     {
         $now = now();
-        $inUse = $this->assignments()
+        $inUseByAssignment = $this->assignments()
             ->where('event_start_datetime', '<=', $now)
             ->where('event_end_datetime', '>=', $now)
             ->exists();
+
+        $inUseByBooking = $this->bookings()
+            ->where('status', 'scheduled')
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>=', $now)
+            ->exists();
+
+        $inUse = $inUseByAssignment || $inUseByBooking;
 
         if ($this->status !== 'maintenance') {
             $this->status = $inUse ? 'in_use' : 'available';
@@ -87,9 +103,17 @@ class MarketingEquipment extends Model
     public function isCurrentlyInUse(): bool
     {
         $now = now();
-        return $this->assignments()
+        $inUseByAssignment = $this->assignments()
             ->where('event_start_datetime', '<=', $now)
             ->where('event_end_datetime', '>=', $now)
             ->exists();
+
+        $inUseByBooking = $this->bookings()
+            ->where('status', 'scheduled')
+            ->where('start_time', '<=', $now)
+            ->where('end_time', '>=', $now)
+            ->exists();
+
+        return $inUseByAssignment || $inUseByBooking;
     }
 }

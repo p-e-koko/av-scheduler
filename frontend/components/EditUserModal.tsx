@@ -353,7 +353,7 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
                       type="checkbox"
                       checked={formData.roles.includes(value)}
                       onChange={(e) => handleRoleChange(value, e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500"
+                      className="w-4 h-4 rounded border-gray-300 text-marketing-600 focus:ring-marketing-500"
                     />
                     <span className="text-sm">{label}</span>
                   </label>

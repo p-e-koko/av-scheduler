@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Search, RefreshCw, Package, History, Edit2, Trash2, RotateCcw } from "lucide-react"
+import { Plus, Search, RefreshCw, Package, History, Edit2, Trash2, CalendarPlus, CalendarMinus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -47,6 +47,14 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
     const [showHistory, setShowHistory] = useState(false)
     const [history, setHistory] = useState<any[]>([])
     const [historyLoading, setHistoryLoading] = useState(false)
+
+    // Booking state
+    const [showBooking, setShowBooking] = useState(false)
+    const [bookingTarget, setBookingTarget] = useState<MarketingEquipment | null>(null)
+    const [bookingStart, setBookingStart] = useState('')
+    const [bookingEnd, setBookingEnd] = useState('')
+    const [bookingError, setBookingError] = useState<string | null>(null)
+    const [bookingLoading, setBookingLoading] = useState(false)
 
     const fetchEquipment = useCallback(async () => {
         setLoading(true)
@@ -105,6 +113,35 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
         finally { setHistoryLoading(false) }
     }
 
+    const openBooking = (eq: MarketingEquipment) => {
+        setBookingTarget(eq)
+        setBookingStart('')
+        setBookingEnd('')
+        setBookingError(null)
+        setShowBooking(true)
+    }
+
+    const handleBook = async () => {
+        if (!bookingStart || !bookingEnd) {
+            setBookingError('Please select both start and end times')
+            return
+        }
+        setBookingLoading(true)
+        setBookingError(null)
+        try {
+            await api.post(`/marketing-equipment/${bookingTarget?.id}/book`, {
+                start_time: bookingStart,
+                end_time: bookingEnd,
+            })
+            setShowBooking(false)
+            fetchEquipment()
+        } catch (e: any) {
+            setBookingError(e?.response?.data?.message || 'Failed to book equipment')
+        } finally {
+            setBookingLoading(false)
+        }
+    }
+
     return (
         <div className="space-y-4">
             {/* Toolbar */}
@@ -124,7 +161,7 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
                         Refresh
                     </Button>
                     {!readonly && (
-                        <Button size="sm" onClick={openCreate} className="bg-pink-600 hover:bg-pink-700 text-white">
+                        <Button size="sm" onClick={openCreate} className="bg-marketing-600 hover:bg-marketing-700 text-white">
                             <Plus className="w-4 h-4 mr-1" />
                             Add Equipment
                         </Button>
@@ -153,7 +190,7 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
                             <tr key={eq.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                                 <td className="px-4 py-3 font-medium text-foreground">
                                     <div className="flex items-center gap-2">
-                                        <Package className="w-4 h-4 text-pink-500 flex-shrink-0" />
+                                        <Package className="w-4 h-4 text-marketing-500 flex-shrink-0" />
                                         {eq.name}
                                     </div>
                                 </td>
@@ -170,6 +207,9 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
                                     <div className="flex items-center justify-end gap-1">
                                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openHistory(eq)}>
                                             <History className="w-3.5 h-3.5" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:text-primary" onClick={() => openBooking(eq)}>
+                                            <CalendarPlus className="w-3.5 h-3.5" />
                                         </Button>
                                         {!readonly && (
                                             <>
@@ -215,7 +255,7 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowForm(false)} disabled={saving}>Cancel</Button>
-                        <Button onClick={handleSave} disabled={saving} className="bg-pink-600 hover:bg-pink-700 text-white">
+                        <Button onClick={handleSave} disabled={saving} className="bg-marketing-600 hover:bg-marketing-700 text-white">
                             {saving ? 'Saving...' : editTarget ? 'Save Changes' : 'Add Equipment'}
                         </Button>
                     </DialogFooter>
@@ -228,7 +268,7 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
                     <DialogHeader>
                         <DialogTitle>
                             <div className="flex items-center gap-2">
-                                <History className="w-4 h-4 text-pink-500" />
+                                <History className="w-4 h-4 text-marketing-500" />
                                 Equipment History — {selectedEquipment?.name}
                             </div>
                         </DialogTitle>
@@ -254,6 +294,35 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
                     )}
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowHistory(false)}>Close</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Booking Dialog */}
+            <Dialog open={showBooking} onOpenChange={open => !open && setShowBooking(false)}>
+                <DialogContent className="sm:max-w-[420px]">
+                    <DialogHeader>
+                        <DialogTitle>Book Equipment</DialogTitle>
+                        <DialogDescription>
+                            Reserve {bookingTarget?.name} for a specific time period.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        {bookingError && <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded">{bookingError}</div>}
+                        <div className="space-y-1.5">
+                            <Label>Start Time *</Label>
+                            <Input type="datetime-local" value={bookingStart} onChange={e => setBookingStart(e.target.value)} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>End Time *</Label>
+                            <Input type="datetime-local" value={bookingEnd} onChange={e => setBookingEnd(e.target.value)} />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowBooking(false)} disabled={bookingLoading}>Cancel</Button>
+                        <Button onClick={handleBook} disabled={bookingLoading} className="bg-marketing-600 hover:bg-marketing-700 text-white">
+                            {bookingLoading ? 'Booking...' : 'Book Equipment'}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

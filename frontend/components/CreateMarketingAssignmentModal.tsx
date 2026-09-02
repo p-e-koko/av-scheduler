@@ -288,7 +288,7 @@ export function CreateMarketingAssignmentModal({ isOpen, onClose, onAssignmentCr
                     <div className="grid grid-cols-2 gap-6 border-t border-border pt-4 mt-2">
                         {/* Equipment Selection */}
                         <div className="space-y-3">
-                            <Label className="flex items-center gap-2 font-bold"><Package className="w-4 h-4 text-pink-500" />Equipment</Label>
+                            <Label className="flex items-center gap-2 font-bold"><Package className="w-4 h-4 text-marketing-500" />Equipment</Label>
                             <div className="flex gap-2">
                                 <select value={selectedEqId} onChange={e => setSelectedEqId(e.target.value)} className="flex-1 rounded-md border border-input bg-muted/50 px-3 text-sm h-9">
                                     <option value="">Select Equipment...</option>
@@ -296,7 +296,7 @@ export function CreateMarketingAssignmentModal({ isOpen, onClose, onAssignmentCr
                                         <option key={e.id} value={e.id}>{e.name} (Qty: {e.quantity})</option>
                                     ))}
                                 </select>
-                                <Button type="button" onClick={handleAddEquipment} disabled={!selectedEqId} size="sm" className="bg-pink-600 hover:bg-pink-700 text-white">Add</Button>
+                                <Button type="button" onClick={handleAddEquipment} disabled={!selectedEqId} size="sm" className="bg-marketing-600 hover:bg-marketing-700 text-white">Add</Button>
                             </div>
                             <div className="space-y-2">
                                 {selectedEquipment.map(eq => (
@@ -310,7 +310,7 @@ export function CreateMarketingAssignmentModal({ isOpen, onClose, onAssignmentCr
 
                         {/* Ambassadors Selection */}
                         <div className="space-y-3">
-                            <Label className="flex items-center gap-2 font-bold"><UserPlus className="w-4 h-4 text-pink-500" />Ambassadors</Label>
+                            <Label className="flex items-center gap-2 font-bold"><UserPlus className="w-4 h-4 text-marketing-500" />Ambassadors</Label>
                             <div className="flex gap-2">
                                 <select value={selectedStudentId} onChange={e => setSelectedStudentId(e.target.value)} className="flex-1 rounded-md border border-input bg-muted/50 px-3 text-sm h-9">
                                     <option value="">Select Ambassador...</option>
@@ -318,7 +318,7 @@ export function CreateMarketingAssignmentModal({ isOpen, onClose, onAssignmentCr
                                         <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
                                 </select>
-                                <Button type="button" onClick={handleAddAssignee} disabled={!selectedStudentId} size="sm" className="bg-pink-600 hover:bg-pink-700 text-white">Add</Button>
+                                <Button type="button" onClick={handleAddAssignee} disabled={!selectedStudentId} size="sm" className="bg-marketing-600 hover:bg-marketing-700 text-white">Add</Button>
                             </div>
                             <div className="space-y-2">
                                 {assignees.map(user => (
@@ -333,7 +333,7 @@ export function CreateMarketingAssignmentModal({ isOpen, onClose, onAssignmentCr
 
                     <DialogFooter className="mt-6">
                         <Button type="button" variant="outline" onClick={onClose} disabled={loading}>Cancel</Button>
-                        <Button type="submit" disabled={loading} className="bg-pink-600 hover:bg-pink-700 text-white">
+                        <Button type="submit" disabled={loading} className="bg-marketing-600 hover:bg-marketing-700 text-white">
                             {loading ? "Saving..." : (assignmentToEdit ? "Update Assignment" : "Create Assignment")}
                         </Button>
                     </DialogFooter>

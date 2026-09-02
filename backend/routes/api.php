@@ -108,7 +108,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Assignment Management Routes - Role-Based Access Control
 
     // Assignment Management - Coordinator only (Full CRUD access)
-    Route::middleware(['role:coordinator', 'throttle:sensitive'])->group(function () {
+    Route::middleware(['role:coordinator,marketing_coordinator,admin', 'throttle:sensitive'])->group(function () {
         Route::apiResource('assignments', AssignmentController::class)->except(['index', 'show']);
         Route::prefix('assignments')->group(function () {
             Route::get('/trashed', [AssignmentController::class, 'trashed']);
@@ -129,52 +129,49 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     // View Assignments — Supervisor, Coordinator, Students (Read-only access)
-    Route::middleware(['role:supervisor,coordinator,student'])->group(function () {
+    Route::middleware(['role:supervisor,coordinator,student,marketing_supervisor,marketing_coordinator,student_ambassador,admin'])->group(function () {
         Route::get('/assignments', [AssignmentController::class, 'index']);
         Route::get('/assignments/{assignment}', [AssignmentController::class, 'show']);
     });
-
-    // Marketing: view assignments (scoped to marketing department in controller)
-    Route::middleware(['role:marketing_supervisor,marketing_coordinator,student_ambassador'])->group(function () {
-        Route::get('/assignments', [AssignmentController::class, 'index']);
-        Route::get('/assignments/{assignment}', [AssignmentController::class, 'show']);
+    
+    // Marketing Supervisor Schedules: Read for everyone in marketing, Write for supervisors (handled by policy or middleware if needed, but we'll map standard REST)
+    Route::middleware(['role:marketing_supervisor,marketing_coordinator,student_ambassador,admin'])->group(function () {
+        Route::get('/marketing-supervisor-schedules', [\App\Http\Controllers\Api\MarketingSupervisorScheduleController::class, 'index']);
+        Route::get('/marketing-supervisor-schedules/{marketingSupervisorSchedule}', [\App\Http\Controllers\Api\MarketingSupervisorScheduleController::class, 'show']);
+    });
+    Route::middleware(['role:marketing_supervisor,admin'])->group(function () {
+        Route::post('/marketing-supervisor-schedules', [\App\Http\Controllers\Api\MarketingSupervisorScheduleController::class, 'store']);
+        Route::put('/marketing-supervisor-schedules/{marketingSupervisorSchedule}', [\App\Http\Controllers\Api\MarketingSupervisorScheduleController::class, 'update']);
+        Route::delete('/marketing-supervisor-schedules/{marketingSupervisorSchedule}', [\App\Http\Controllers\Api\MarketingSupervisorScheduleController::class, 'destroy']);
     });
 
-    // Student-specific assignment routes
-    Route::middleware(['role:student'])->group(function () {
+    // Student and Student Ambassador assignment routes
+    Route::middleware(['role:student,student_ambassador'])->group(function () {
         Route::get('/my-assignments', [AssignmentController::class, 'myAssignments']);
         Route::post('/assignments/{assignment}/accept', [AssignmentController::class, 'acceptAssignment']);
-        Route::post('/assignments/{assignment}/reject', [AssignmentController::class, 'rejectAssignment']);
+        
         // Students can check themselves in/out of their own assignments
         Route::post('/assignments/{assignment}/check-in', function (Request $request, \App\Models\Assignment $assignment) {
             $request->merge(['user_id' => $request->user()->id]);
             return app(AssignmentController::class)->checkInUser($request, $assignment);
         });
+        
         Route::post('/assignments/{assignment}/check-out', function (Request $request, \App\Models\Assignment $assignment) {
             $request->merge(['user_id' => $request->user()->id]);
             return app(AssignmentController::class)->checkOutUser($request, $assignment);
         });
+        
+        Route::post('/assignments/{assignment}/acknowledge-modification', [AssignmentController::class, 'acknowledgeModification']);
+        
         Route::post('/assignments/{assignment}/add-to-calendar', [AssignmentController::class, 'addToCalendar']);
         Route::post('/assignments/{assignment}/remove-from-calendar', [AssignmentController::class, 'removeFromCalendar']);
         Route::post('/assignments/{assignment}/add-to-outlook-calendar', [AssignmentController::class, 'addToOutlookCalendar']);
         Route::post('/assignments/{assignment}/remove-from-outlook-calendar', [AssignmentController::class, 'removeFromOutlookCalendar']);
-        Route::post('/assignments/{assignment}/acknowledge-modification', [AssignmentController::class, 'acknowledgeModification']);
     });
 
-    // Student Ambassador assignment routes (accept-only, no reject)
-    Route::middleware(['role:student_ambassador'])->group(function () {
-        Route::get('/my-assignments', [AssignmentController::class, 'myAssignments']);
-        Route::post('/assignments/{assignment}/accept', [AssignmentController::class, 'acceptAssignment']);
-        // Note: rejectAssignment is blocked in the controller for student_ambassador role
-        Route::post('/assignments/{assignment}/check-in', function (Request $request, \App\Models\Assignment $assignment) {
-            $request->merge(['user_id' => $request->user()->id]);
-            return app(AssignmentController::class)->checkInUser($request, $assignment);
-        });
-        Route::post('/assignments/{assignment}/check-out', function (Request $request, \App\Models\Assignment $assignment) {
-            $request->merge(['user_id' => $request->user()->id]);
-            return app(AssignmentController::class)->checkOutUser($request, $assignment);
-        });
-        Route::post('/assignments/{assignment}/acknowledge-modification', [AssignmentController::class, 'acknowledgeModification']);
+    // Only 'student' can reject assignments. 'student_ambassador' cannot.
+    Route::middleware(['role:student'])->group(function () {
+        Route::post('/assignments/{assignment}/reject', [AssignmentController::class, 'rejectAssignment']);
     });
 
     // Availability Management Routes - Role-Based Access Control
@@ -360,6 +357,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/marketing-equipment/trashed', [MarketingEquipmentController::class, 'trashed']);
         Route::get('/marketing-equipment/{marketingEquipment}', [MarketingEquipmentController::class, 'show']);
         Route::get('/marketing-equipment/{marketingEquipment}/history', [MarketingEquipmentController::class, 'history']);
+        
+        // Pre-booking
+        Route::post('/marketing-equipment/{equipment}/book', [\App\Http\Controllers\Api\MarketingEquipmentBookingController::class, 'store']);
+        Route::delete('/marketing-equipment-bookings/{booking}', [\App\Http\Controllers\Api\MarketingEquipmentBookingController::class, 'destroy']);
     });
 
     // Write: coordinator & supervisor & admin

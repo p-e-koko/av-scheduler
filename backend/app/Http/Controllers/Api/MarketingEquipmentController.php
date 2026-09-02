@@ -144,15 +144,44 @@ class MarketingEquipmentController extends Controller
                 return $assignment;
             });
 
+        $bookings = $marketingEquipment->bookings()
+            ->with('user')
+            ->orderBy('start_time', 'desc')
+            ->get()
+            ->map(function ($b) use ($now) {
+                $isCurrent = $b->start_time <= $now && $b->end_time >= $now && $b->status !== 'cancelled';
+                return [
+                    'assignment_name' => 'Pre-booked by ' . ($b->user->name ?? 'User'),
+                    'event_start_datetime' => $b->start_time,
+                    'event_end_datetime' => $b->end_time,
+                    'is_current' => $isCurrent,
+                    'is_upcoming' => $b->start_time > $now && $b->status !== 'cancelled',
+                    'currently_using' => $isCurrent,
+                    'status' => $b->status
+                ];
+            });
+
         $currentStatus = $marketingEquipment->isCurrentlyInUse()
             ? 'Currently Using'
             : ucfirst($marketingEquipment->status);
+
+        $mergedHistory = $assignments->toArray();
+        foreach ($bookings->toArray() as $bk) {
+            $mergedHistory[] = (object) $bk;
+        }
+
+        // Sort by event_start_datetime desc
+        usort($mergedHistory, function($a, $b) {
+            $aTime = is_object($a) ? $a->event_start_datetime : $a['event_start_datetime'];
+            $bTime = is_object($b) ? $b->event_start_datetime : $b['event_start_datetime'];
+            return strtotime($bTime) - strtotime($aTime);
+        });
 
         return response()->json([
             'data' => [
                 'equipment'      => $marketingEquipment,
                 'current_status' => $currentStatus,
-                'assignments'    => $assignments,
+                'assignments'    => array_values($mergedHistory),
             ],
         ]);
     }

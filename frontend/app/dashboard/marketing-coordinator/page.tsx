@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { MarketingCoordinatorSidebar } from "@/components/MarketingCoordinatorSidebar"
 import { MarketingEquipmentPage } from "@/components/MarketingEquipmentPage"
-import { MarketingSupervisorSchedulePage } from "@/components/MarketingSupervisorSchedulePage"
+import { MarketingSupervisorSimpleSchedule } from "@/components/MarketingSupervisorSimpleSchedule"
 import { CreateMarketingAssignmentModal } from "@/components/CreateMarketingAssignmentModal"
+import { MarketingStudentAmbassadorsPage } from "@/components/MarketingStudentAmbassadorsPage"
 import { getStoredUser, type User } from "@/lib/api"
 
 type Tab = "assignments" | "students" | "equipment" | "schedules" | "recycle-bin"
@@ -51,7 +52,7 @@ export default function MarketingCoordinatorDashboard() {
                                     <p className="text-muted-foreground">
                                         Manage event and recording assignments for the marketing team.
                                     </p>
-                                    <Button onClick={() => setShowCreateModal(true)} className="bg-pink-600 hover:bg-pink-700 text-white">Create Assignment</Button>
+                                    <Button onClick={() => setShowCreateModal(true)} className="bg-marketing-600 hover:bg-marketing-700 text-white">Create Assignment</Button>
                                 </div>
                                 {/* TODO: MarketingAssignmentsList integration */}
                                 <CreateMarketingAssignmentModal
@@ -63,12 +64,14 @@ export default function MarketingCoordinatorDashboard() {
                         )}
 
                         {activeTab === "students" && (
-                            <div>
-                                <h2 className="text-2xl font-bold mb-4">Student Ambassadors</h2>
-                                <p className="text-muted-foreground">
-                                    View and manage student ambassadors in the marketing department.
-                                </p>
-                                {/* TODO: StudentAmbassadorList */}
+                            <div className="space-y-6">
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-4">Student Ambassadors</h2>
+                                    <p className="text-muted-foreground">
+                                        View and manage student ambassadors in the marketing department.
+                                    </p>
+                                </div>
+                                <MarketingStudentAmbassadorsPage />
                             </div>
                         )}
 
@@ -88,7 +91,7 @@ export default function MarketingCoordinatorDashboard() {
                                 <p className="text-muted-foreground mb-4">
                                     View the marketing supervisors' office hours and schedules.
                                 </p>
-                                <MarketingSupervisorSchedulePage canUpload={false} />
+                                <MarketingSupervisorSimpleSchedule />
                             </div>
                         )}
 

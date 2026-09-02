@@ -12,6 +12,7 @@ import {
     X,
     Loader2,
     LayoutDashboard,
+    User,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -26,7 +27,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 
-type AmbassadorTab = "assignments" | "availability" | "supervisor-schedule"
+type AmbassadorTab = "profile" | "assignments" | "schedule" | "supervisor-schedule"
 
 interface StudentAmbassadorSidebarProps {
     activeTab: AmbassadorTab
@@ -83,15 +84,16 @@ export function StudentAmbassadorSidebar({
     const userRoles = currentUser.roles && currentUser.roles.length > 0 ? currentUser.roles : [currentUser.role]
 
     const navItems: { tab: AmbassadorTab; icon: React.ReactNode; label: string }[] = [
+        { tab: "profile", icon: <User className="w-5 h-5" />, label: "Profile" },
         { tab: "assignments", icon: <ClipboardList className="w-5 h-5" />, label: "My Assignments" },
-        { tab: "availability", icon: <Calendar className="w-5 h-5" />, label: "Availability" },
+        { tab: "schedule", icon: <Calendar className="w-5 h-5" />, label: "My Schedule" },
         { tab: "supervisor-schedule", icon: <LayoutDashboard className="w-5 h-5" />, label: "Supervisor Schedule" },
     ]
 
     const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
         <div className="bg-card/80 backdrop-blur-xl border-r border-border shadow-lg h-full flex flex-col">
             {/* Header */}
-            <div className="bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white border-0 p-4">
+            <div className="bg-gradient-to-r from-marketing-700 to-marketing-500 text-white border-0 p-4">
                 <div className="flex items-center justify-between">
                     {!sidebarCollapsed || isMobile ? (
                         <div className="flex items-center space-x-3">
@@ -132,12 +134,12 @@ export function StudentAmbassadorSidebar({
                             key={tab}
                             onClick={() => { onTabChange(tab); if (isMobile && onClose) onClose() }}
                             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === tab
-                                    ? 'text-fuchsia-600 dark:text-white bg-fuchsia-50 dark:bg-fuchsia-900/30 border-fuchsia-200 dark:border-fuchsia-700'
-                                    : 'text-muted-foreground hover:bg-accent'
-                                } hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === tab ? 'border-fuchsia-200 dark:border-fuchsia-700' : 'border-transparent'
+                                ? 'text-marketing-600 dark:text-white bg-marketing-50 dark:bg-marketing-900/30 border-marketing-200 dark:border-marketing-700'
+                                : 'text-muted-foreground hover:bg-accent'
+                                } hover:bg-marketing-50 dark:hover:bg-marketing-900/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === tab ? 'border-marketing-200 dark:border-marketing-700' : 'border-transparent'
                                 }`}
                         >
-                            <span className={activeTab === tab ? 'text-fuchsia-600 dark:text-white' : ''}>{icon}</span>
+                            <span className={activeTab === tab ? 'text-marketing-600 dark:text-white' : ''}>{icon}</span>
                             {(!sidebarCollapsed || isMobile) && <span className="font-medium">{label}</span>}
                         </div>
                     ))}
@@ -174,9 +176,9 @@ export function StudentAmbassadorSidebar({
             {/* Footer */}
             <div className="p-4 border-t border-border bg-card/50">
                 <div className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'}`}>
-                    <Avatar className="h-9 w-9 border-2 border-fuchsia-500/30">
+                    <Avatar className="h-9 w-9 border-2 border-marketing-500/30">
                         <AvatarImage src={currentUser.profile_picture || currentUser.profile_picture_url || undefined} />
-                        <AvatarFallback className="bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-300 font-medium">
+                        <AvatarFallback className="bg-marketing-100 dark:bg-marketing-900/40 text-marketing-700 dark:text-marketing-300 font-medium">
                             {getInitials(currentUser.name)}
                         </AvatarFallback>
                     </Avatar>
@@ -239,7 +241,7 @@ export function StudentAmbassadorSidebar({
             />
             <Dialog open={isLoggingOut} onOpenChange={() => { }}>
                 <DialogContent className="sm:max-w-[425px] flex flex-col items-center justify-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-fuchsia-600 mb-4" />
+                    <Loader2 className="h-8 w-8 animate-spin text-marketing-600 mb-4" />
                     <DialogTitle className="text-lg font-medium">Logging out...</DialogTitle>
                 </DialogContent>
             </Dialog>

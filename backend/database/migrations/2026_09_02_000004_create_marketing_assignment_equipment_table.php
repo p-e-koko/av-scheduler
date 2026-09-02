@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreign('assignment_id')->references('id')->on('assignments')->onDelete('cascade');
             $table->foreign('marketing_equipment_id')->references('id')->on('marketing_equipment')->onDelete('cascade');
 
-            $table->unique(['assignment_id', 'marketing_equipment_id']);
+            $table->unique(['assignment_id', 'marketing_equipment_id'], 'mk_assign_equip_unique');
         });
     }
 

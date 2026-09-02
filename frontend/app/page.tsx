@@ -20,7 +20,6 @@ export default function Home() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [showContactIT, setShowContactIT] = useState(false)
 
   useEffect(() => {
     const currentUser = getStoredUser()
@@ -104,59 +103,37 @@ export default function Home() {
                   Sign In
                 </Button>
               </Link>
-
-              <Button
-                variant="outline"
-                className="w-full bg-white/80 backdrop-blur-xl border-gray-300/30 dark:bg-transparent dark:text-white dark:border-white dark:hover:bg-white/10"
-                onClick={() => setShowContactIT(true)}
-              >
-                Create Account
-              </Button>
             </>
           )}
         </div>
 
         {/* Quick Access for Testing */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-            <p className="text-xs text-yellow-800 font-medium mb-2">Development Mode</p>
-            <div className="flex space-x-2">
-              <Link href="/login">
-                <Button variant="ghost" size="sm" className="text-xs">
-                  Login Page
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button variant="ghost" size="sm" className="text-xs">
-                  Register Page
-                </Button>
-              </Link>
-              <Link href="/dashboard/admin">
-                <Button variant="ghost" size="sm" className="text-xs">
-                  Admin Dashboard
-                </Button>
-              </Link>
+        {
+          process.env.NODE_ENV === 'development' && (
+            <div className="mt-8 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-xs text-yellow-800 font-medium mb-2">Development Mode</p>
+              <div className="flex space-x-2">
+                <Link href="/login">
+                  <Button variant="ghost" size="sm" className="text-xs">
+                    Login Page
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button variant="ghost" size="sm" className="text-xs">
+                    Register Page
+                  </Button>
+                </Link>
+                <Link href="/dashboard/admin">
+                  <Button variant="ghost" size="sm" className="text-xs">
+                    Admin Dashboard
+                  </Button>
+                </Link>
+              </div>
             </div>
-          </div>
-        )}
-      </main>
-
-      <Dialog open={showContactIT} onOpenChange={setShowContactIT}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Account Creation</DialogTitle>
-            <DialogDescription>
-              Please contact the IT office to create a new account.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end">
-            <Button onClick={() => setShowContactIT(false)}>
-              Close
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+          )
+        }
+      </main >
+    </div >
   )
 }
 

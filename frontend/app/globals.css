@@ -63,6 +63,17 @@
 }
 
 @theme inline {
+  --color-marketing-50: #fcf2f5;
+  --color-marketing-100: #f8e1e7;
+  --color-marketing-200: #f1c3d0;
+  --color-marketing-300: #e69eaa;
+  --color-marketing-400: #d96f83;
+  --color-marketing-500: #cb445d;
+  --color-marketing-600: #c01f48;
+  --color-marketing-700: #a31637;
+  --color-marketing-800: #881531;
+  --color-marketing-900: #73152d;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);

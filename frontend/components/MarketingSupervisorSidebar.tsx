@@ -93,7 +93,7 @@ export function MarketingSupervisorSidebar({
     const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
         <div className="bg-card/80 backdrop-blur-xl border-r border-border shadow-lg h-full flex flex-col">
             {/* Header */}
-            <div className="bg-gradient-to-r from-rose-700 to-pink-600 text-white border-0 p-4">
+            <div className="bg-gradient-to-r from-marketing-800 to-marketing-600 text-white border-0 p-4">
                 <div className="flex items-center justify-between">
                     {!sidebarCollapsed || isMobile ? (
                         <div className="flex items-center space-x-3">
@@ -134,12 +134,12 @@ export function MarketingSupervisorSidebar({
                             key={tab}
                             onClick={() => { onTabChange(tab); if (isMobile && onClose) onClose() }}
                             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === tab
-                                    ? 'text-rose-700 dark:text-white bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-700'
+                                    ? 'text-marketing-700 dark:text-white bg-marketing-50 dark:bg-marketing-900/30 border-marketing-200 dark:border-marketing-700'
                                     : 'text-muted-foreground hover:bg-accent'
-                                } hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === tab ? 'border-rose-200 dark:border-rose-700' : 'border-transparent'
+                                } hover:bg-marketing-50 dark:hover:bg-marketing-900/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === tab ? 'border-marketing-200 dark:border-marketing-700' : 'border-transparent'
                                 }`}
                         >
-                            <span className={activeTab === tab ? 'text-rose-700 dark:text-white' : ''}>{icon}</span>
+                            <span className={activeTab === tab ? 'text-marketing-700 dark:text-white' : ''}>{icon}</span>
                             {(!sidebarCollapsed || isMobile) && <span className="font-medium">{label}</span>}
                         </div>
                     ))}
@@ -176,9 +176,9 @@ export function MarketingSupervisorSidebar({
             {/* Footer */}
             <div className="p-4 border-t border-border bg-card/50">
                 <div className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'}`}>
-                    <Avatar className="h-9 w-9 border-2 border-rose-500/30">
+                    <Avatar className="h-9 w-9 border-2 border-marketing-500/30">
                         <AvatarImage src={currentUser.profile_picture || currentUser.profile_picture_url || undefined} />
-                        <AvatarFallback className="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 font-medium">
+                        <AvatarFallback className="bg-marketing-100 dark:bg-marketing-900/40 text-marketing-700 dark:text-marketing-300 font-medium">
                             {getInitials(currentUser.name)}
                         </AvatarFallback>
                     </Avatar>
@@ -241,7 +241,7 @@ export function MarketingSupervisorSidebar({
             />
             <Dialog open={isLoggingOut} onOpenChange={() => { }}>
                 <DialogContent className="sm:max-w-[425px] flex flex-col items-center justify-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-rose-600 mb-4" />
+                    <Loader2 className="h-8 w-8 animate-spin text-marketing-600 mb-4" />
                     <DialogTitle className="text-lg font-medium">Logging out...</DialogTitle>
                 </DialogContent>
             </Dialog>
