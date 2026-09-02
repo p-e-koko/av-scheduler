@@ -849,11 +849,6 @@ function StudentAmbassadorDashboard() {
 
         {/* Content Area */}
         <main className="flex-1 overflow-auto p-4 md:p-6">
-          {/* Supervisor Schedule Tab */}
-          {activeTab === "supervisor-schedule" && (
-            <MarketingSupervisorSimpleSchedule />
-          )}
-
           {/* Profile Tab */}
           {activeTab === "profile" && (
             <div className="flex flex-col space-y-6">
