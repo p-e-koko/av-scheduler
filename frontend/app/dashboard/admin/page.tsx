@@ -283,6 +283,10 @@ function AdminDashboard() {
 
   const handleUserUpdated = () => {
     fetchUsers() // Refresh the user list
+    const updatedStored = getStoredUser()
+    if (updatedStored) {
+      setCurrentUser(updatedStored)
+    }
     setSelectedUser(null)
   }
 

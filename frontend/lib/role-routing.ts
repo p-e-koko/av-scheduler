@@ -55,20 +55,16 @@ export const canAccessDashboard = (userRole: string | string[], dashboardPath: s
 // Get allowed dashboard paths for a user
 export const getAllowedDashboards = (userRole: string | string[]): string[] => {
   const roles = normalizeRoles(userRole);
+  const allowed = new Set<string>();
 
   if (roles.includes('admin')) {
-    return [
-      '/dashboard/admin',
-      '/dashboard/coordinator',
-      '/dashboard/student',
-      '/dashboard/supervisor',
-      '/dashboard/inventory',
-      '/dashboard/customer',
-      '/dashboard/keys',
-      '/dashboard/marketing-supervisor',
-      '/dashboard/marketing-coordinator',
-      '/dashboard/student-ambassador',
-    ];
+    allowed.add('/dashboard/admin');
+    allowed.add('/dashboard/coordinator');
+    allowed.add('/dashboard/student');
+    allowed.add('/dashboard/supervisor');
+    allowed.add('/dashboard/inventory');
+    allowed.add('/dashboard/customer');
+    allowed.add('/dashboard/keys');
   }
 
   const rolePathMap: Record<string, string[]> = {
@@ -82,7 +78,6 @@ export const getAllowedDashboards = (userRole: string | string[]): string[] => {
     'student_ambassador': ['/dashboard/student-ambassador'],
   };
 
-  const allowed = new Set<string>();
   roles.forEach(role => {
     const paths = rolePathMap[role];
     if (paths) paths.forEach(p => allowed.add(p));

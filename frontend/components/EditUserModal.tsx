@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { userAPI, formatAPIError, type User } from "@/lib/api"
+import { userAPI, formatAPIError, getStoredUser, setStoredUser, type User } from "@/lib/api"
 
 interface EditUserModalProps {
   isOpen: boolean
@@ -158,7 +158,12 @@ export default function EditUserModal({ isOpen, onClose, onUserUpdated, user }: 
         submitData.append('profile_picture', formData.profile_picture)
       }
 
-      await userAPI.updateUser(user.id, submitData)
+      const res = await userAPI.updateUser(user.id, submitData)
+
+      const loggedInUser = getStoredUser()
+      if (loggedInUser && loggedInUser.id === user.id && res?.user) {
+        setStoredUser(res.user)
+      }
 
       onUserUpdated()
       onClose()

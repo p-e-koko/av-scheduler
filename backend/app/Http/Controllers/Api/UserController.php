@@ -27,14 +27,27 @@ class UserController extends Controller
 
         $currentUser = $request->user();
 
-        if ($currentUser->hasAnyRole(['marketing_supervisor', 'marketing_coordinator'])) {
-            // Only allow seeing marketing users
-            $query->whereRaw("exists (select * from \"model_has_roles\" where \"model_has_roles\".\"model_id\"::uuid = \"users\".\"id\" and \"model_has_roles\".\"role_id\" in (select \"id\" from \"roles\" where \"name\" in ('marketing_supervisor', 'marketing_coordinator', 'student_ambassador')))");
-        } elseif ($currentUser->hasAnyRole(['supervisor', 'coordinator'])) {
-            // Only allow seeing AV-IT users
-            $query->whereRaw("exists (select * from \"model_has_roles\" where \"model_has_roles\".\"model_id\"::uuid = \"users\".\"id\" and \"model_has_roles\".\"role_id\" in (select \"id\" from \"roles\" where \"name\" in ('supervisor', 'coordinator', 'student', 'customer')))");
-        }
+        // Check if user is an admin either by primary role column or Spatie roles
+        $isAdmin = $currentUser->role === 'admin' 
+            || $currentUser->hasRole('admin') 
+            || (method_exists($currentUser, 'getRoleNames') && $currentUser->getRoleNames()->contains('admin'));
 
+        if (!$isAdmin) {
+            $userRoles = $currentUser->getRoleNames()->toArray();
+            if ($currentUser->role) {
+                $userRoles[] = $currentUser->role;
+            }
+            $isMarketing = !empty(array_intersect(['marketing_supervisor', 'marketing_coordinator'], $userRoles));
+            $isAvIt = !empty(array_intersect(['supervisor', 'coordinator'], $userRoles));
+
+            if ($isMarketing) {
+                // Only allow seeing marketing users
+                $query->whereRaw("exists (select * from \"model_has_roles\" where \"model_has_roles\".\"model_id\"::uuid = \"users\".\"id\" and \"model_has_roles\".\"role_id\" in (select \"id\" from \"roles\" where \"name\" in ('marketing_supervisor', 'marketing_coordinator', 'student_ambassador')))");
+            } elseif ($isAvIt) {
+                // Only allow seeing AV-IT users
+                $query->whereRaw("exists (select * from \"model_has_roles\" where \"model_has_roles\".\"model_id\"::uuid = \"users\".\"id\" and \"model_has_roles\".\"role_id\" in (select \"id\" from \"roles\" where \"name\" in ('supervisor', 'coordinator', 'student', 'customer')))");
+            }
+        }
 
         if ($request->has('role')) {
             $role = $request->role;
@@ -297,7 +310,26 @@ class UserController extends Controller
 
         $user->syncRoles($normalizedRoles);
 
-        $primaryRole = collect($normalizedRoles)->first(fn ($value) => $value !== 'customer') ?? 'customer';
+        // Define strict primary role priority
+        $rolePriority = [
+            'admin',
+            'supervisor',
+            'coordinator',
+            'marketing_supervisor',
+            'marketing_coordinator',
+            'student_ambassador',
+            'student',
+            'customer'
+        ];
+
+        $primaryRole = 'customer';
+        foreach ($rolePriority as $priorityRole) {
+            if (in_array($priorityRole, $normalizedRoles, true)) {
+                $primaryRole = $priorityRole;
+                break;
+            }
+        }
+
         $user->role = $primaryRole;
         $user->save();
     }
