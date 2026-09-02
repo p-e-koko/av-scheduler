@@ -6,14 +6,19 @@ import { Button } from "@/components/ui/button"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
 import { MarketingSupervisorSidebar } from "@/components/MarketingSupervisorSidebar"
 import { MarketingSupervisorSchedulePage } from "@/components/MarketingSupervisorSchedulePage"
+import { MarketingEquipmentPage } from "@/components/MarketingEquipmentPage"
+import { MarketingStudentAmbassadorsPage } from "@/components/MarketingStudentAmbassadorsPage"
+import { CreateMarketingAssignmentModal } from "@/components/CreateMarketingAssignmentModal"
+import { MarketingAssignmentsList } from "@/components/MarketingAssignmentsList"
 import { getStoredUser, type User } from "@/lib/api"
 
-type Tab = "overview" | "students" | "assignments" | "my-schedule"
+type Tab = "students" | "assignments" | "my-schedule" | "equipment"
 
 export default function MarketingSupervisorDashboard() {
-    const [activeTab, setActiveTab] = useState<Tab>("overview")
+    const [activeTab, setActiveTab] = useState<Tab>("students")
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [user, setUser] = useState<User | null>(null)
+    const [showCreateModal, setShowCreateModal] = useState(false)
 
     useEffect(() => {
         const stored = getStoredUser()
@@ -41,33 +46,43 @@ export default function MarketingSupervisorDashboard() {
                     </div>
 
                     <div className="p-6">
-                        {activeTab === "overview" && (
-                            <div>
-                                <h2 className="text-2xl font-bold mb-4">Overview</h2>
-                                <p className="text-muted-foreground">
-                                    Overview of marketing team assignments and activity.
-                                </p>
-                                {/* TODO: DashboardComponents summary cards for marketing */}
-                            </div>
-                        )}
-
                         {activeTab === "students" && (
-                            <div>
-                                <h2 className="text-2xl font-bold mb-4">Student Ambassadors</h2>
-                                <p className="text-muted-foreground">
-                                    View your marketing student ambassadors and their availability.
-                                </p>
-                                {/* TODO: StudentAmbassadorList (read-only) */}
+                            <div className="space-y-6">
+                                <div>
+                                    <h2 className="text-2xl font-bold mb-4">Student Ambassadors</h2>
+                                    <p className="text-muted-foreground">
+                                        View and manage student ambassadors in the marketing department.
+                                    </p>
+                                </div>
+                                <MarketingStudentAmbassadorsPage />
                             </div>
                         )}
 
                         {activeTab === "assignments" && (
                             <div>
                                 <h2 className="text-2xl font-bold mb-4">Marketing Assignments</h2>
-                                <p className="text-muted-foreground">
-                                    View all marketing assignment records.
+                                <div className="flex justify-between items-center mb-4">
+                                    <p className="text-muted-foreground">
+                                        Manage event and recording assignments for the marketing team.
+                                    </p>
+                                    <Button onClick={() => setShowCreateModal(true)} className="bg-marketing-700 hover:bg-marketing-800 text-white">Create Assignment</Button>
+                                </div>
+                                <MarketingAssignmentsList readonly={false} />
+                                <CreateMarketingAssignmentModal
+                                    isOpen={showCreateModal}
+                                    onClose={() => setShowCreateModal(false)}
+                                    onAssignmentCreated={() => { }}
+                                />
+                            </div>
+                        )}
+
+                        {activeTab === "equipment" && (
+                            <div>
+                                <h2 className="text-2xl font-bold mb-4">Marketing Equipment</h2>
+                                <p className="text-muted-foreground mb-4">
+                                    Manage marketing equipment inventory and track usage.
                                 </p>
-                                {/* TODO: MarketingAssignmentsList (read-only) */}
+                                <MarketingEquipmentPage readonly={false} />
                             </div>
                         )}
 

@@ -66,6 +66,7 @@ import {
 import { initServerTime, getServerTime } from "@/lib/server-time"
 import { StudentAmbassadorSidebar } from "@/components/StudentAmbassadorSidebar"
 import { MarketingSupervisorSimpleSchedule } from "@/components/MarketingSupervisorSimpleSchedule"
+import { MarketingEquipmentPage } from "@/components/MarketingEquipmentPage"
 import { RejectAssignmentModal } from "@/components/RejectAssignmentModal"
 import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
@@ -79,16 +80,16 @@ function StudentAmbassadorDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [currentUser, setCurrentUser] = useState<UserType | null>(null)
-  const [activeTab, setActiveTab] = useState<"profile" | "assignments" | "schedule" | "supervisor-schedule">("profile")
+  const [activeTab, setActiveTab] = useState<"profile" | "assignments" | "schedule" | "supervisor-schedule" | "equipment">("profile")
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab && ['profile', 'assignments', 'schedule', 'supervisor-schedule'].includes(tab)) {
+    if (tab && ['profile', 'assignments', 'schedule', 'supervisor-schedule', 'equipment'].includes(tab)) {
       setActiveTab(tab as any)
     }
   }, [searchParams])
 
-  const handleTabChange = (tab: "profile" | "assignments" | "schedule" | "supervisor-schedule") => {
+  const handleTabChange = (tab: "profile" | "assignments" | "schedule" | "supervisor-schedule" | "equipment") => {
     const params = new URLSearchParams(searchParams.toString())
     params.set('tab', tab)
     router.push(`/dashboard/student-ambassador?${params.toString()}`)
@@ -326,7 +327,8 @@ function StudentAmbassadorDashboard() {
               const [allAssignmentsResponse, myAssignmentsResponse] = await Promise.all([
                 assignmentAPI.getAssignments({
                   per_page: 10,
-                  page: assignmentCurrentPage
+                  page: assignmentCurrentPage,
+                  department: 'marketing'
                 }),
                 assignmentAPI.getMyAssignments({ per_page: 100 })
               ])
@@ -417,7 +419,7 @@ function StudentAmbassadorDashboard() {
     try {
       setLoading(true)
       const [allAssignmentsResponse, myAssignmentsResponse] = await Promise.all([
-        assignmentAPI.getAssignments({ per_page: 50 }),
+        assignmentAPI.getAssignments({ per_page: 50, department: 'marketing' }),
         assignmentAPI.getMyAssignments({ per_page: 50 })
       ])
 
@@ -797,15 +799,17 @@ function StudentAmbassadorDashboard() {
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
                   {activeTab === "profile" && "My Profile"}
-                  {activeTab === "assignments" && "My Assignments"}
+                  {activeTab === "assignments" && "Assignments"}
                   {activeTab === "schedule" && "My Schedule"}
                   {activeTab === "supervisor-schedule" && "Supervisor Schedule"}
+                  {activeTab === "equipment" && "Equipment"}
                 </h1>
                 <p className="text-muted-foreground mt-1">
                   {activeTab === "profile" && "Manage your profile and skills"}
                   {activeTab === "assignments" && "View and track your assignments"}
                   {activeTab === "schedule" && "Manage your availability"}
                   {activeTab === "supervisor-schedule" && "View your supervisor's schedule"}
+                  {activeTab === "equipment" && "View and book equipment"}
                 </p>
               </div>
             </div>
@@ -821,7 +825,7 @@ function StudentAmbassadorDashboard() {
                         setAssignmentFilter("all")
                         setAssignmentCurrentPage(1)
                       }}
-                      className={`flex-1 md:flex-none ${assignmentFilter === "all" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      className={`flex-1 md:flex-none ${assignmentFilter === "all" ? "bg-marketing-600 text-white" : "text-muted-foreground hover:text-foreground"}`}
                     >
                       All
                     </Button>
@@ -832,7 +836,7 @@ function StudentAmbassadorDashboard() {
                         setAssignmentFilter("me")
                         setAssignmentCurrentPage(1)
                       }}
-                      className={`flex-1 md:flex-none ${assignmentFilter === "me" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      className={`flex-1 md:flex-none ${assignmentFilter === "me" ? "bg-marketing-600 text-white" : "text-muted-foreground hover:text-foreground"}`}
                     >
                       Mine
                     </Button>
@@ -861,7 +865,7 @@ function StudentAmbassadorDashboard() {
                       <div className="flex-shrink-0">
                         <Avatar className="h-32 w-32">
                           <AvatarImage src={currentUser.profile_picture || currentUser.profile_picture_url || ""} />
-                          <AvatarFallback className="bg-primary text-primary-foreground text-3xl font-semibold">
+                          <AvatarFallback className="bg-marketing-600 text-white text-3xl font-semibold">
                             {getInitials(currentUser.name)}
                           </AvatarFallback>
                         </Avatar>
@@ -883,7 +887,7 @@ function StudentAmbassadorDashboard() {
                                     type="text"
                                     value={phoneNumberInput}
                                     onChange={(e) => setPhoneNumberInput(e.target.value)}
-                                    className="h-7 px-2 text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-32 md:w-40"
+                                    className="h-7 px-2 text-sm border border-input rounded bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-marketing-500 w-32 md:w-40"
                                     placeholder="Phone number"
                                   />
                                   <Button
@@ -915,7 +919,7 @@ function StudentAmbassadorDashboard() {
                                   </span>
                                   <button
                                     onClick={() => setIsEditingPhone(true)}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-primary"
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-muted-foreground hover:text-marketing-600"
                                     title="Edit Phone Number"
                                   >
                                     <Edit className="w-3 h-3" />
@@ -958,7 +962,7 @@ function StudentAmbassadorDashboard() {
                 <div className="bg-card/90 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden border border-border">
                   <div className="p-6 border-b border-border">
                     <h3 className="text-lg font-semibold flex items-center text-foreground">
-                      <Calendar className="w-5 h-5 mr-2 text-primary" />
+                      <Calendar className="w-5 h-5 mr-2 text-marketing-600" />
                       Availability Schedule
                     </h3>
                   </div>
@@ -984,7 +988,7 @@ function StudentAmbassadorDashboard() {
               {/* Assignment Stats - Compact View */}
               <div className="flex flex-wrap gap-3">
                 <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
-                  <CheckCircle className="w-4 h-4 text-primary" />
+                  <CheckCircle className="w-4 h-4 text-marketing-600" />
                   <span className="text-sm font-medium">{assignmentStats.total} Total</span>
                 </div>
                 <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full border border-border shadow-sm">
@@ -1021,7 +1025,7 @@ function StudentAmbassadorDashboard() {
                           variant={viewMode === "card" ? "default" : "ghost"}
                           size="sm"
                           onClick={() => setViewMode("card")}
-                          className={`flex-1 sm:flex-none ${viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                          className={`flex-1 sm:flex-none ${viewMode === "card" ? "bg-marketing-600 text-white" : "text-muted-foreground hover:text-foreground"}`}
                         >
                           <Grid className="w-4 h-4" />
                         </Button>
@@ -1029,7 +1033,7 @@ function StudentAmbassadorDashboard() {
                           variant={viewMode === "list" ? "default" : "ghost"}
                           size="sm"
                           onClick={() => setViewMode("list")}
-                          className={`flex-1 sm:flex-none ${viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                          className={`flex-1 sm:flex-none ${viewMode === "list" ? "bg-marketing-600 text-white" : "text-muted-foreground hover:text-foreground"}`}
                         >
                           <List className="w-4 h-4" />
                         </Button>
@@ -1074,7 +1078,14 @@ function StudentAmbassadorDashboard() {
                               <div className="min-w-0">
                                 <h4 className="font-semibold text-foreground truncate">{assignment.assignment_name}</h4>
                                 <p className="text-sm text-muted-foreground truncate">{assignment.event_name} • {assignment.event_location}</p>
-                                <p className="text-xs text-muted-foreground">{new Date(assignment.event_start_datetime).toLocaleDateString()}</p>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-muted-foreground mt-1">
+                                  <span>{new Date(assignment.event_start_datetime).toLocaleDateString()}</span>
+                                  {assignment.creator && (
+                                    <span className="mt-1 sm:mt-0">
+                                      Created by: <span className="font-medium text-foreground ml-1">{assignment.creator.name}</span>
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             {viewMode === "list" && (
@@ -1092,7 +1103,7 @@ function StudentAmbassadorDashboard() {
                             <div className="space-y-2 mt-4">
                               <Button
                                 size="sm"
-                                className="w-full bg-primary hover:bg-primary-dark text-primary-foreground"
+                                className="w-full bg-marketing-600 hover:bg-marketing-700 text-white"
                                 onClick={() => handleViewAssignment(assignment)}
                               >
                                 View Details
@@ -1347,7 +1358,7 @@ function StudentAmbassadorDashboard() {
                   </DropdownMenu>
                   <Button
                     size="sm"
-                    className="bg-primary hover:bg-primary-dark text-primary-foreground"
+                    className="bg-marketing-600 hover:bg-marketing-700 text-white"
                     onClick={() => setIsAddAvailabilityModalOpen(true)}
                   >
                     <Plus className="w-4 h-4 mr-1" />
@@ -1367,6 +1378,11 @@ function StudentAmbassadorDashboard() {
                 className="min-h-[600px]"
               />
             </div>
+          )}
+
+          {/* Equipment Tab */}
+          {activeTab === "equipment" && (
+            <MarketingEquipmentPage />
           )}
         </main>
         {/* Modals */}

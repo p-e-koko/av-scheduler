@@ -8,10 +8,11 @@ import { MarketingCoordinatorSidebar } from "@/components/MarketingCoordinatorSi
 import { MarketingEquipmentPage } from "@/components/MarketingEquipmentPage"
 import { MarketingSupervisorSimpleSchedule } from "@/components/MarketingSupervisorSimpleSchedule"
 import { CreateMarketingAssignmentModal } from "@/components/CreateMarketingAssignmentModal"
+import { MarketingAssignmentsList } from "@/components/MarketingAssignmentsList"
 import { MarketingStudentAmbassadorsPage } from "@/components/MarketingStudentAmbassadorsPage"
 import { getStoredUser, type User } from "@/lib/api"
 
-type Tab = "assignments" | "students" | "equipment" | "schedules" | "recycle-bin"
+type Tab = "assignments" | "students" | "equipment" | "supervisor-schedule" | "recycle-bin"
 
 export default function MarketingCoordinatorDashboard() {
     const [activeTab, setActiveTab] = useState<Tab>("assignments")
@@ -54,7 +55,7 @@ export default function MarketingCoordinatorDashboard() {
                                     </p>
                                     <Button onClick={() => setShowCreateModal(true)} className="bg-marketing-600 hover:bg-marketing-700 text-white">Create Assignment</Button>
                                 </div>
-                                {/* TODO: MarketingAssignmentsList integration */}
+                                <MarketingAssignmentsList readonly={false} />
                                 <CreateMarketingAssignmentModal
                                     isOpen={showCreateModal}
                                     onClose={() => setShowCreateModal(false)}
@@ -85,9 +86,9 @@ export default function MarketingCoordinatorDashboard() {
                             </div>
                         )}
 
-                        {activeTab === "schedules" && (
+                        {activeTab === "supervisor-schedule" && (
                             <div>
-                                <h2 className="text-2xl font-bold mb-4">Supervisor Schedules</h2>
+                                <h2 className="text-2xl font-bold mb-4">Supervisor Schedule</h2>
                                 <p className="text-muted-foreground mb-4">
                                     View the marketing supervisors' office hours and schedules.
                                 </p>

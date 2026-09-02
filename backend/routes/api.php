@@ -107,8 +107,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Assignment Management Routes - Role-Based Access Control
 
-    // Assignment Management - Coordinator only (Full CRUD access)
-    Route::middleware(['role:coordinator,marketing_coordinator,admin', 'throttle:sensitive'])->group(function () {
+    // Assignment Management - Coordinator and Marketing Supervisor/Coordinator (Full CRUD access)
+    Route::middleware(['role:coordinator,marketing_coordinator,marketing_supervisor,admin', 'throttle:sensitive'])->group(function () {
         Route::apiResource('assignments', AssignmentController::class)->except(['index', 'show']);
         Route::prefix('assignments')->group(function () {
             Route::get('/trashed', [AssignmentController::class, 'trashed']);
@@ -382,19 +382,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['role:marketing_coordinator,marketing_supervisor,admin'])
         ->post('/marketing-equipment/check-conflict', [MarketingAssignmentEquipmentController::class, 'checkConflict']);
 
-    // ─── Marketing Coordinator: assignment CRUD ───────────────────────────────
-    Route::middleware(['role:marketing_coordinator', 'throttle:sensitive'])->group(function () {
-        Route::apiResource('assignments', AssignmentController::class)->except(['index', 'show']);
-        Route::prefix('assignments')->group(function () {
-            Route::get('/trashed', [AssignmentController::class, 'trashed']);
-            Route::post('/{id}/restore', [AssignmentController::class, 'restore']);
-            Route::delete('/{id}/force', [AssignmentController::class, 'forceDelete']);
-            Route::post('/{assignment}/assign-user', [AssignmentController::class, 'assignUser']);
-            Route::post('/{assignment}/unassign-user', [AssignmentController::class, 'unassignUser']);
-            Route::post('/{assignment}/check-in-user', [AssignmentController::class, 'checkInUser']);
-            Route::post('/{assignment}/check-out-user', [AssignmentController::class, 'checkOutUser']);
-        });
-    });
+
 
     // ─── Marketing Supervisor Schedule ───────────────────────────────────────
 

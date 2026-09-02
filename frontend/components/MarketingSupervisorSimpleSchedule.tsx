@@ -56,7 +56,7 @@ export function MarketingSupervisorSimpleSchedule() {
     if (loading) {
         return (
             <div className="flex h-64 items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin text-marketing-600" />
             </div>
         )
     }
@@ -69,7 +69,7 @@ export function MarketingSupervisorSimpleSchedule() {
                     <Card key={day} className="bg-card/80 backdrop-blur-xl border-border shadow-md">
                         <CardHeader className="bg-muted/50 border-b border-border py-4">
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <Calendar className="h-5 w-5 text-primary" />
+                                <Calendar className="h-5 w-5 text-marketing-600" />
                                 {day}
                             </CardTitle>
                         </CardHeader>
@@ -82,7 +82,7 @@ export function MarketingSupervisorSimpleSchedule() {
                                                 {slot.user}
                                             </div>
                                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-muted-foreground bg-muted/50 sm:bg-transparent p-2 sm:p-0 rounded sm:rounded-none">
-                                                <div className="bg-primary/10 text-primary-medium px-3 py-1 rounded-full text-sm font-semibold inline-block border border-primary/20">
+                                                <div className="bg-marketing-100 text-marketing-800 px-3 py-1 rounded-full text-sm font-semibold inline-block border border-marketing-200">
                                                     {slot.startTime} - {slot.endTime}
                                                 </div>
                                                 <div className="text-sm border-l-0 sm:border-l sm:border-border sm:pl-4">

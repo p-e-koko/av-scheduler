@@ -13,6 +13,7 @@ import {
     X,
     Loader2,
     LayoutDashboard,
+    Package,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -27,7 +28,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 
-type MarketingSupTab = "overview" | "students" | "assignments" | "my-schedule"
+type MarketingSupTab = "students" | "assignments" | "my-schedule" | "equipment"
 
 interface MarketingSupervisorSidebarProps {
     activeTab: MarketingSupTab
@@ -84,10 +85,10 @@ export function MarketingSupervisorSidebar({
     const userRoles = currentUser.roles && currentUser.roles.length > 0 ? currentUser.roles : [currentUser.role]
 
     const navItems: { tab: MarketingSupTab; icon: React.ReactNode; label: string }[] = [
-        { tab: "overview", icon: <LayoutDashboard className="w-5 h-5" />, label: "Overview" },
         { tab: "students", icon: <Users className="w-5 h-5" />, label: "Ambassadors" },
         { tab: "assignments", icon: <ClipboardList className="w-5 h-5" />, label: "Assignments" },
         { tab: "my-schedule", icon: <Calendar className="w-5 h-5" />, label: "My Schedule" },
+        { tab: "equipment", icon: <Package className="w-5 h-5" />, label: "Equipment" },
     ]
 
     const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
@@ -134,8 +135,8 @@ export function MarketingSupervisorSidebar({
                             key={tab}
                             onClick={() => { onTabChange(tab); if (isMobile && onClose) onClose() }}
                             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === tab
-                                    ? 'text-marketing-700 dark:text-white bg-marketing-50 dark:bg-marketing-900/30 border-marketing-200 dark:border-marketing-700'
-                                    : 'text-muted-foreground hover:bg-accent'
+                                ? 'text-marketing-700 dark:text-white bg-marketing-50 dark:bg-marketing-900/30 border-marketing-200 dark:border-marketing-700'
+                                : 'text-muted-foreground hover:bg-accent'
                                 } hover:bg-marketing-50 dark:hover:bg-marketing-900/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === tab ? 'border-marketing-200 dark:border-marketing-700' : 'border-transparent'
                                 }`}
                         >

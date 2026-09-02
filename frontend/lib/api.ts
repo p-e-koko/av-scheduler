@@ -737,6 +737,7 @@ export interface AssignmentsQueryParams {
   page?: number;
   per_page?: number;
   status?: string;
+  department?: string;
   created_by?: number;
   start_date?: string;
   end_date?: string;
@@ -956,6 +957,7 @@ export const assignmentAPI = {
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.per_page) queryParams.append('per_page', params.per_page.toString());
     if (params.status) queryParams.append('status', params.status);
+    if (params.department) queryParams.append('department', params.department);
     if (params.created_by) queryParams.append('created_by', params.created_by.toString());
     if (params.start_date) queryParams.append('start_date', params.start_date);
     if (params.end_date) queryParams.append('end_date', params.end_date);

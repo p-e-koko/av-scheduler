@@ -48,6 +48,10 @@ class AssignmentController extends Controller
         if (!$user->hasRole('admin')) {
             $dept = $user->getDepartment();
             $query->where('department', $dept);
+        } else {
+            if ($request->has('department')) {
+                $query->where('department', $request->department);
+            }
         }
 
         // Add filtering by status
@@ -241,7 +245,14 @@ class AssignmentController extends Controller
      */
     public function trashed(Request $request): JsonResponse
     {
+        $user = $request->user();
         $query = Assignment::onlyTrashed()->with(['creator', 'users', 'mediaBooking.customer']);
+
+        // ── Department scoping ─────────────────────────────────────────────
+        if (!$user->hasRole('admin')) {
+            $dept = $user->getDepartment();
+            $query->where('department', $dept);
+        }
 
         // Add search functionality for trashed items
         if ($request->has('search')) {

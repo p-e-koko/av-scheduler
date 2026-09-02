@@ -13,6 +13,7 @@ import {
     Loader2,
     LayoutDashboard,
     User,
+    Package,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -27,7 +28,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 
-type AmbassadorTab = "profile" | "assignments" | "schedule" | "supervisor-schedule"
+type AmbassadorTab = "profile" | "assignments" | "schedule" | "supervisor-schedule" | "equipment"
 
 interface StudentAmbassadorSidebarProps {
     activeTab: AmbassadorTab
@@ -85,9 +86,10 @@ export function StudentAmbassadorSidebar({
 
     const navItems: { tab: AmbassadorTab; icon: React.ReactNode; label: string }[] = [
         { tab: "profile", icon: <User className="w-5 h-5" />, label: "Profile" },
-        { tab: "assignments", icon: <ClipboardList className="w-5 h-5" />, label: "My Assignments" },
+        { tab: "assignments", icon: <ClipboardList className="w-5 h-5" />, label: "Assignments" },
         { tab: "schedule", icon: <Calendar className="w-5 h-5" />, label: "My Schedule" },
         { tab: "supervisor-schedule", icon: <LayoutDashboard className="w-5 h-5" />, label: "Supervisor Schedule" },
+        { tab: "equipment", icon: <Package className="w-5 h-5" />, label: "Equipment" },
     ]
 
     const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (

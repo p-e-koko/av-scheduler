@@ -29,7 +29,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 
-type MarketingCoordTab = "assignments" | "students" | "equipment" | "schedules" | "recycle-bin"
+type MarketingCoordTab = "assignments" | "students" | "equipment" | "supervisor-schedule" | "recycle-bin"
 
 interface MarketingCoordinatorSidebarProps {
     activeTab: MarketingCoordTab
@@ -89,7 +89,7 @@ export function MarketingCoordinatorSidebar({
         { tab: "assignments", icon: <ClipboardList className="w-5 h-5" />, label: "Assignments" },
         { tab: "students", icon: <Users className="w-5 h-5" />, label: "Ambassadors" },
         { tab: "equipment", icon: <Package className="w-5 h-5" />, label: "Equipment" },
-        { tab: "schedules", icon: <Calendar className="w-5 h-5" />, label: "Schedules" },
+        { tab: "supervisor-schedule", icon: <Calendar className="w-5 h-5" />, label: "Supervisor Schedule" },
         { tab: "recycle-bin", icon: <Trash2 className="w-5 h-5" />, label: "Recycle Bin" },
     ]
 
@@ -137,8 +137,8 @@ export function MarketingCoordinatorSidebar({
                             key={tab}
                             onClick={() => { onTabChange(tab); if (isMobile && onClose) onClose() }}
                             className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${activeTab === tab
-                                    ? 'text-marketing-600 dark:text-white bg-marketing-50 dark:bg-marketing-900/30 border-marketing-200 dark:border-marketing-700'
-                                    : 'text-muted-foreground hover:bg-accent'
+                                ? 'text-marketing-600 dark:text-white bg-marketing-50 dark:bg-marketing-900/30 border-marketing-200 dark:border-marketing-700'
+                                : 'text-muted-foreground hover:bg-accent'
                                 } hover:bg-marketing-50 dark:hover:bg-marketing-900/20 rounded-lg p-2 cursor-pointer transition-colors border ${activeTab === tab ? 'border-marketing-200 dark:border-marketing-700' : 'border-transparent'
                                 }`}
                         >

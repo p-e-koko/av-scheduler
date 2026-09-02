@@ -237,6 +237,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getDepartment(): string
     {
         $marketingRoles = ['marketing_supervisor', 'marketing_coordinator', 'student_ambassador'];
+        
+        // Check literal role column first (common for manual edits or quick assignments)
+        if (in_array($this->role, $marketingRoles)) {
+            return 'marketing';
+        }
+
         foreach ($marketingRoles as $role) {
             if ($this->hasRole($role)) {
                 return 'marketing';
