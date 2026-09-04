@@ -222,8 +222,8 @@ export function MarketingSupervisorSchedulePage({ canUpload = false }: Marketing
 
                         <div className="space-y-2">
                             <Label>Day of the Week</Label>
-                            <select value={dayOfWeek} onChange={e => setDayOfWeek(e.target.value)} className="w-full h-10 rounded-md border border-input px-3" required>
-                                {daysOfWeek.map(d => <option key={d} value={d}>{d}</option>)}
+                            <select value={dayOfWeek} onChange={e => setDayOfWeek(e.target.value)} className="w-full h-10 rounded-md border border-input px-3 bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100" required>
+                                {daysOfWeek.map(d => <option key={d} value={d} className="bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100">{d}</option>)}
                             </select>
                         </div>
 
@@ -235,16 +235,16 @@ export function MarketingSupervisorSchedulePage({ canUpload = false }: Marketing
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Start Time</Label>
-                                <select value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full h-10 rounded-md border border-input px-3" required>
-                                    <option value="" disabled>Time</option>
-                                    {timeSlots.map(t => <option key={t} value={t}>{t}</option>)}
+                                <select value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full h-10 rounded-md border border-input px-3 bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100" required>
+                                    <option value="" disabled className="bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100">Time</option>
+                                    {timeSlots.map(t => <option key={t} value={t} className="bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100">{t}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <Label>End Time</Label>
-                                <select value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full h-10 rounded-md border border-input px-3" required>
-                                    <option value="" disabled>Time</option>
-                                    {timeSlots.map(t => <option key={t} value={t}>{t}</option>)}
+                                <select value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full h-10 rounded-md border border-input px-3 bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100" required>
+                                    <option value="" disabled className="bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100">Time</option>
+                                    {timeSlots.map(t => <option key={t} value={t} className="bg-background text-foreground dark:bg-zinc-900 dark:text-zinc-100">{t}</option>)}
                                 </select>
                             </div>
                         </div>

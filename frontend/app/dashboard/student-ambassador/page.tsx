@@ -68,7 +68,7 @@ import { StudentAmbassadorSidebar } from "@/components/StudentAmbassadorSidebar"
 import { MarketingSupervisorSimpleSchedule } from "@/components/MarketingSupervisorSimpleSchedule"
 import { MarketingEquipmentPage } from "@/components/MarketingEquipmentPage"
 import { RejectAssignmentModal } from "@/components/RejectAssignmentModal"
-import { AssignmentDetailModal } from "@/components/AssignmentDetailModal"
+import { MarketingAssignmentDetailModal } from "@/components/MarketingAssignmentDetailModal"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { LoadingDialog } from "@/components/LoadingDialog"
 import { StatusDialog } from "@/components/StatusDialog"
@@ -1109,33 +1109,16 @@ function StudentAmbassadorDashboard() {
                                 <div className="space-y-2">
                                   <div className="flex gap-2">
                                     {assignment.pivot.status !== 'accepted' && assignment.pivot.status !== 'rejected' && (
-                                      <>
-                                        <Button
-                                          size="sm"
-                                          className="flex-1 bg-emerald-900 hover:bg-emerald-950 text-white shadow-sm"
-                                          onClick={() => handleAcceptAssignment(assignment.id)}
-                                        >
-                                          Accept
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          className="flex-1 bg-red-900 hover:bg-red-950 text-white shadow-sm"
-                                          onClick={() => handleRejectAssignment(assignment.id)}
-                                        >
-                                          Reject
-                                        </Button>
-                                      </>
+                                      <Button
+                                        size="sm"
+                                        className="w-full bg-emerald-900 hover:bg-emerald-950 text-white shadow-sm"
+                                        onClick={() => handleAcceptAssignment(assignment.id)}
+                                      >
+                                        Accept
+                                      </Button>
                                     )}
                                     {assignment.pivot.status === 'accepted' && (
-                                      <div className="flex flex-col gap-2">
-                                        <Button
-                                          size="sm"
-                                          className="w-full bg-red-900 hover:bg-red-950 text-white shadow-sm"
-                                          onClick={() => handleRejectAssignment(assignment.id)}
-                                        >
-                                          Reject
-                                        </Button>
-
+                                      <div className="flex flex-col gap-2 w-full">
                                         {/* Microsoft Calendar Button */}
                                         {assignment.pivot.microsoft_event_id ? (
                                           <Button
@@ -1161,15 +1144,6 @@ function StudentAmbassadorDashboard() {
                                           </Button>
                                         )}
                                       </div>
-                                    )}
-                                    {assignment.pivot.status === 'rejected' && (
-                                      <Button
-                                        size="sm"
-                                        className="flex-1 bg-emerald-900 hover:bg-emerald-950 text-white shadow-sm"
-                                        onClick={() => handleAcceptAssignment(assignment.id)}
-                                      >
-                                        Accept
-                                      </Button>
                                     )}
                                   </div>
                                   <div className="text-xs text-center text-muted-foreground">
@@ -1412,10 +1386,13 @@ function StudentAmbassadorDashboard() {
           variant="default"
         />
 
-        <AssignmentDetailModal
+        <MarketingAssignmentDetailModal
           isOpen={isDetailModalOpen}
           onClose={() => setIsDetailModalOpen(false)}
           assignment={selectedAssignment}
+          currentUserId={currentUser?.id ? Number(currentUser.id) : undefined}
+          isAmbassador={true}
+          onAccept={async (id: number) => { handleAcceptAssignment(id) }}
         />
 
         <ModifiedAssignmentModal

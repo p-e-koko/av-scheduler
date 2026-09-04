@@ -135,12 +135,15 @@ class MarketingEquipmentController extends Controller
 
         $assignments = $marketingEquipment->assignments()
             ->withPivot('quantity_used')
+            ->with('users')
             ->orderBy('event_start_datetime', 'desc')
             ->get()
             ->map(function ($assignment) use ($now) {
                 $assignment->is_current = $assignment->event_start_datetime <= $now
                     && $assignment->event_end_datetime >= $now;
                 $assignment->is_upcoming = $assignment->event_start_datetime > $now;
+                $assignment->currently_using = $assignment->is_current;
+                $assignment->user_name = $assignment->users->pluck('name')->join(', ');
                 return $assignment;
             });
 
@@ -151,7 +154,8 @@ class MarketingEquipmentController extends Controller
             ->map(function ($b) use ($now) {
                 $isCurrent = $b->start_time <= $now && $b->end_time >= $now && $b->status !== 'cancelled';
                 return [
-                    'assignment_name' => 'Pre-booked by ' . ($b->user->name ?? 'User'),
+                    'assignment_name' => 'Booked by ' . ($b->user->name ?? 'User'),
+                    'user_name' => $b->user->name ?? 'User',
                     'event_start_datetime' => $b->start_time,
                     'event_end_datetime' => $b->end_time,
                     'is_current' => $isCurrent,

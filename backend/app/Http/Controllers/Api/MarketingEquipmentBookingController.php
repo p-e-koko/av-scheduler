@@ -15,10 +15,33 @@ class MarketingEquipmentBookingController extends Controller
      */
     public function store(Request $request, MarketingEquipment $equipment): JsonResponse
     {
-        $request->validate([
-            'start_time' => 'required|date',
-            'end_time' => 'required|date|after:start_time',
-        ]);
+        if ($equipment->status === 'maintenance') {
+            return response()->json(['message' => 'Equipment is under maintenance and cannot be booked.'], 422);
+        }
+
+        $startTime = $request->start_time;
+        $endTime = $request->end_time;
+
+        $hasBookingConflict = $equipment->bookings()
+            ->where('status', 'scheduled')
+            ->where(function ($q) use ($startTime, $endTime) {
+                $q->where('start_time', '<', $endTime)
+                  ->where('end_time', '>', $startTime);
+            })->exists();
+
+        if ($hasBookingConflict) {
+            return response()->json(['message' => 'Equipment is booked by someone else for the selected time window.'], 422);
+        }
+
+        $hasAssignmentConflict = $equipment->assignments()
+            ->where(function ($q) use ($startTime, $endTime) {
+                $q->where('event_start_datetime', '<', $endTime)
+                  ->where('event_end_datetime', '>', $startTime);
+            })->exists();
+
+        if ($hasAssignmentConflict) {
+            return response()->json(['message' => 'Equipment is assigned to another event during the selected time window.'], 422);
+        }
 
         $booking = MarketingEquipmentBooking::create([
             'user_id' => $request->user()->id,

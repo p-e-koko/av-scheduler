@@ -137,7 +137,7 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
             setShowBooking(false)
             fetchEquipment()
         } catch (e: any) {
-            setBookingError(e?.response?.data?.message || 'Failed to book equipment')
+            setBookingError(formatAPIError(e) || e?.response?.data?.message || 'Equipment is booked by someone else for the selected time window.')
         } finally {
             setBookingLoading(false)
         }
@@ -305,17 +305,52 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
                         <p className="text-center text-muted-foreground py-6">No history recorded yet.</p>
                     ) : (
                         <div className="space-y-2">
-                            {history.map((h, i) => (
-                                <div key={i} className="flex items-center justify-between p-3 rounded border border-border bg-muted/30 text-sm">
-                                    <div>
-                                        <p className="font-medium text-foreground">{h.assignment_name || h.event_name || 'Assignment'}</p>
-                                        <p className="text-xs text-muted-foreground">{h.event_start_datetime ? new Date(h.event_start_datetime).toLocaleDateString() : ''}</p>
-                                    </div>
-                                    <Badge className={`text-xs border ${h.currently_using ? STATUS_CONFIG.currently_using.className : STATUS_CONFIG.available.className}`}>
-                                        {h.currently_using ? 'In Use' : 'Returned'}
+                            {history.map((h, i) => {
+                                const start = h.event_start_datetime ? new Date(h.event_start_datetime) : null
+                                const end = h.event_end_datetime ? new Date(h.event_end_datetime) : null
+                                const now = new Date()
+
+                                const isCurrent = h.currently_using || h.is_current || (start && end && start <= now && end >= now)
+                                const isUpcoming = h.is_upcoming || (start && start > now)
+
+                                let statusBadge = (
+                                    <Badge className="text-xs border bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                        Returned
                                     </Badge>
-                                </div>
-                            ))}
+                                )
+                                if (isCurrent) {
+                                    statusBadge = (
+                                        <Badge className="text-xs border bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400">
+                                            In Use
+                                        </Badge>
+                                    )
+                                } else if (isUpcoming) {
+                                    statusBadge = (
+                                        <Badge className="text-xs border bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400">
+                                            Booked
+                                        </Badge>
+                                    )
+                                }
+
+                                const formatDT = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+
+                                return (
+                                    <div key={i} className="flex items-center justify-between p-3 rounded border border-border bg-muted/30 text-sm gap-3">
+                                        <div className="space-y-0.5">
+                                            <p className="font-semibold text-foreground">{h.assignment_name || h.event_name || 'Booking / Assignment'}</p>
+                                            {h.user_name && (
+                                                <p className="text-xs font-medium text-marketing-600 dark:text-marketing-400">Booked / Assigned: {h.user_name}</p>
+                                            )}
+                                            {start && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formatDT(start)} {end ? `– ${end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}` : ''}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div>{statusBadge}</div>
+                                    </div>
+                                )
+                            })}
                         </div>
                     )}
                     <DialogFooter>
