@@ -34,6 +34,20 @@ class AssignmentAssignedNotification extends Notification
         return ['database', 'mail', WebPushChannel::class];
     }
 
+    private function getTargetUrl(object $notifiable): string
+    {
+        $userRoles = method_exists($notifiable, 'getRoleNames') ? $notifiable->getRoleNames()->toArray() : [];
+        if ($notifiable->role) {
+            $userRoles[] = $notifiable->role;
+        }
+
+        if (in_array('student_ambassador', $userRoles, true) || $this->assignment->department === 'marketing') {
+            return '/dashboard/student-ambassador?tab=assignments';
+        }
+
+        return '/dashboard/student?tab=assignments';
+    }
+
     /**
      * Get the WebPush representation of the notification.
      */
@@ -43,7 +57,7 @@ class AssignmentAssignedNotification extends Notification
             ->title('New Assignment Assigned')
             ->icon('/icons/icon-192x192.png')
             ->body('You have been assigned to a new assignment: ' . $this->assignment->assignment_name)
-            ->data(['url' => '/dashboard/student?tab=assignments']);
+            ->data(['url' => $this->getTargetUrl($notifiable)]);
     }
 
     /**
@@ -66,7 +80,7 @@ class AssignmentAssignedNotification extends Notification
             'message' => 'You have been assigned to a new assignment: ' . $this->assignment->assignment_name,
             'assignment_id' => $this->assignment->id,
             'type' => 'assignment_assigned',
-            'url' => '/dashboard/student?tab=assignments',
+            'url' => $this->getTargetUrl($notifiable),
         ];
     }
 }

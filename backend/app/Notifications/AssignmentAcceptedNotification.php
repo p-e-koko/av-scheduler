@@ -37,6 +37,26 @@ class AssignmentAcceptedNotification extends Notification
         return ['database', 'mail', WebPushChannel::class];
     }
 
+    private function getTargetUrl(object $notifiable): string
+    {
+        $userRoles = method_exists($notifiable, 'getRoleNames') ? $notifiable->getRoleNames()->toArray() : [];
+        if ($notifiable->role) {
+            $userRoles[] = $notifiable->role;
+        }
+
+        if (in_array('marketing_supervisor', $userRoles, true)) {
+            return '/dashboard/marketing-supervisor?tab=assignments';
+        }
+        if (in_array('marketing_coordinator', $userRoles, true)) {
+            return '/dashboard/marketing-coordinator?tab=assignments';
+        }
+        if (in_array('supervisor', $userRoles, true)) {
+            return '/dashboard/supervisor?tab=assignments';
+        }
+
+        return '/dashboard/coordinator?tab=assignments';
+    }
+
     /**
      * Get the WebPush representation of the notification.
      */
@@ -46,7 +66,7 @@ class AssignmentAcceptedNotification extends Notification
             ->title('Assignment Accepted')
             ->icon('/icons/icon-192x192.png')
             ->body($this->student->name . ' has accepted the assignment: ' . $this->assignment->assignment_name)
-            ->data(['url' => '/dashboard/coordinator?tab=assignments']);
+            ->data(['url' => $this->getTargetUrl($notifiable)]);
     }
 
     /**
@@ -70,7 +90,7 @@ class AssignmentAcceptedNotification extends Notification
             'assignment_id' => $this->assignment->id,
             'student_id' => $this->student->id,
             'type' => 'assignment_accepted',
-            'url' => '/dashboard/coordinator?tab=assignments',
+            'url' => $this->getTargetUrl($notifiable),
         ];
     }
 }

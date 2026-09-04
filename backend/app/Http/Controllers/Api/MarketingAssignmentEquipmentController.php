@@ -64,6 +64,8 @@ class MarketingAssignmentEquipmentController extends Controller
             'equipment_ids' => $validated['equipment_ids'],
         ]);
 
+        $this->notifyAssignedUsers($assignment);
+
         return response()->json([
             'message' => 'Equipment assigned successfully.',
             'data'    => $assignment->marketingEquipment()->withPivot('quantity_used')->get(),
@@ -82,7 +84,21 @@ class MarketingAssignmentEquipmentController extends Controller
             'equipment_id'  => $equipmentId,
         ]);
 
+        $this->notifyAssignedUsers($assignment);
+
         return response()->json(['message' => 'Equipment unassigned.']);
+    }
+
+    private function notifyAssignedUsers(Assignment $assignment): void
+    {
+        try {
+            foreach ($assignment->users as $assignedUser) {
+                $assignment->users()->updateExistingPivot($assignedUser->id, ['is_modified' => true]);
+                $assignedUser->notify(new \App\Notifications\AssignmentModifiedNotification($assignment));
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to notify users of equipment change: ' . $e->getMessage());
+        }
     }
 
     // -------------------------------------------------------------------------

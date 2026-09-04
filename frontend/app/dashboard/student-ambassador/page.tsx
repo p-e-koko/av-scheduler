@@ -1377,7 +1377,7 @@ function StudentAmbassadorDashboard() {
 
           {/* Equipment Tab */}
           {activeTab === "equipment" && (
-            <MarketingEquipmentPage />
+            <MarketingEquipmentPage readonly={true} />
           )}
         </main>
         {/* Modals */}

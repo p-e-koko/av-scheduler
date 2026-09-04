@@ -108,7 +108,8 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
         setHistoryLoading(true)
         try {
             const res: any = await api.get(`/marketing-equipment/${eq.id}/history`)
-            setHistory(res.data.data || res.data || [])
+            const items = res.data.data?.assignments || res.data?.assignments || (Array.isArray(res.data?.data) ? res.data.data : [])
+            setHistory(items)
         } catch { setHistory([]) }
         finally { setHistoryLoading(false) }
     }
@@ -204,19 +205,44 @@ export function MarketingEquipmentPage({ readonly = false }: MarketingEquipmentP
                                     </Badge>
                                 </td>
                                 <td className="px-4 py-3">
-                                    <div className="flex items-center justify-end gap-1">
-                                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openHistory(eq)}>
-                                            <History className="w-3.5 h-3.5" />
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 px-2.5 text-xs font-medium text-marketing-700 bg-marketing-50 hover:bg-marketing-100 border-marketing-200 dark:bg-marketing-950/40 dark:text-marketing-300 dark:border-marketing-800 shadow-sm"
+                                            onClick={() => openBooking(eq)}
+                                            title="Book Equipment"
+                                        >
+                                            <CalendarPlus className="w-3.5 h-3.5 mr-1 text-marketing-600" />
+                                            Book
                                         </Button>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary hover:text-primary" onClick={() => openBooking(eq)}>
-                                            <CalendarPlus className="w-3.5 h-3.5" />
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                            onClick={() => openHistory(eq)}
+                                            title="View Equipment History"
+                                        >
+                                            <History className="w-3.5 h-3.5" />
                                         </Button>
                                         {!readonly && (
                                             <>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(eq)}>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                                                    onClick={() => openEdit(eq)}
+                                                    title="Edit Equipment"
+                                                >
                                                     <Edit2 className="w-3.5 h-3.5" />
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(eq)}>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-destructive hover:text-destructive"
+                                                    onClick={() => handleDelete(eq)}
+                                                    title="Delete Equipment"
+                                                >
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </Button>
                                             </>

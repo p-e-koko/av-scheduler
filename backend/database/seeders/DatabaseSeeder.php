@@ -16,14 +16,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Always run role seeder to ensure roles/permissions exist
+        // Always run role seeders to ensure roles/permissions exist
         $this->call(RolePermissionSeeder::class);
+        $this->call(MarketingRolesSeeder::class);
 
         $password = Hash::make('password'); // Default password is 'password'
 
         // 1. Admin User — dev account with all staff roles for multi-role testing
         $adminEmail = 'pekkodev@gmail.com';
-        $adminRoles = ['admin', 'coordinator', 'supervisor', 'student'];
+        $adminRoles = ['admin', 'coordinator', 'supervisor', 'student', 'marketing_supervisor', 'marketing_coordinator', 'student_ambassador'];
         $admin = \App\Models\User::withTrashed()->where('email', $adminEmail)->first();
         if (!$admin) {
             $admin = \App\Models\User::create([
@@ -35,7 +36,8 @@ class DatabaseSeeder extends Seeder
                 'email_verified_at' => now(),
             ]);
         }
-        $admin->syncRoles($adminRoles);
+        $existingAdminRoles = $admin->getRoleNames()->toArray();
+        $admin->syncRoles(array_values(array_unique(array_merge($adminRoles, $existingAdminRoles))));
 
         // 2. Coordinator User
         $coordEmail = 'panneikoko1221@gmail.com';

@@ -31,9 +31,26 @@ class MarketingEquipmentBookingController extends Controller
         // Refresh equipment dynamic usage status
         $equipment->refreshStatus();
 
+        $booking->load(['equipment', 'user']);
+
+        // Notify marketing supervisors and coordinators
+        try {
+            $recipients = \App\Models\User::whereHas('roles', function ($q) {
+                $q->whereIn('name', ['marketing_supervisor', 'marketing_coordinator', 'admin']);
+            })->orWhereIn('role', ['marketing_supervisor', 'marketing_coordinator', 'admin'])->get();
+
+            foreach ($recipients as $recipient) {
+                if ($recipient->id !== $request->user()->id) {
+                    $recipient->notify(new \App\Notifications\MarketingEquipmentBookedNotification($booking));
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send equipment booking notification: ' . $e->getMessage());
+        }
+
         return response()->json([
             'message' => 'Equipment pre-booked successfully.',
-            'booking' => $booking->load('equipment')
+            'booking' => $booking
         ], 201);
     }
 
