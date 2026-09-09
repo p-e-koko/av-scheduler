@@ -345,6 +345,24 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/it-office-schedules/{id}', [\App\Http\Controllers\Api\ITOfficeScheduleController::class, 'update']);
     Route::delete('/it-office-schedules/{id}', [\App\Http\Controllers\Api\ITOfficeScheduleController::class, 'destroy']);
 
+    // -------------------------------------------------------------------------
+    // Wireless Microphone Routes (AV-IT only — no marketing access)
+    // -------------------------------------------------------------------------
+
+    // Read: supervisor, coordinator, student, admin
+    Route::middleware(['role:admin,coordinator,supervisor,student'])->group(function () {
+        Route::get('/wireless-microphones', [\App\Http\Controllers\Api\WirelessMicrophoneController::class, 'index']);
+        Route::get('/wireless-microphones/locations', [\App\Http\Controllers\Api\WirelessMicrophoneController::class, 'locations']);
+        Route::get('/wireless-microphones/{wirelessMicrophone}', [\App\Http\Controllers\Api\WirelessMicrophoneController::class, 'show']);
+    });
+
+    // Write: supervisor, coordinator, admin only
+    Route::middleware(['role:admin,coordinator,supervisor'])->group(function () {
+        Route::post('/wireless-microphones', [\App\Http\Controllers\Api\WirelessMicrophoneController::class, 'store']);
+        Route::put('/wireless-microphones/{wirelessMicrophone}', [\App\Http\Controllers\Api\WirelessMicrophoneController::class, 'update']);
+        Route::delete('/wireless-microphones/{wirelessMicrophone}', [\App\Http\Controllers\Api\WirelessMicrophoneController::class, 'destroy']);
+    });
+
 }); // end auth:sanctum group
 
 // ─────────────────────────────────────────────────────────────────────────────

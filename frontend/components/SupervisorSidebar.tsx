@@ -16,7 +16,8 @@ import {
   LayoutDashboard,
   Key,
   Monitor,
-  UserCheck
+  UserCheck,
+  Radio
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -226,6 +227,20 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
             <Key className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/keys') ? 'text-primary dark:text-white' : ''}`} />
             {(!sidebarCollapsed || isMobile) && <span className="font-medium">Keys</span>}
           </div>
+          <div
+            onClick={() => {
+              router.push('/dashboard/wireless-mics')
+              if (isMobile && onClose) onClose()
+            }}
+            className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/wireless-mics')
+              ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
+              : 'text-muted-foreground hover:bg-accent'
+              } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/wireless-mics') ? 'border-primary/20' : 'border-transparent'
+              }`}
+          >
+            <Radio className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/wireless-mics') ? 'text-primary dark:text-white' : ''}`} />
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Wireless Mics</span>}
+          </div>
 
           {/* IT Office Schedule */}
           <div
@@ -260,7 +275,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
           </div>
 
           {/* Switch Dashboard Section */}
-          {currentUser && getAllowedDashboards(userRoles).filter(path => path !== '/dashboard/supervisor' && path !== '/dashboard/inventory' && path !== '/dashboard/keys').length > 0 && (
+          {currentUser && getAllowedDashboards(userRoles).filter(path => path !== '/dashboard/supervisor' && path !== '/dashboard/inventory' && path !== '/dashboard/keys' && path !== '/dashboard/wireless-mics').length > 0 && (
             <>
               <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
                 {(!sidebarCollapsed || isMobile) ? (
@@ -272,7 +287,7 @@ export function SupervisorSidebar({ activeTab, onTabChange, isOpen, onClose }: S
                 )}
               </div>
               {getAllowedDashboards(userRoles)
-                .filter(path => path !== '/dashboard/supervisor' && path !== '/dashboard/inventory' && path !== '/dashboard/keys')
+                .filter(path => path !== '/dashboard/supervisor' && path !== '/dashboard/inventory' && path !== '/dashboard/keys' && path !== '/dashboard/wireless-mics')
                 .map(path => {
                   const label = path.split('/').pop();
                   return (

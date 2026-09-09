@@ -1840,3 +1840,43 @@ export const itOfficeScheduleAPI = {
     return apiCall('/users/it-assistants');
   },
 };
+
+// Wireless Microphone API
+export interface WirelessMicrophone {
+  id: string;
+  brand_model: string;
+  frequency: string;
+  location: string;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
+export interface WirelessMicrophoneListResponse {
+  data: WirelessMicrophone[];
+  meta?: { total: number; per_page: number; current_page: number; last_page: number };
+}
+
+export const wirelessMicrophoneAPI = {
+  async list(params: Record<string, string | number> = {}): Promise<WirelessMicrophoneListResponse> {
+    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
+    return apiCall<WirelessMicrophoneListResponse>('/wireless-microphones' + (qs ? '?' + qs : ''));
+  },
+  async get(id: string): Promise<{ microphone: WirelessMicrophone }> {
+    return apiCall<{ microphone: WirelessMicrophone }>('/wireless-microphones/' + id);
+  },
+  async create(data: { brand_model: string; frequency: string; location: string; notes?: string }): Promise<{ message: string; microphone: WirelessMicrophone }> {
+    return apiCall<{ message: string; microphone: WirelessMicrophone }>('/wireless-microphones', { method: 'POST', body: JSON.stringify(data) });
+  },
+  async update(id: string, data: Partial<WirelessMicrophone>): Promise<{ message: string; microphone: WirelessMicrophone }> {
+    return apiCall<{ message: string; microphone: WirelessMicrophone }>('/wireless-microphones/' + id, { method: 'PUT', body: JSON.stringify(data) });
+  },
+  async delete(id: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>('/wireless-microphones/' + id, { method: 'DELETE' });
+  },
+  async locations(): Promise<{ locations: string[] }> {
+    return apiCall<{ locations: string[] }>('/wireless-microphones/locations');
+  },
+};
+

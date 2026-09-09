@@ -16,7 +16,8 @@ import {
   Loader2,
   LayoutDashboard,
   Key,
-  Monitor
+  Monitor,
+  Radio
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -213,6 +214,19 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
               {(!sidebarCollapsed || isMobile) && <span className="font-medium">Keys</span>}
             </div>
           )}
+          {/* Wireless Mics — hidden for IT-only */}
+          {!isITOnly && (
+            <div
+              onClick={() => {
+                router.push('/dashboard/wireless-mics')
+                if (isMobile && onClose) onClose()
+              }}
+              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
+            >
+              <Radio className="w-5 h-5 flex-shrink-0" />
+              {(!sidebarCollapsed || isMobile) && <span className="font-medium">Wireless Mics</span>}
+            </div>
+          )}
           {/* IT Office Schedule — shown only for IT Assistants */}
           {isIT && (
             <div
@@ -232,7 +246,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
           )}
 
           {/* Switch Dashboard Section */}
-          {currentUser && !hasOnlyStudentRole && getAllowedDashboards(userRoles).filter(path => path !== '/dashboard/student' && path !== '/dashboard/inventory' && path !== '/dashboard/keys').length > 0 && (
+          {currentUser && !hasOnlyStudentRole && getAllowedDashboards(userRoles).filter(path => path !== '/dashboard/student' && path !== '/dashboard/inventory' && path !== '/dashboard/keys' && path !== '/dashboard/wireless-mics').length > 0 && (
             <>
               <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
                 {(!sidebarCollapsed || isMobile) ? (
@@ -244,7 +258,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
                 )}
               </div>
               {getAllowedDashboards(userRoles)
-                .filter(path => path !== '/dashboard/student' && path !== '/dashboard/inventory' && path !== '/dashboard/keys')
+                .filter(path => path !== '/dashboard/student' && path !== '/dashboard/inventory' && path !== '/dashboard/keys' && path !== '/dashboard/wireless-mics')
                 .map(path => {
                   const label = path.split('/').pop();
                   return (
