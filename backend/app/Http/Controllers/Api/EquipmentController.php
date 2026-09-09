@@ -490,12 +490,14 @@ class EquipmentController extends Controller
                 if (function_exists('imagewebp')) {
                     imagewebp($srcImage, $targetPath, 30); // 30% quality compression as requested
                     imagedestroy($srcImage);
+                    @chmod($targetPath, 0664);
                     return 'equipment_images/' . $filename;
                 } elseif (function_exists('imagejpeg')) {
                     $jpgFilename = uniqid('eq_') . '_' . time() . '.jpg';
                     $jpgPath = $directory . '/' . $jpgFilename;
                     imagejpeg($srcImage, $jpgPath, 30);
                     imagedestroy($srcImage);
+                    @chmod($jpgPath, 0664);
                     return 'equipment_images/' . $jpgFilename;
                 }
             }
