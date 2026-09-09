@@ -21,7 +21,7 @@ import EquipmentHistoryModal from "@/components/EquipmentHistoryModal"
 import EquipmentDetailModal from "@/components/EquipmentDetailModal"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import {
-    equipmentAPI, cableAPI, getStoredUser, formatAPIError, hasAnyRole,
+    equipmentAPI, cableAPI, getStoredUser, formatAPIError, hasAnyRole, getStorageUrl,
     type Equipment, type Cable, type User
 } from "@/lib/api"
 
@@ -474,6 +474,18 @@ function EquipmentCard({ item, canManage, onAction, onDelete, onHistory, onEdit 
         <Card className="bg-card/90 backdrop-blur-xl border-0 shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all cursor-pointer group"
             onClick={onAction}>
             <CardContent className="p-4 space-y-3">
+                {(item.image_url || item.image_path) && (
+                    <div className="w-full h-36 rounded-lg overflow-hidden bg-black/20 border border-border/50 flex items-center justify-center p-1">
+                        <img
+                            src={getStorageUrl(item.image_url || item.image_path) || ""}
+                            alt={item.name}
+                            className="w-full h-full object-contain rounded-md"
+                            onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                            }}
+                        />
+                    </div>
+                )}
                 <div className="flex items-start justify-between gap-2">
                     <div>
                         <h3 className="font-semibold text-foreground text-sm leading-tight">{item.name}</h3>

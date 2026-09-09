@@ -57,7 +57,12 @@ class EquipmentController extends Controller
             'location'      => 'required|string|max:255',
             'purchase_date' => 'nullable|date',
             'condition'     => 'nullable|in:good,fair,poor',
+            'image'         => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
         ]);
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $this->processAndStoreImage($request->file('image'));
+        }
 
         $data['barcode'] = Equipment::generateBarcode($data['location']);
         $data['status']  = 'available';
@@ -117,7 +122,15 @@ class EquipmentController extends Controller
             'purchase_date' => 'nullable|date',
             'condition'     => 'nullable|in:good,fair,poor',
             'status'        => 'nullable|in:available,checked_out,maintenance',
+            'image'         => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
         ]);
+
+        if ($request->hasFile('image')) {
+            if ($equipment->image_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($equipment->image_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($equipment->image_path);
+            }
+            $data['image_path'] = $this->processAndStoreImage($request->file('image'));
+        }
 
         $equipment->update($data);
 
@@ -360,5 +373,136 @@ class EquipmentController extends Controller
             ->pluck('location');
 
         return response()->json(['locations' => $locations]);
+    }
+
+    /**
+     * Bulk checkout multiple equipment items.
+     */
+    public function bulkCheckout(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'barcodes'   => 'required|array|min:1',
+            'barcodes.*' => 'required|string',
+            'event_note' => 'required|string|max:500',
+        ]);
+
+        $user = auth()->user();
+        $checkouts = [];
+        $errors = [];
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            foreach ($data['barcodes'] as $barcode) {
+                $baseBarcode = str_contains($barcode, '-') ? explode('-', $barcode)[0] : $barcode;
+                $equipment = Equipment::where('barcode', $baseBarcode)->lockForUpdate()->first();
+
+                if (!$equipment) {
+                    $errors[] = "Equipment with barcode {$barcode} not found.";
+                    continue;
+                }
+
+                if (!$equipment->isAvailable()) {
+                    $errors[] = "{$equipment->name} ({$equipment->barcode}) is not available.";
+                    continue;
+                }
+
+                $checkout = EquipmentCheckout::create([
+                    'equipment_id'   => $equipment->id,
+                    'user_id'        => $user->id,
+                    'event_note'     => $data['event_note'],
+                    'checked_out_at' => now(),
+                ]);
+
+                $equipment->update(['status' => 'checked_out']);
+
+                AuditLogger::log('equipment.checked_out', [
+                    'equipment_id' => $equipment->id,
+                    'barcode'      => $equipment->barcode,
+                    'name'         => $equipment->name,
+                    'event_note'   => $data['event_note'],
+                    'checkout_id'  => $checkout->id,
+                ]);
+
+                $checkouts[] = $checkout->load('equipment', 'user');
+            }
+
+            if (!empty($errors) && empty($checkouts)) {
+                \Illuminate\Support\Facades\DB::rollBack();
+                return response()->json([
+                    'message' => 'Bulk checkout failed.',
+                    'errors'  => $errors,
+                ], 422);
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json([
+                'message'   => count($checkouts) . ' equipment item(s) checked out successfully to ' . $user->name,
+                'checkouts' => $checkouts,
+                'warnings'  => $errors,
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['message' => 'Bulk checkout error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Process and store equipment image with 30% quality compression on physical server.
+     */
+    private function processAndStoreImage($file): string
+    {
+        $filename = uniqid('eq_') . '_' . time() . '.webp';
+        $directory = storage_path('app/public/equipment_images');
+
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $targetPath = $directory . '/' . $filename;
+
+        // Image optimization using GD if available
+        if (function_exists('imagecreatefromstring')) {
+            $imageContent = file_get_contents($file->getRealPath());
+            $srcImage = @imagecreatefromstring($imageContent);
+
+            if ($srcImage !== false) {
+                $width = imagesx($srcImage);
+                $height = imagesy($srcImage);
+                $maxSize = 1200;
+
+                if ($width > $maxSize || $height > $maxSize) {
+                    if ($width > $height) {
+                        $newWidth = $maxSize;
+                        $newHeight = (int) round(($height / $width) * $maxSize);
+                    } else {
+                        $newHeight = $maxSize;
+                        $newWidth = (int) round(($width / $height) * $maxSize);
+                    }
+                    $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
+                    imagealphablending($resizedImage, false);
+                    imagesavealpha($resizedImage, true);
+                    imagecopyresampled($resizedImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                    imagedestroy($srcImage);
+                    $srcImage = $resizedImage;
+                }
+
+                if (function_exists('imagewebp')) {
+                    imagewebp($srcImage, $targetPath, 30); // 30% quality compression as requested
+                    imagedestroy($srcImage);
+                    return 'equipment_images/' . $filename;
+                } elseif (function_exists('imagejpeg')) {
+                    $jpgFilename = uniqid('eq_') . '_' . time() . '.jpg';
+                    $jpgPath = $directory . '/' . $jpgFilename;
+                    imagejpeg($srcImage, $jpgPath, 30);
+                    imagedestroy($srcImage);
+                    return 'equipment_images/' . $jpgFilename;
+                }
+            }
+        }
+
+        // Fallback standard storage if GD processing fails
+        $path = $file->store('equipment_images', 'public');
+        return $path;
     }
 }

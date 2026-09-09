@@ -266,6 +266,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/equipment/my', [EquipmentController::class, 'myEquipment']);
     Route::get('/equipment/scan/{barcode}', [EquipmentController::class, 'scan']);
     Route::post('/equipment/scan/{barcode}/checkout', [EquipmentController::class, 'checkout']);
+    Route::post('/equipment/bulk-checkout', [EquipmentController::class, 'bulkCheckout']);
     Route::post('/equipment/scan/{barcode}/return', [EquipmentController::class, 'return']);
     Route::get('/equipment/{equipment}', [EquipmentController::class, 'show']);
     Route::get('/equipment/{equipment}/history', [EquipmentController::class, 'history']);
@@ -290,10 +291,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // All authenticated users: View keys and history
     Route::get('/keys', [\App\Http\Controllers\Api\KeyController::class, 'index']);
+    Route::get('/keys/locations', [\App\Http\Controllers\Api\KeyController::class, 'locations']);
     Route::get('/keys/{id}', [\App\Http\Controllers\Api\KeyController::class, 'show']);
     Route::get('/keys/{id}/history', [\App\Http\Controllers\Api\KeyController::class, 'history']);
 
     // All authenticated users: Checkout/Return
+    Route::post('/keys/bulk-take', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'bulkTake']);
     Route::post('/keys/{id}/checkout', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'checkout']);
     Route::post('/keys/{id}/return', [\App\Http\Controllers\Api\KeyCheckoutController::class, 'return']);
 

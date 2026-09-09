@@ -21,6 +21,32 @@ if (typeof window !== 'undefined') {
 
 console.log('Configured API_BASE_URL (from NEXT_PUBLIC_API_URL or /api):', API_BASE_URL);
 
+/**
+ * Helper to normalize storage image URLs returned by Laravel backend.
+ * Resolves hardcoded APP_URL paths (e.g. http://localhost:8000/storage/...)
+ * to use the current API_BASE_URL origin or relative browser path.
+ */
+export function getStorageUrl(url?: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith('data:') || url.startsWith('blob:')) return url;
+
+  const storageIndex = url.indexOf('/storage/');
+  const storagePath = storageIndex !== -1 ? url.substring(storageIndex) : (url.startsWith('/') ? url : '/' + url);
+
+  if (typeof window !== 'undefined') {
+    if (API_BASE_URL.startsWith('http')) {
+      try {
+        const apiUrlObj = new URL(API_BASE_URL);
+        return `${apiUrlObj.origin}${storagePath}`;
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return storagePath;
+  }
+  return url;
+}
+
 // Custom error class for API errors
 export class APIError extends Error {
   constructor(
@@ -283,10 +309,15 @@ async function apiCall<T>(
 
   console.log('Making API call to:', url);
 
-  const defaultHeaders: HeadersInit = {
-    'Content-Type': 'application/json',
+  const isFormData = options.body instanceof FormData;
+
+  const defaultHeaders: Record<string, string> = {
     'Accept': 'application/json',
   };
+
+  if (!isFormData) {
+    defaultHeaders['Content-Type'] = 'application/json';
+  }
 
   // Inject Bearer Token if available (for Social Login support)
   if (typeof window !== 'undefined') {
@@ -304,13 +335,20 @@ async function apiCall<T>(
     }
   }
 
+  const finalHeaders = {
+    ...defaultHeaders,
+    ...options.headers,
+  };
+
+  if (isFormData) {
+    delete (finalHeaders as any)['Content-Type'];
+    delete (finalHeaders as any)['content-type'];
+  }
+
   const config: RequestInit = {
     ...options,
     credentials: 'include', // Include cookies for session authentication
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
+    headers: finalHeaders,
   };
 
   try {
@@ -1406,6 +1444,8 @@ export interface Equipment {
   purchase_date?: string | null;
   condition: 'good' | 'fair' | 'poor';
   status: 'available' | 'checked_out' | 'maintenance';
+  image_path?: string | null;
+  image_url?: string | null;
   current_checkout?: EquipmentCheckout | null;
   created_at: string;
   updated_at: string;
@@ -1416,6 +1456,7 @@ export interface Key {
   id: string;
   code: string;
   description: string;
+  location?: string | null;
   current_checkout?: KeyCheckout | null;
   assigned_user_id?: string | null;
   assigned_user?: User | null;
@@ -1511,10 +1552,17 @@ export const equipmentAPI = {
   async scan(barcode: string): Promise<{ equipment: Equipment }> {
     return apiCall<{ equipment: Equipment }>('/equipment/scan/' + encodeURIComponent(barcode));
   },
-  async create(data: { name: string; category: string; location: string; purchase_date?: string; condition?: string; }): Promise<{ message: string; equipment: Equipment }> {
+  async create(data: FormData | { name: string; category: string; location: string; purchase_date?: string; condition?: string; }): Promise<{ message: string; equipment: Equipment }> {
+    if (data instanceof FormData) {
+      return apiCall<{ message: string; equipment: Equipment }>('/equipment', { method: 'POST', body: data });
+    }
     return apiCall<{ message: string; equipment: Equipment }>('/equipment', { method: 'POST', body: JSON.stringify(data) });
   },
-  async update(id: string, data: Partial<Equipment>): Promise<{ message: string; equipment: Equipment }> {
+  async update(id: string, data: FormData | Partial<Equipment>): Promise<{ message: string; equipment: Equipment }> {
+    if (data instanceof FormData) {
+      data.append('_method', 'PUT');
+      return apiCall<{ message: string; equipment: Equipment }>('/equipment/' + id, { method: 'POST', body: data });
+    }
     return apiCall<{ message: string; equipment: Equipment }>('/equipment/' + id, { method: 'PUT', body: JSON.stringify(data) });
   },
   async delete(id: string): Promise<{ message: string }> {
@@ -1532,6 +1580,9 @@ export const equipmentAPI = {
   },
   async checkout(barcode: string, event_note: string): Promise<{ message: string; checkout: EquipmentCheckout }> {
     return apiCall<{ message: string; checkout: EquipmentCheckout }>('/equipment/scan/' + encodeURIComponent(barcode) + '/checkout', { method: 'POST', body: JSON.stringify({ event_note }) });
+  },
+  async bulkCheckout(barcodes: string[], event_note: string): Promise<{ message: string; checkouts: EquipmentCheckout[]; warnings?: string[] }> {
+    return apiCall<{ message: string; checkouts: EquipmentCheckout[]; warnings?: string[] }>('/equipment/bulk-checkout', { method: 'POST', body: JSON.stringify({ barcodes, event_note }) });
   },
   async return(barcode: string, return_note?: string): Promise<{ message: string; checkout: EquipmentCheckout }> {
     return apiCall<{ message: string; checkout: EquipmentCheckout }>('/equipment/scan/' + encodeURIComponent(barcode) + '/return', { method: 'POST', body: JSON.stringify({ return_note: return_note ?? null }) });
@@ -1615,22 +1666,23 @@ export const checkoutAPI = {
 };
 
 export const keyAPI = {
-  async list(): Promise<Key[]> {
-    return apiCall<Key[]>('/keys');
+  async list(params: { location?: string; search?: string; assigned_user_id?: string } = {}): Promise<Key[]> {
+    const qs = new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null && v !== '').map(([k, v]) => [k, String(v)])).toString();
+    return apiCall<Key[]>('/keys' + (qs ? '?' + qs : ''));
   },
   async get(id: string): Promise<Key> {
     return apiCall<Key>('/keys/' + id);
   },
-  async create(data: { code: string; description: string; assigned_user_id?: string | null }): Promise<Key> {
+  async create(data: { code: string; description: string; location?: string; assigned_user_id?: string | null }): Promise<Key> {
     return apiCall<Key>('/keys', { method: 'POST', body: JSON.stringify(data) });
   },
-  async update(id: string, data: { code: string; description: string; assigned_user_id?: string | null }): Promise<Key> {
+  async update(id: string, data: { code: string; description: string; location?: string; assigned_user_id?: string | null }): Promise<Key> {
     return apiCall<Key>('/keys/' + id, { method: 'PUT', body: JSON.stringify(data) });
   },
   async delete(id: string): Promise<{ message: string }> {
     return apiCall<{ message: string }>('/keys/' + id, { method: 'DELETE' });
   },
-  async checkout(id: string, data: { student_id?: string; purpose: string; }): Promise<KeyCheckout> {
+  async checkout(id: string, data: { student_id?: string; purpose: string; } | { purpose: string }): Promise<KeyCheckout> {
     return apiCall<KeyCheckout>('/keys/' + id + '/checkout', { method: 'POST', body: JSON.stringify(data) });
   },
   async return(id: string): Promise<{ message: string; checkout: KeyCheckout }> {
@@ -1638,6 +1690,12 @@ export const keyAPI = {
   },
   async history(id: string): Promise<KeyCheckout[]> {
     return apiCall<KeyCheckout[]>('/keys/' + id + '/history');
+  },
+  async locations(): Promise<{ locations: string[] }> {
+    return apiCall<{ locations: string[] }>('/keys/locations');
+  },
+  async bulkTake(key_ids: string[], purpose: string): Promise<{ message: string; checkouts: KeyCheckout[] }> {
+    return apiCall<{ message: string; checkouts: KeyCheckout[] }>('/keys/bulk-take', { method: 'POST', body: JSON.stringify({ key_ids, purpose }) });
   },
 };
 

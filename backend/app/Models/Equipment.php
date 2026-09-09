@@ -29,7 +29,27 @@ class Equipment extends Model
         'purchase_date',
         'condition',
         'status',
+        'image_path',
     ];
+
+    /**
+     * The accessors to append to the model's array form.
+     */
+    protected $appends = [
+        'image_url',
+    ];
+
+    /**
+     * Get full URL for the equipment image.
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image_path) {
+            return null;
+        }
+
+        return asset('storage/' . $this->image_path);
+    }
 
     /**
      * The attributes that should be cast.

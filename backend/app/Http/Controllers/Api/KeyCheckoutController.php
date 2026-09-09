@@ -67,4 +67,55 @@ class KeyCheckoutController extends Controller
 
         return response()->json(['message' => 'Key returned successfully', 'checkout' => $checkout]);
     }
+
+    /**
+     * Take multiple keys at once ("Take All" / Multi-take).
+     */
+    public function bulkTake(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'key_ids' => 'required|array|min:1',
+            'key_ids.*' => 'required|exists:key_management,id',
+            'purpose' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = Auth::user();
+        $studentId = $user->student_id ?? $user->username ?? 'Unknown';
+        $checkouts = [];
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            foreach ($request->key_ids as $keyId) {
+                $key = Key::findOrFail($keyId);
+                $currentCheckout = $key->currentCheckout;
+                if ($currentCheckout) {
+                    $currentCheckout->update(['returned_at' => now()]);
+                }
+
+                $checkout = KeyCheckout::create([
+                    'key_id' => $key->id,
+                    'user_id' => $user->id,
+                    'student_id' => $studentId,
+                    'purpose' => $request->purpose,
+                    'checked_out_at' => now(),
+                ]);
+
+                $checkouts[] = $checkout->load('key', 'user');
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json([
+                'message' => count($checkouts) . ' key(s) taken successfully.',
+                'checkouts' => $checkouts,
+            ], 201);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json(['message' => 'Bulk key take failed: ' . $e->getMessage()], 500);
+        }
+    }
 }

@@ -24,7 +24,7 @@ export function KeyActionModal({ isOpen, onClose, onSaved, editKey }: KeyActionP
     const [users, setUsers] = useState<User[]>([])
     const [userSearch, setUserSearch] = useState("")
     const [isUserListOpen, setIsUserListOpen] = useState(false)
-    const [form, setForm] = useState({ code: "", description: "", assigned_user_id: "" as string | null })
+    const [form, setForm] = useState({ code: "", description: "", location: "", assigned_user_id: "" as string | null })
 
     useEffect(() => {
         if (isOpen) {
@@ -34,6 +34,7 @@ export function KeyActionModal({ isOpen, onClose, onSaved, editKey }: KeyActionP
                 setForm({
                     code: editKey.code,
                     description: editKey.description,
+                    location: editKey.location || "",
                     assigned_user_id: editKey.assigned_user_id || null
                 })
                 if (editKey.assigned_user) {
@@ -42,7 +43,7 @@ export function KeyActionModal({ isOpen, onClose, onSaved, editKey }: KeyActionP
                     setUserSearch("")
                 }
             } else {
-                setForm({ code: "", description: "", assigned_user_id: null })
+                setForm({ code: "", description: "", location: "", assigned_user_id: null })
                 setUserSearch("")
             }
         }
@@ -120,6 +121,13 @@ export function KeyActionModal({ isOpen, onClose, onSaved, editKey }: KeyActionP
                                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                                 placeholder="e.g. Main Lab Room 101"
                                 className="flex min-h-[100px] w-full rounded-md border border-border/50 bg-muted/30 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus:border-primary transition-all" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="key-location" className="text-sm font-semibold">Location / Room</Label>
+                            <Input id="key-location" value={form.location}
+                                onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
+                                placeholder="e.g. Building A, Floor 2"
+                                className="bg-muted/30 border-border/50 focus:border-primary transition-all" />
                         </div>
 
                         <div className="space-y-2 relative">
@@ -418,11 +426,10 @@ export function KeyDetailModal({ isOpen, onClose, onRefresh, targetKey, currentU
     const [history, setHistory] = useState<KeyCheckout[]>([])
     const [historyLoading, setHistoryLoading] = useState(true)
     const [checkoutLoading, setCheckoutLoading] = useState(false)
-    const [returnLoading, setReturnLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
     const [form, setForm] = useState({ purpose: "" })
-    // Local copy of the key so we can update after checkout/return
+    // Local copy of the key so we can update after checkout
     const [localKey, setLocalKey] = useState<Key | null>(null)
 
     useEffect(() => {
@@ -469,25 +476,7 @@ export function KeyDetailModal({ isOpen, onClose, onRefresh, targetKey, currentU
         }
     }
 
-    const handleReturn = async () => {
-        if (!localKey) return
-        setReturnLoading(true)
-        setError(null)
-        setSuccess(null)
-        try {
-            await keyAPI.return(localKey.id)
-            setSuccess("Key returned successfully!")
-            // Refresh key data and history
-            const updatedKey = await keyAPI.get(localKey.id)
-            setLocalKey(updatedKey)
-            await fetchHistory(localKey.id)
-            onRefresh()
-        } catch (err) {
-            setError(formatAPIError(err))
-        } finally {
-            setReturnLoading(false)
-        }
-    }
+
 
     if (!isOpen || !targetKey) return null
 
@@ -512,12 +501,12 @@ export function KeyDetailModal({ isOpen, onClose, onRefresh, targetKey, currentU
                     </div>
                     <div className="flex items-center gap-2">
                         {localKey?.assigned_user && (
-                            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 dark:bg-white/10 dark:border-white/20">
-                                <BookOpen className="w-3 h-3 text-primary dark:text-white" />
-                                <span className="text-[10px] font-bold text-primary dark:text-white uppercase">Original Holder: {localKey.assigned_user.name}</span>
+                            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 dark:bg-sky-500/15 dark:border-sky-500/30">
+                                <BookOpen className="w-3 h-3 text-blue-600 dark:text-sky-400" />
+                                <span className="text-[10px] font-bold text-blue-700 dark:text-sky-300 uppercase">Original Holder: {localKey.assigned_user.name}</span>
                             </div>
                         )}
-                        <Badge variant="outline" className={`text-xs px-2.5 py-1 border ${isCheckedOut ? "bg-amber-500/10 text-amber-500 border-amber-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"}`}>
+                        <Badge variant="outline" className={`text-xs px-2.5 py-1 border rounded-full ${isCheckedOut ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"}`}>
                             {isCheckedOut ? <Clock className="w-3 h-3 mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
                             {isCheckedOut ? "Currently Held" : "Available"}
                         </Badge>
@@ -534,23 +523,23 @@ export function KeyDetailModal({ isOpen, onClose, onRefresh, targetKey, currentU
                     <div className="p-5 space-y-4 border-b border-border">
 
                         {isCheckedOut && (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                                     <UserIcon className="w-3.5 h-3.5" /> Current Key Holder
                                 </h3>
-                                <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-4 space-y-3">
+                                <div className="bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/20 rounded-xl p-4 space-y-3">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-sm font-bold text-amber-600">
+                                        <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-sm flex items-center justify-center shrink-0">
                                             {holder?.user?.name?.charAt(0) ?? "?"}
                                         </div>
-                                        <div className="flex-1">
-                                            <p className="font-semibold text-foreground">{holder?.user?.name ?? "Unknown User"}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-foreground truncate">{holder?.user?.name ?? "Unknown User"}</p>
                                             <p className="text-xs text-muted-foreground font-mono">ID: {holder?.student_id}</p>
                                         </div>
                                     </div>
-                                    <div className="pt-2 border-t border-amber-500/10">
-                                        <p className="text-[10px] uppercase font-bold text-amber-500/70 tracking-wider">Purpose</p>
-                                        <p className="text-sm italic text-foreground mt-0.5">{holder?.purpose}</p>
+                                    <div className="pt-2 border-t border-amber-500/20">
+                                        <p className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400 tracking-wider">Purpose</p>
+                                        <p className="text-xs italic text-foreground mt-0.5">{holder?.purpose}</p>
                                     </div>
                                 </div>
                             </div>
@@ -558,57 +547,41 @@ export function KeyDetailModal({ isOpen, onClose, onRefresh, targetKey, currentU
 
                         {/* Actions Section */}
                         <div className="pt-2">
-                            {isCheckedOut && currentUser?.id === holder?.user_id ? (
-                                /* Current user is the holder: only show Return */
-                                <div className="space-y-4 mt-4">
-                                    <Button
-                                        variant="outline"
-                                        className="w-full bg-amber-500/5 hover:bg-amber-500/10 text-amber-600 border-amber-500/20 rounded-xl h-11"
-                                        onClick={handleReturn}
-                                        disabled={returnLoading}
-                                    >
-                                        {returnLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <LogOut className="w-4 h-4 mr-2" />}
-                                        Return Key (You have it)
-                                    </Button>
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                    <LogIn className="w-3.5 h-3.5" /> {isCheckedOut ? "Take From Current Holder" : "Take This Key"}
+                                </h3>
+                                <div className={`rounded-xl p-4 border ${isCheckedOut ? "bg-blue-500/5 dark:bg-sky-500/10 border-blue-500/20 dark:border-sky-500/20" : "bg-emerald-500/5 border-emerald-500/15"}`}>
+                                    <form onSubmit={handleCheckout} className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="detail-purpose" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                                Purpose <span className="text-destructive">*</span>
+                                            </Label>
+                                            <Input
+                                                id="detail-purpose"
+                                                required
+                                                value={form.purpose}
+                                                onChange={e => setForm(f => ({ ...f, purpose: e.target.value }))}
+                                                placeholder={isCheckedOut ? "Handing over from previous student..." : "Why are you taking this key?"}
+                                                className="bg-background border-border rounded-xl focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <Button
+                                            type="submit"
+                                            className={`w-full rounded-xl h-11 font-semibold text-white shadow-lg ${isCheckedOut ? "bg-blue-600 hover:bg-blue-700 dark:bg-sky-500 dark:hover:bg-sky-600 shadow-blue-500/20" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"}`}
+                                            disabled={checkoutLoading}
+                                        >
+                                            {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <LogIn className="w-4 h-4 mr-2" />}
+                                            {isCheckedOut ? "Confirm Handover / Take Key" : "Take Key"}
+                                        </Button>
+                                        {isCheckedOut && (
+                                            <p className="text-[10px] text-muted-foreground text-center italic mt-2">
+                                                Note: Taking this key will automatically complete the previous student's session.
+                                            </p>
+                                        )}
+                                    </form>
                                 </div>
-                            ) : (
-                                /* Key is available OR held by someone else: show Checkout form */
-                                <div className="space-y-4">
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                        <LogIn className="w-3.5 h-3.5" /> {isCheckedOut ? "Take From Current Holder" : "Take This Key"}
-                                    </h3>
-                                    <div className={`rounded-xl p-4 border ${isCheckedOut ? "bg-primary/5 border-primary/20" : "bg-emerald-500/5 border-emerald-500/15"}`}>
-                                        <form onSubmit={handleCheckout} className="space-y-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="detail-purpose" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                                    Purpose <span className="text-destructive">*</span>
-                                                </Label>
-                                                <Input
-                                                    id="detail-purpose"
-                                                    required
-                                                    value={form.purpose}
-                                                    onChange={e => setForm(f => ({ ...f, purpose: e.target.value }))}
-                                                    placeholder={isCheckedOut ? "Handing over from previous student..." : "Why are you taking this key?"}
-                                                    className="bg-background/50 border-border/50 focus:border-primary transition-all"
-                                                />
-                                            </div>
-                                            <Button
-                                                type="submit"
-                                                className={`w-full rounded-xl h-11 shadow-lg ${isCheckedOut ? "bg-primary shadow-primary/20" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20"}`}
-                                                disabled={checkoutLoading}
-                                            >
-                                                {checkoutLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <LogIn className="w-4 h-4 mr-2" />}
-                                                {isCheckedOut ? "Confirm Handover" : "Checkout Key"}
-                                            </Button>
-                                            {isCheckedOut && (
-                                                <p className="text-[10px] text-muted-foreground text-center italic mt-2">
-                                                    Note: Taking this key will automatically complete the previous student's session.
-                                                </p>
-                                            )}
-                                        </form>
-                                    </div>
-                                </div>
-                            )}
+                            </div>
                         </div>
 
                         {/* Error / Success Messages */}

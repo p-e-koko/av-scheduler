@@ -18,6 +18,7 @@ class Key extends Model
     protected $fillable = [
         'code',
         'description',
+        'location',
         'assigned_user_id',
     ];
 

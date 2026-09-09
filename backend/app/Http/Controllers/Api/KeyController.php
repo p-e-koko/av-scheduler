@@ -20,6 +20,19 @@ class KeyController extends Controller
             $query->where('assigned_user_id', $request->assigned_user_id);
         }
 
+        if ($request->has('location') && !empty($request->location)) {
+            $query->where('location', 'like', '%' . $request->location . '%');
+        }
+
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%");
+            });
+        }
+
         $keys = $query->get();
         
         return response()->json($keys);
@@ -33,6 +46,7 @@ class KeyController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => 'required|string|unique:key_management,code',
             'description' => 'required|string',
+            'location' => 'nullable|string|max:255',
             'assigned_user_id' => 'nullable|exists:users,id',
         ]);
 
@@ -65,6 +79,7 @@ class KeyController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => 'required|string|unique:key_management,code,' . $key->id . ',id',
             'description' => 'required|string',
+            'location' => 'nullable|string|max:255',
             'assigned_user_id' => 'nullable|exists:users,id',
         ]);
 
@@ -97,5 +112,20 @@ class KeyController extends Controller
         $history = $key->checkouts()->with('user')->orderBy('checked_out_at', 'desc')->get();
         
         return response()->json($history);
+    }
+
+    /**
+     * Get distinct key locations list.
+     */
+    public function locations()
+    {
+        $locations = Key::whereNotNull('location')
+            ->where('location', '!=', '')
+            ->select('location')
+            ->distinct()
+            ->orderBy('location')
+            ->pluck('location');
+
+        return response()->json(['locations' => $locations]);
     }
 }

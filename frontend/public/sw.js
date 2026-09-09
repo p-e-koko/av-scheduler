@@ -61,7 +61,7 @@ self.addEventListener('notificationclick', function (event) {
           return client.focus();
         }
       }
-      
+
       if (windowClients.length > 0) {
         let client = windowClients[0];
         if ('navigate' in client && 'focus' in client) {
@@ -79,6 +79,21 @@ self.addEventListener('notificationclick', function (event) {
 
 // Fetch event listener (required for PWA installability on Chrome/Android)
 self.addEventListener('fetch', function (event) {
-  // Pass-through fetch handler that calls event.respondWith() to satisfy PWA criteria
-  event.respondWith(fetch(event.request));
+  // Only intercept GET requests. Non-GET requests (e.g. POST/PUT with FormData) must bypass SW
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  const url = new URL(event.request.url);
+  // Bypass SW for API calls, storage asset uploads/downloads, and external domains
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api') || url.pathname.startsWith('/storage')) {
+    return;
+  }
+
+  event.respondWith(
+    fetch(event.request).catch(function (err) {
+      console.warn('SW fetch failed:', err);
+    })
+  );
 });
+

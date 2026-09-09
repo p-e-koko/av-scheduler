@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { X, QrCode, CheckCircle, AlertCircle, Loader2, Camera, Keyboard } from "lucide-react"
+import { X, QrCode, CheckCircle, AlertCircle, Loader2, Camera, Keyboard, Plus, Trash2 } from "lucide-react"
 import { BrowserMultiFormatReader } from "@zxing/library"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,6 +19,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
     const [step, setStep] = useState<ScanStep>("scan")
     const [barcode, setBarcode] = useState("")
     const [equipment, setEquipment] = useState<Equipment | null>(null)
+    const [stagedEquipment, setStagedEquipment] = useState<Equipment[]>([])
     const [cable, setCable] = useState<Cable | null>(null)
     const [activeCableCheckouts, setActiveCableCheckouts] = useState<CableCheckout[]>([])
     const [checkoutQuantity, setCheckoutQuantity] = useState(1)
@@ -40,6 +41,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
             setStep("scan")
             setBarcode("")
             setEquipment(null)
+            setStagedEquipment([])
             setCable(null)
             setActiveCableCheckouts([])
             setCheckoutQuantity(1)
@@ -103,8 +105,6 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
         stopScanner()
 
         try {
-            // Logic: 'AV2026C' for Cables, 'AV2026E' for Equipment
-            // The backend handles stripping suffixes, so we just check the prefix
             if (targetBarcode.includes("AV2026C") || targetBarcode.startsWith("C")) {
                 const res = await cableAPI.scan(targetBarcode)
                 setCable(res.cable)
@@ -114,11 +114,18 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
             } else {
                 const res = await equipmentAPI.scan(targetBarcode)
                 const item = res.equipment
-                setEquipment(item)
 
                 if (item.status === "available") {
-                    setStep("checkout")
+                    // Check if item is already in staged items
+                    if (stagedEquipment.some(staged => staged.id === item.id)) {
+                        setError(`Item "${item.name}" (${item.barcode}) is already added to scan list.`)
+                        setStep("checkout")
+                    } else {
+                        setEquipment(item)
+                        setStep("checkout")
+                    }
                 } else if (item.status === "checked_out") {
+                    setEquipment(item)
                     setStep("confirm_return")
                 } else {
                     setError(`This item is currently under maintenance and cannot be checked out.`)
@@ -132,13 +139,42 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
         }
     }
 
+    const handleStageCurrentEquipment = () => {
+        if (!equipment) return
+        if (!stagedEquipment.some(e => e.id === equipment.id)) {
+            setStagedEquipment(prev => [...prev, equipment])
+        }
+        setEquipment(null)
+        setBarcode("")
+        setError(null)
+        setStep("scan")
+    }
+
+    const handleRemoveStagedItem = (id: string) => {
+        setStagedEquipment(prev => prev.filter(e => e.id !== id))
+    }
+
     const handleCheckout = async () => {
         if (!eventNote.trim()) { setError("Event note is required."); return }
         setLoading(true)
         setError(null)
+
+        // Combine staged equipment with current scanned equipment if present
+        let itemsToCheckout = [...stagedEquipment]
+        if (equipment && !itemsToCheckout.some(e => e.id === equipment.id)) {
+            itemsToCheckout.push(equipment)
+        }
+
         try {
-            if (equipment) {
-                const res = await equipmentAPI.checkout(equipment.barcode, eventNote.trim())
+            if (itemsToCheckout.length > 1) {
+                const barcodes = itemsToCheckout.map(e => e.barcode)
+                const res = await equipmentAPI.bulkCheckout(barcodes, eventNote.trim())
+                setResultMessage(res.message)
+                setResultSuccess(true)
+                setStep("result")
+            } else if (itemsToCheckout.length === 1) {
+                const item = itemsToCheckout[0]
+                const res = await equipmentAPI.checkout(item.barcode, eventNote.trim())
                 setResultMessage(res.message)
                 setResultSuccess(true)
                 setStep("result")
@@ -147,6 +183,8 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                 setResultMessage(res.message)
                 setResultSuccess(true)
                 setStep("result")
+            } else {
+                setError("No equipment items selected for checkout.")
             }
         } catch (err: any) {
             setError(formatAPIError(err))
@@ -182,6 +220,9 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
 
     if (!isOpen) return null
 
+    // Determine total count of equipment to check out
+    const totalEquipmentToCheckout = stagedEquipment.length + (equipment && !stagedEquipment.some(e => e.id === equipment.id) ? 1 : 0)
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
@@ -198,6 +239,38 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                 </div>
 
                 <div className="p-5 space-y-4">
+                    {/* Staged Items Badge bar if we have staged equipment */}
+                    {stagedEquipment.length > 0 && step === "scan" && (
+                        <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs font-semibold text-primary flex items-center gap-1">
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    {stagedEquipment.length} item(s) scanned & ready
+                                </span>
+                                <Button
+                                    size="sm"
+                                    className="h-7 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    onClick={() => setStep("checkout")}
+                                >
+                                    Proceed to Checkout
+                                </Button>
+                            </div>
+                            <div className="max-h-24 overflow-y-auto space-y-1">
+                                {stagedEquipment.map(item => (
+                                    <div key={item.id} className="flex justify-between items-center text-xs bg-background/50 p-1.5 rounded border border-border">
+                                        <span className="font-medium truncate max-w-[200px]">{item.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-muted-foreground font-mono text-[10px]">{item.barcode}</span>
+                                            <button onClick={() => handleRemoveStagedItem(item.id)} className="text-destructive hover:text-destructive/80">
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Step: Scan */}
                     {step === "scan" && (
                         <>
@@ -244,7 +317,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                                             value={barcode}
                                             onChange={e => setBarcode(e.target.value)}
                                             onKeyDown={e => e.key === "Enter" && handleScan()}
-                                            placeholder="e.g. AV2026CAB001-1"
+                                            placeholder="e.g. AV2026EST001"
                                             className="font-mono"
                                         />
                                         <Button onClick={() => handleScan()} disabled={loading || !barcode.trim()}>
@@ -259,19 +332,68 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                     )}
 
                     {/* Step: Checkout */}
-                    {step === "checkout" && (equipment || cable) && (
+                    {step === "checkout" && (equipment || cable || stagedEquipment.length > 0) && (
                         <>
-                            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
-                                <p className="text-sm font-semibold text-emerald-400 flex items-center gap-1">
-                                    <CheckCircle className="w-4 h-4" />
-                                    Item Available
-                                </p>
-                                <p className="text-sm text-foreground mt-1 font-medium">{equipment?.name || cable?.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {equipment?.barcode || cable?.barcode} · {equipment?.location || cable?.location}
-                                    {cable && <span className="ml-2 font-bold text-primary">({cable.amount} available)</span>}
-                                </p>
-                            </div>
+                            {/* Staged Equipment List */}
+                            {stagedEquipment.length > 0 && (
+                                <div className="bg-primary/5 border border-primary/15 rounded-lg p-3 space-y-2">
+                                    <p className="text-xs font-semibold text-primary">Staged Equipment ({stagedEquipment.length})</p>
+                                    <div className="max-h-32 overflow-y-auto space-y-1">
+                                        {stagedEquipment.map(item => (
+                                            <div key={item.id} className="flex justify-between items-center text-xs bg-card p-1.5 rounded border border-border">
+                                                <span className="font-medium truncate max-w-[200px]">{item.name}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-muted-foreground font-mono text-[10px]">{item.barcode}</span>
+                                                    <button onClick={() => handleRemoveStagedItem(item.id)} className="text-destructive hover:text-destructive/80">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Currently Scanned Item */}
+                            {equipment && (
+                                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <p className="text-sm font-semibold text-emerald-400 flex items-center gap-1">
+                                                <CheckCircle className="w-4 h-4" />
+                                                Scanned Item Available
+                                            </p>
+                                            <p className="text-sm text-foreground mt-1 font-medium">{equipment.name}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {equipment.barcode} · {equipment.location}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 text-xs border-emerald-500/30 hover:bg-emerald-500/10"
+                                            onClick={handleStageCurrentEquipment}
+                                        >
+                                            <Plus className="w-3.5 h-3.5 mr-1" />
+                                            Scan Another
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {cable && (
+                                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
+                                    <p className="text-sm font-semibold text-emerald-400 flex items-center gap-1">
+                                        <CheckCircle className="w-4 h-4" />
+                                        Cable Available
+                                    </p>
+                                    <p className="text-sm text-foreground mt-1 font-medium">{cable.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {cable.barcode} · {cable.location}
+                                        <span className="ml-2 font-bold text-primary">({cable.amount} available)</span>
+                                    </p>
+                                </div>
+                            )}
 
                             {cable && activeCableCheckouts.length > 0 && (
                                 <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-lg">
@@ -316,16 +438,19 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                                     autoFocus
                                     value={eventNote}
                                     onChange={e => setEventNote(e.target.value)}
-                                    placeholder="e.g. Sunday Worship Service 2026-04-20"
+                                    placeholder="e.g. Sabbath Worship Service 2026-04-20"
                                 />
                                 {error && <p className="text-sm text-destructive">{error}</p>}
                             </div>
+
                             <div className="flex gap-2">
-                                <Button variant="outline" className="flex-1" onClick={() => setStep("scan")}>Back</Button>
+                                <Button variant="outline" className="flex-1" onClick={() => setStep("scan")}>
+                                    {stagedEquipment.length > 0 ? "+ Scan More" : "Back"}
+                                </Button>
                                 <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                    onClick={handleCheckout} disabled={loading}>
+                                    onClick={handleCheckout} disabled={loading || totalEquipmentToCheckout === 0 && !cable}>
                                     {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                                    Check Out {cable ? `(${checkoutQuantity})` : ""}
+                                    Check Out {totalEquipmentToCheckout > 1 ? `(${totalEquipmentToCheckout} items)` : cable ? `(${checkoutQuantity})` : ""}
                                 </Button>
                             </div>
                         </>
@@ -415,6 +540,7 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                                         setStep("scan");
                                         setBarcode("");
                                         setEquipment(null);
+                                        setStagedEquipment([]);
                                         setCable(null);
                                         setActiveCableCheckouts([]);
                                         setCheckoutQuantity(1);
@@ -430,6 +556,6 @@ export default function BarcodeScannerModal({ isOpen, onClose }: Props) {
                     )}
                 </div>
             </div>
-        </div >
+        </div>
     )
 }

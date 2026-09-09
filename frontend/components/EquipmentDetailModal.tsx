@@ -1,10 +1,10 @@
 "use client"
 
-import { X, Printer, Copy, Check } from "lucide-react"
-import { useState, useRef } from "react"
+import { X, Printer, Copy, Check, Image as ImageIcon } from "lucide-react"
+import { useState } from "react"
 import { QRCodeCanvas } from "qrcode.react"
 import { Button } from "@/components/ui/button"
-import type { Equipment, Cable } from "@/lib/api"
+import { getStorageUrl, type Equipment, type Cable } from "@/lib/api"
 
 interface Props {
     equipment: Equipment | null
@@ -24,8 +24,9 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
     }
 
     const handleCopy = async (code: string) => {
+        const textToCopy = `${code} - ${displayItem.name}`
         try {
-            await navigator.clipboard.writeText(code)
+            await navigator.clipboard.writeText(textToCopy)
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
         } catch (err) {
@@ -37,29 +38,38 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
         try {
             const qrCanvas = document.querySelector(`#${containerId} canvas`) as HTMLCanvasElement
             if (qrCanvas) {
-                // Composite canvas to include text label
                 const compositeCanvas = document.createElement('canvas')
                 const ctx = compositeCanvas.getContext('2d')
                 if (!ctx) throw new Error("Could not get canvas context")
 
-                const textPadding = 20
+                const equipmentTitle = displayItem.name || "Equipment"
                 const margin = 20
+                const headerHeight = 30
+                const footerHeight = 30
+
                 compositeCanvas.width = qrCanvas.width + (margin * 2)
-                compositeCanvas.height = qrCanvas.height + textPadding + (margin * 2)
+                compositeCanvas.height = qrCanvas.height + headerHeight + footerHeight + (margin * 2)
 
                 // Fill white background
                 ctx.fillStyle = "#ffffff"
                 ctx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height)
 
-                // Draw QR Code
-                ctx.drawImage(qrCanvas, margin, margin)
-
-                // Draw Text
-                ctx.fillStyle = "#000000"
-                ctx.font = "bold 16px monospace"
+                // Draw Header (Equipment Name)
+                ctx.fillStyle = "#111827"
+                ctx.font = "bold 14px sans-serif"
                 ctx.textAlign = "center"
                 ctx.textBaseline = "top"
-                ctx.fillText(code, compositeCanvas.width / 2, qrCanvas.height + margin + 4)
+                ctx.fillText(equipmentTitle, compositeCanvas.width / 2, margin)
+
+                // Draw QR Code Center
+                ctx.drawImage(qrCanvas, margin, margin + headerHeight)
+
+                // Draw Footer (Barcode Code)
+                ctx.fillStyle = "#374151"
+                ctx.font = "bold 13px monospace"
+                ctx.textAlign = "center"
+                ctx.textBaseline = "top"
+                ctx.fillText(code, compositeCanvas.width / 2, margin + headerHeight + qrCanvas.height + 8)
 
                 const blob = await new Promise<Blob | null>(res => compositeCanvas.toBlob(res))
                 if (blob) {
@@ -70,11 +80,11 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
                     setTimeout(() => setCopiedQR(false), 2000)
                 }
             } else {
-                await navigator.clipboard.writeText(code)
+                await navigator.clipboard.writeText(`${code} - ${displayItem.name}`)
             }
         } catch (err) {
             console.error("Failed to copy QR code", err)
-            await navigator.clipboard.writeText(code)
+            await navigator.clipboard.writeText(`${code} - ${displayItem.name}`)
         }
     }
 
@@ -83,7 +93,7 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
             {/* Modal Content */}
-            <div className="relative z-10 bg-card border border-border rounded-xl shadow-2xl w-full max-w-sm overflow-hidden print:hidden">
+            <div className="relative z-10 bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden print:hidden">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <h2 className="text-lg font-semibold">Equipment Detail</h2>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
@@ -91,8 +101,22 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
                     </Button>
                 </div>
 
-                <div className="p-6 text-center h-[500px] overflow-y-auto custom-scrollbar">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-4">{displayItem.name}</h3>
+                <div className="p-6 text-center max-h-[80vh] overflow-y-auto custom-scrollbar space-y-4">
+                    {/* Equipment Photo Display */}
+                    {(equipment?.image_url || equipment?.image_path) && (
+                        <div className="w-full h-48 rounded-lg overflow-hidden border border-border bg-black/20 flex items-center justify-center p-2 mb-2">
+                            <img
+                                src={getStorageUrl(equipment.image_url || equipment.image_path) || ""}
+                                alt={equipment.name}
+                                className="w-full h-full object-contain rounded-md"
+                                onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none'
+                                }}
+                            />
+                        </div>
+                    )}
+
+                    <h3 className="text-base font-semibold text-foreground">{displayItem.name}</h3>
 
                     <div className="flex flex-col gap-6 mb-6">
                         {/* If it's a cable with amount > 1, show multiple QR codes */}
@@ -103,14 +127,15 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
                                 return (
                                     <div key={num} className="bg-white/5 border border-border/50 p-4 rounded-lg">
                                         <p className="text-xs font-mono text-muted-foreground mb-3 text-left">Label #{num}</p>
-                                        <div className="bg-white p-4 rounded-md shadow-inner flex flex-col items-center" id={containerId}>
+                                        <div className="bg-white p-4 rounded-md shadow-inner flex flex-col items-center border border-gray-200" id={containerId}>
+                                            <p className="mb-2 text-xs font-bold text-gray-900 truncate max-w-[200px]">{displayItem.name}</p>
                                             <QRCodeCanvas
                                                 value={code}
-                                                size={120}
+                                                size={130}
                                                 level="H"
                                                 includeMargin={false}
                                             />
-                                            <p className="mt-4 text-sm font-mono font-bold tracking-widest text-black">{code}</p>
+                                            <p className="mt-3 text-sm font-mono font-bold tracking-widest text-gray-800">{code}</p>
                                         </div>
                                         <div className="flex gap-2 mt-4">
                                             <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => handleCopy(code)}>
@@ -127,14 +152,15 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
                             })
                         ) : (
                             <div className="bg-white/5 border border-border/50 p-4 rounded-lg">
-                                <div className="bg-white p-6 rounded-md shadow-inner flex flex-col items-center" id="qrcode-detail-single">
+                                <div className="bg-white p-6 rounded-md shadow-inner flex flex-col items-center border border-gray-200" id="qrcode-detail-single">
+                                    <p className="mb-2 text-sm font-bold text-gray-900 truncate max-w-[220px]">{displayItem.name}</p>
                                     <QRCodeCanvas
                                         value={displayItem.barcode}
                                         size={140}
                                         level="H"
                                         includeMargin={false}
                                     />
-                                    <p className="mt-4 text-sm font-mono font-bold tracking-widest text-black">{displayItem.barcode}</p>
+                                    <p className="mt-4 text-sm font-mono font-bold tracking-widest text-gray-800">{displayItem.barcode}</p>
                                 </div>
                                 <div className="flex gap-2 mt-6">
                                     <Button variant="outline" className="flex-1" onClick={() => handleCopy(displayItem.barcode)}>
@@ -163,22 +189,24 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
                     {cable && cable.amount > 1 ? (
                         Array.from({ length: cable.amount }, (_, i) => i + 1).map(num => (
                             <div key={num} className="flex flex-col items-center justify-center border-2 border-black p-8 rounded-lg page-break-after-always">
+                                <p className="mb-3 text-lg font-bold text-black">{displayItem.name}</p>
                                 <QRCodeCanvas
                                     value={`${displayItem.barcode}-${num}`}
                                     size={200}
                                     level="H"
                                 />
-                                <p className="mt-4 text-2xl font-mono font-bold tracking-widest">{displayItem.barcode}-{num}</p>
+                                <p className="mt-4 text-2xl font-mono font-bold tracking-widest text-black">{displayItem.barcode}-{num}</p>
                             </div>
                         ))
                     ) : (
                         <div className="flex flex-col items-center justify-center border-2 border-black p-8 rounded-lg">
+                            <p className="mb-3 text-lg font-bold text-black">{displayItem.name}</p>
                             <QRCodeCanvas
                                 value={displayItem.barcode}
                                 size={200}
                                 level="H"
                             />
-                            <p className="mt-4 text-2xl font-mono font-bold tracking-widest">{displayItem.barcode}</p>
+                            <p className="mt-4 text-2xl font-mono font-bold tracking-widest text-black">{displayItem.barcode}</p>
                         </div>
                     )}
                 </div>
@@ -199,7 +227,6 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
                     .print\\:block *, .print\\:flex * {
                         visibility: visible !important;
                     }
-                    /* Ensure the print content is the only thing visible and fills the page or sits at top */
                     .print\\:flex {
                         position: absolute;
                         left: 0;
