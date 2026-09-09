@@ -97,7 +97,7 @@ function MyEquipmentPage() {
                                         </Badge>
                                     </div>
                                     <div className="text-xs space-y-1">
-                                        <p className="text-muted-foreground">📍 {c.equipment?.location}</p>
+                                        <p className="text-muted-foreground">  {c.equipment?.location}</p>
                                         <p><span className="text-muted-foreground">Event: </span><span className="text-foreground">{c.event_note}</span></p>
                                         <p className="text-muted-foreground">Taken: {fmt(c.checked_out_at)}</p>
                                     </div>

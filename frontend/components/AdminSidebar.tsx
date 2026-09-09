@@ -233,7 +233,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               }`}
           >
             <Radio className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/wireless-mics') ? 'text-primary dark:text-white' : ''}`} />
-            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Wireless Mics</span>}
+            {(!sidebarCollapsed || isMobile) && <span className="font-medium">Receivers</span>}
           </div>
 
           {/* Switch Dashboard Section */}

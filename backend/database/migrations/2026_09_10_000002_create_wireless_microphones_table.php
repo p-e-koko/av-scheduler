@@ -11,7 +11,10 @@ return new class extends Migration
         Schema::create('wireless_microphones', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('brand_model');
-            $table->string('frequency');
+            $table->string('type')->default('Digital');
+            $table->integer('channels_count')->default(1);
+            $table->json('channels')->nullable();
+            $table->string('frequency')->nullable();
             $table->string('location');
             $table->text('notes')->nullable();
             $table->timestamp('created_at')->useCurrent();

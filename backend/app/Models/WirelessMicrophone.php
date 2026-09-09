@@ -9,16 +9,22 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WirelessMicrophone extends Model
 {
-    use HasFactory, SoftDeletes, HasUuid;
+    use HasFactory, HasUuid, SoftDeletes;
 
     protected $table = 'wireless_microphones';
 
-    protected $primaryKey = 'id';
-
     protected $fillable = [
         'brand_model',
+        'type',
+        'channels_count',
+        'channels',
         'frequency',
         'location',
         'notes',
+    ];
+
+    protected $casts = [
+        'channels' => 'array',
+        'channels_count' => 'integer',
     ];
 }

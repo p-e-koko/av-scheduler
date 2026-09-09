@@ -344,7 +344,7 @@ function InventoryPage() {
                                                 <td className="px-4 py-3 font-medium">{item.name} {itemType === "cables" && `(${(item as Cable).length})`}</td>
                                                 <td className="px-4 py-3 font-mono text-xs">{item.barcode}</td>
                                                 <td className="px-4 py-3">{item.category}</td>
-                                                <td className="px-4 py-3">📍 {item.location}</td>
+                                                <td className="px-4 py-3">  {item.location}</td>
                                                 <td className="px-4 py-3">
                                                     {itemType === "equipment" ? (
                                                         <Badge className={`text-[10px] border ${(STATUS_CONFIG[(item as Equipment).status]).className}`}>
@@ -495,7 +495,7 @@ function EquipmentCard({ item, canManage, onAction, onDelete, onHistory, onEdit 
                 </div>
                 <div className="space-y-1">
                     <p className="text-[10px] font-mono bg-muted/30 px-2 py-1 rounded text-foreground/70">{item.barcode}</p>
-                    <p className="text-xs text-muted-foreground">📍 {item.location}</p>
+                    <p className="text-xs text-muted-foreground">  {item.location}</p>
                 </div>
                 <Badge className={`text-[10px] ${condCfg.className}`}>{condCfg.label} condition</Badge>
                 {item.status === "checked_out" && item.current_checkout && (
@@ -541,7 +541,7 @@ function CableCard({ item, canManage, onAction, onDelete, onHistory, onEdit }: {
                 </div>
                 <div className="space-y-1">
                     <p className="text-[10px] font-mono bg-muted/30 px-2 py-1 rounded text-foreground/70">{item.barcode}</p>
-                    <p className="text-xs text-muted-foreground">📍 {item.location}</p>
+                    <p className="text-xs text-muted-foreground">  {item.location}</p>
                 </div>
                 <Badge className={`text-[10px] ${condCfg.className}`}>{condCfg.label} condition</Badge>
 

@@ -224,7 +224,7 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
               className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
             >
               <Radio className="w-5 h-5 flex-shrink-0" />
-              {(!sidebarCollapsed || isMobile) && <span className="font-medium">Wireless Mics</span>}
+              {(!sidebarCollapsed || isMobile) && <span className="font-medium">Receivers</span>}
             </div>
           )}
           {/* IT Office Schedule — shown only for IT Assistants */}

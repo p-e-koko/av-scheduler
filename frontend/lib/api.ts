@@ -1841,10 +1841,18 @@ export const itOfficeScheduleAPI = {
   },
 };
 
-// Wireless Microphone API
+// Wireless Microphone / Receiver Management API
+export interface ReceiverChannel {
+  channel_number: number;
+  frequency: string;
+}
+
 export interface WirelessMicrophone {
   id: string;
   brand_model: string;
+  type?: "Digital" | "Analog";
+  channels_count?: number;
+  channels?: ReceiverChannel[];
   frequency: string;
   location: string;
   notes?: string | null;
@@ -1863,14 +1871,28 @@ export const wirelessMicrophoneAPI = {
     const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
     return apiCall<WirelessMicrophoneListResponse>('/wireless-microphones' + (qs ? '?' + qs : ''));
   },
-  async get(id: string): Promise<{ microphone: WirelessMicrophone }> {
-    return apiCall<{ microphone: WirelessMicrophone }>('/wireless-microphones/' + id);
+  async get(id: string): Promise<{ data: WirelessMicrophone }> {
+    return apiCall<{ data: WirelessMicrophone }>('/wireless-microphones/' + id);
   },
-  async create(data: { brand_model: string; frequency: string; location: string; notes?: string }): Promise<{ message: string; microphone: WirelessMicrophone }> {
-    return apiCall<{ message: string; microphone: WirelessMicrophone }>('/wireless-microphones', { method: 'POST', body: JSON.stringify(data) });
+  async create(data: {
+    brand_model: string;
+    type: "Digital" | "Analog";
+    channels_count: number;
+    channels: ReceiverChannel[];
+    location: string;
+    notes?: string;
+  }): Promise<{ message: string; data: WirelessMicrophone }> {
+    return apiCall<{ message: string; data: WirelessMicrophone }>('/wireless-microphones', { method: 'POST', body: JSON.stringify(data) });
   },
-  async update(id: string, data: Partial<WirelessMicrophone>): Promise<{ message: string; microphone: WirelessMicrophone }> {
-    return apiCall<{ message: string; microphone: WirelessMicrophone }>('/wireless-microphones/' + id, { method: 'PUT', body: JSON.stringify(data) });
+  async update(id: string, data: Partial<{
+    brand_model: string;
+    type: "Digital" | "Analog";
+    channels_count: number;
+    channels: ReceiverChannel[];
+    location: string;
+    notes?: string;
+  }>): Promise<{ message: string; data: WirelessMicrophone }> {
+    return apiCall<{ message: string; data: WirelessMicrophone }>('/wireless-microphones/' + id, { method: 'PUT', body: JSON.stringify(data) });
   },
   async delete(id: string): Promise<{ message: string }> {
     return apiCall<{ message: string }>('/wireless-microphones/' + id, { method: 'DELETE' });

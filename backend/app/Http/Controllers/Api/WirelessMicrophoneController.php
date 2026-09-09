@@ -10,116 +10,145 @@ use Illuminate\Http\Request;
 
 class WirelessMicrophoneController extends Controller
 {
-    /**
-     * List all wireless microphones with optional search and location filter.
-     */
     public function index(Request $request): JsonResponse
     {
         $query = WirelessMicrophone::query();
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('brand_model', 'like', "%{$search}%")
+                  ->orWhere('type', 'like', "%{$search}%")
                   ->orWhere('frequency', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%");
+                  ->orWhere('location', 'like', "%{$search}%")
+                  ->orWhere('notes', 'like', "%{$search}%");
             });
         }
 
-        if ($request->has('location') && $request->location) {
-            $query->where('location', 'like', '%' . $request->location . '%');
+        if ($request->filled('location')) {
+            $query->where('location', $request->location);
         }
 
-        $perPage = $request->get('per_page', 50);
-        $microphones = $query->orderBy('brand_model')->paginate($perPage);
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
 
-        return response()->json($microphones);
+        $perPage = (int) $request->get('per_page', 50);
+        $mics = $query->orderBy('brand_model', 'asc')->paginate($perPage);
+
+        return response()->json($mics);
     }
 
-    /**
-     * Store a new wireless microphone.
-     */
+    public function locations(): JsonResponse
+    {
+        $locations = WirelessMicrophone::distinct()
+            ->whereNotNull('location')
+            ->pluck('location')
+            ->sort()
+            ->values();
+
+        return response()->json(['locations' => $locations]);
+    }
+
     public function store(Request $request): JsonResponse
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'brand_model' => 'required|string|max:255',
-            'frequency'   => 'required|string|max:255',
-            'location'    => 'required|string|max:255',
-            'notes'       => 'nullable|string|max:1000',
+            'type' => 'required|string|in:Digital,Analog',
+            'channels_count' => 'required|integer|min:1|max:32',
+            'channels' => 'required|array|min:1',
+            'channels.*.channel_number' => 'required',
+            'channels.*.frequency' => 'required|string',
+            'location' => 'required|string|max:255',
+            'notes' => 'nullable|string',
         ]);
 
-        $mic = WirelessMicrophone::create($data);
+        $freqParts = [];
+        foreach ($validated['channels'] as $c) {
+            $chNum = $c['channel_number'];
+            $chFreq = $c['frequency'];
+            $freqParts[] = "Ch{$chNum}: {$chFreq}";
+        }
+        $validated['frequency'] = implode(', ', $freqParts);
 
-        AuditLogger::log('wireless_mic.created', [
-            'mic_id'      => $mic->id,
-            'brand_model' => $mic->brand_model,
-            'frequency'   => $mic->frequency,
-        ]);
+        $mic = WirelessMicrophone::create($validated);
+
+        AuditLogger::log(
+            'create',
+            "Created {$mic->type} receiver {$mic->brand_model} with {$mic->channels_count} channels at {$mic->location}",
+            $mic,
+            null,
+            $mic->toArray(),
+            'AV-IT'
+        );
 
         return response()->json([
-            'message'    => 'Wireless microphone added successfully',
-            'microphone' => $mic,
+            'message' => 'Receiver created successfully',
+            'data' => $mic,
         ], 201);
     }
 
-    /**
-     * Show a single wireless microphone.
-     */
     public function show(WirelessMicrophone $wirelessMicrophone): JsonResponse
     {
-        return response()->json(['microphone' => $wirelessMicrophone]);
+        return response()->json(['data' => $wirelessMicrophone]);
     }
 
-    /**
-     * Update a wireless microphone.
-     */
     public function update(Request $request, WirelessMicrophone $wirelessMicrophone): JsonResponse
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'brand_model' => 'sometimes|required|string|max:255',
-            'frequency'   => 'sometimes|required|string|max:255',
-            'location'    => 'sometimes|required|string|max:255',
-            'notes'       => 'nullable|string|max:1000',
+            'type' => 'sometimes|required|string|in:Digital,Analog',
+            'channels_count' => 'sometimes|required|integer|min:1|max:32',
+            'channels' => 'sometimes|required|array|min:1',
+            'channels.*.channel_number' => 'required',
+            'channels.*.frequency' => 'required|string',
+            'location' => 'sometimes|required|string|max:255',
+            'notes' => 'nullable|string',
         ]);
 
-        $wirelessMicrophone->update($data);
+        $old = $wirelessMicrophone->toArray();
 
-        AuditLogger::log('wireless_mic.updated', [
-            'mic_id'      => $wirelessMicrophone->id,
-            'brand_model' => $wirelessMicrophone->brand_model,
-        ]);
+        if (isset($validated['channels'])) {
+            $freqParts = [];
+            foreach ($validated['channels'] as $c) {
+                $chNum = $c['channel_number'];
+                $chFreq = $c['frequency'];
+                $freqParts[] = "Ch{$chNum}: {$chFreq}";
+            }
+            $validated['frequency'] = implode(', ', $freqParts);
+        }
+
+        $wirelessMicrophone->update($validated);
+
+        AuditLogger::log(
+            'update',
+            "Updated receiver {$wirelessMicrophone->brand_model}",
+            $wirelessMicrophone,
+            $old,
+            $wirelessMicrophone->toArray(),
+            'AV-IT'
+        );
 
         return response()->json([
-            'message'    => 'Wireless microphone updated successfully',
-            'microphone' => $wirelessMicrophone->fresh(),
+            'message' => 'Receiver updated successfully',
+            'data' => $wirelessMicrophone,
         ]);
     }
 
-    /**
-     * Soft delete a wireless microphone.
-     */
     public function destroy(WirelessMicrophone $wirelessMicrophone): JsonResponse
     {
+        $old = $wirelessMicrophone->toArray();
         $wirelessMicrophone->delete();
 
-        AuditLogger::log('wireless_mic.deleted', [
-            'mic_id'      => $wirelessMicrophone->id,
-            'brand_model' => $wirelessMicrophone->brand_model,
-        ]);
+        AuditLogger::log(
+            'delete',
+            "Deleted receiver {$old['brand_model']}",
+            null,
+            $old,
+            null,
+            'AV-IT'
+        );
 
-        return response()->json(['message' => 'Wireless microphone deleted successfully']);
-    }
-
-    /**
-     * Get all unique locations.
-     */
-    public function locations(): JsonResponse
-    {
-        $locations = WirelessMicrophone::select('location')
-            ->distinct()
-            ->orderBy('location')
-            ->pluck('location');
-
-        return response()->json(['locations' => $locations]);
+        return response()->json(['message' => 'Receiver deleted successfully']);
     }
 }
