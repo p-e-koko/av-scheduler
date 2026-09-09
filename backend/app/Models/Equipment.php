@@ -97,20 +97,21 @@ class Equipment extends Model
      */
     public static function generateBarcode(string $location): string
     {
-        // Take first 2 letters of location, uppercase
-        $locPart = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $location), 0, 2));
+        $cleanLoc = preg_replace('/[^A-Za-z]/', '', $location);
+        $locPart = strtoupper(substr($cleanLoc, 0, 2));
+        if (strlen($locPart) < 2) {
+            $locPart = str_pad($locPart, 2, 'X', STR_PAD_RIGHT);
+        }
         $prefix = 'AV2026E' . $locPart;
 
-        // Find highest existing number for this prefix
         $barcodes = self::withTrashed()
             ->where('barcode', 'like', "{$prefix}%")
             ->pluck('barcode');
 
         $maxNum = 0;
+        $prefixLen = strlen($prefix);
         foreach ($barcodes as $barcode) {
-            // Suffix starts after AV2026E + 2 chars of location (Total 9 chars)
-            $suffix = substr($barcode, 9);
-            // Stripping any potential sub-item suffixes like -1
+            $suffix = substr($barcode, $prefixLen);
             if (str_contains($suffix, '-')) {
                 $suffix = explode('-', $suffix)[0];
             }

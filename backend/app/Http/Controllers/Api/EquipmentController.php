@@ -452,59 +452,58 @@ class EquipmentController extends Controller
      */
     private function processAndStoreImage($file): string
     {
-        $filename = uniqid('eq_') . '_' . time() . '.webp';
-        $directory = storage_path('app/public/equipment_images');
+        try {
+            $directory = storage_path('app/public/equipment_images');
+            if (!file_exists($directory)) {
+                @mkdir($directory, 0775, true);
+            }
 
-        if (!file_exists($directory)) {
-            mkdir($directory, 0755, true);
-        }
+            if (function_exists('imagecreatefromstring')) {
+                $realPath = $file->getRealPath();
+                if ($realPath && file_exists($realPath)) {
+                    $imageContent = @file_get_contents($realPath);
+                    if ($imageContent !== false) {
+                        $srcImage = @imagecreatefromstring($imageContent);
+                        if ($srcImage !== false) {
+                            $filename = uniqid('eq_') . '_' . time() . '.webp';
+                            $targetPath = $directory . '/' . $filename;
+                            $width = imagesx($srcImage);
+                            $height = imagesy($srcImage);
+                            $maxSize = 1200;
 
-        $targetPath = $directory . '/' . $filename;
+                            if ($width > $maxSize || $height > $maxSize) {
+                                if ($width > $height) {
+                                    $newWidth = $maxSize;
+                                    $newHeight = (int) round(($height / $width) * $maxSize);
+                                } else {
+                                    $newHeight = $maxSize;
+                                    $newWidth = (int) round(($width / $height) * $maxSize);
+                                }
+                                $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
+                                imagealphablending($resizedImage, false);
+                                imagesavealpha($resizedImage, true);
+                                imagecopyresampled($resizedImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                                imagedestroy($srcImage);
+                                $srcImage = $resizedImage;
+                            }
 
-        // Image optimization using GD if available
-        if (function_exists('imagecreatefromstring')) {
-            $imageContent = file_get_contents($file->getRealPath());
-            $srcImage = @imagecreatefromstring($imageContent);
-
-            if ($srcImage !== false) {
-                $width = imagesx($srcImage);
-                $height = imagesy($srcImage);
-                $maxSize = 1200;
-
-                if ($width > $maxSize || $height > $maxSize) {
-                    if ($width > $height) {
-                        $newWidth = $maxSize;
-                        $newHeight = (int) round(($height / $width) * $maxSize);
-                    } else {
-                        $newHeight = $maxSize;
-                        $newWidth = (int) round(($width / $height) * $maxSize);
+                            if (function_exists('imagewebp')) {
+                                @imagewebp($srcImage, $targetPath, 30);
+                                @imagedestroy($srcImage);
+                                @chmod($targetPath, 0664);
+                                return 'equipment_images/' . $filename;
+                            }
+                        }
                     }
-                    $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
-                    imagealphablending($resizedImage, false);
-                    imagesavealpha($resizedImage, true);
-                    imagecopyresampled($resizedImage, $srcImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
-                    imagedestroy($srcImage);
-                    $srcImage = $resizedImage;
-                }
-
-                if (function_exists('imagewebp')) {
-                    imagewebp($srcImage, $targetPath, 30); // 30% quality compression as requested
-                    imagedestroy($srcImage);
-                    @chmod($targetPath, 0664);
-                    return 'equipment_images/' . $filename;
-                } elseif (function_exists('imagejpeg')) {
-                    $jpgFilename = uniqid('eq_') . '_' . time() . '.jpg';
-                    $jpgPath = $directory . '/' . $jpgFilename;
-                    imagejpeg($srcImage, $jpgPath, 30);
-                    imagedestroy($srcImage);
-                    @chmod($jpgPath, 0664);
-                    return 'equipment_images/' . $jpgFilename;
                 }
             }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning("GD image processing failed: " . $e->getMessage());
         }
 
         // Fallback standard storage if GD processing fails
         $path = $file->store('equipment_images', 'public');
+        @chmod(storage_path('app/public/' . $path), 0664);
         return $path;
     }
 }
