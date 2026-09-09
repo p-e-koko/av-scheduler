@@ -6,14 +6,22 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   async rewrites() {
-    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    let backendOrigin = rawApiUrl;
+    // Determine internal backend URL for server-side proxying to bypass Cloudflare/WAF.
+    // In docker-compose, this is typically 'http://backend:8080'
+    const internalApiUrl = process.env.INTERNAL_BACKEND_URL || "http://backend:8080";
+    let backendOrigin = internalApiUrl;
+
     try {
-      if (rawApiUrl.startsWith("http")) {
-        backendOrigin = new URL(rawApiUrl).origin;
+      if (internalApiUrl.startsWith("http")) {
+        backendOrigin = new URL(internalApiUrl).origin;
       }
     } catch {
-      backendOrigin = "http://localhost:8000";
+      backendOrigin = "http://backend:8080";
+    }
+
+    // Fallback if not running in docker but running locally
+    if (process.env.NODE_ENV === 'development' && !process.env.INTERNAL_BACKEND_URL) {
+      backendOrigin = "http://localhost:8080";
     }
 
     return [
