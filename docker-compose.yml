@@ -53,6 +53,8 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       CORS_ALLOWED_ORIGINS: ${FRONTEND_URL}
 
+    volumes:
+      - storage_data:/var/www/html/storage/app/public
     depends_on:
       - db
     networks:
@@ -98,3 +100,4 @@ networks:
 
 volumes:
   db_data:
+  storage_data:

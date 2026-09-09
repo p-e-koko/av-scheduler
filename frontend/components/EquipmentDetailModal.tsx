@@ -1,6 +1,6 @@
 "use client"
 
-import { X, Printer, Copy, Check, Image as ImageIcon } from "lucide-react"
+import { X, Printer, Copy, Check, Image as ImageIcon, Maximize2 } from "lucide-react"
 import { useState } from "react"
 import { QRCodeCanvas } from "qrcode.react"
 import { Button } from "@/components/ui/button"
@@ -19,6 +19,7 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
 
     const [copied, setCopied] = useState(false)
     const [copiedQR, setCopiedQR] = useState(false)
+    const [fullscreenImage, setFullscreenImage] = useState(false)
     const handlePrint = () => {
         window.print()
     }
@@ -89,130 +90,136 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+        <>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-            {/* Modal Content */}
-            <div className="relative z-10 bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden print:hidden">
-                <div className="flex items-center justify-between p-4 border-b border-border">
-                    <h2 className="text-lg font-semibold">Equipment Detail</h2>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
-                        <X className="w-4 h-4" />
-                    </Button>
-                </div>
+                {/* Modal Content */}
+                <div className="relative z-10 bg-card border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden print:hidden">
+                    <div className="flex items-center justify-between p-4 border-b border-border">
+                        <h2 className="text-lg font-semibold">Equipment Detail</h2>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
+                            <X className="w-4 h-4" />
+                        </Button>
+                    </div>
 
-                <div className="p-6 text-center max-h-[80vh] overflow-y-auto custom-scrollbar space-y-4">
-                    {/* Equipment Photo Display */}
-                    {(equipment?.image_url || equipment?.image_path) && (
-                        <div className="w-full h-48 rounded-lg overflow-hidden border border-border bg-black/20 flex items-center justify-center p-2 mb-2">
-                            <img
-                                src={getStorageUrl(equipment.image_url || equipment.image_path) || ""}
-                                alt={equipment.name}
-                                className="w-full h-full object-contain rounded-md"
-                                onError={(e) => {
-                                    (e.target as HTMLElement).style.display = 'none'
-                                }}
-                            />
-                        </div>
-                    )}
-
-                    <h3 className="text-base font-semibold text-foreground">{displayItem.name}</h3>
-
-                    <div className="flex flex-col gap-6 mb-6">
-                        {/* If it's a cable with amount > 1, show multiple QR codes */}
-                        {cable && cable.amount > 1 ? (
-                            Array.from({ length: cable.amount }, (_, i) => i + 1).map(num => {
-                                const code = `${displayItem.barcode}-${num}`
-                                const containerId = `qrcode-container-${num}`
-                                return (
-                                    <div key={num} className="bg-white/5 border border-border/50 p-4 rounded-lg">
-                                        <p className="text-xs font-mono text-muted-foreground mb-3 text-left">Label #{num}</p>
-                                        <div className="bg-white p-4 rounded-md shadow-inner flex flex-col items-center border border-gray-200" id={containerId}>
-                                            <p className="mb-2 text-xs font-bold text-gray-900 truncate max-w-[200px]">{displayItem.name}</p>
-                                            <QRCodeCanvas
-                                                value={code}
-                                                size={130}
-                                                level="H"
-                                                includeMargin={false}
-                                            />
-                                            <p className="mt-3 text-sm font-mono font-bold tracking-widest text-gray-800">{code}</p>
-                                        </div>
-                                        <div className="flex gap-2 mt-4">
-                                            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => handleCopy(code)}>
-                                                {copied ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
-                                                Copy Code
-                                            </Button>
-                                            <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => handleCopyQR(code, containerId)}>
-                                                {copiedQR ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
-                                                Copy QR
-                                            </Button>
-                                        </div>
-                                    </div>
-                                )
-                            })
-                        ) : (
-                            <div className="bg-white/5 border border-border/50 p-4 rounded-lg">
-                                <div className="bg-white p-6 rounded-md shadow-inner flex flex-col items-center border border-gray-200" id="qrcode-detail-single">
-                                    <p className="mb-2 text-sm font-bold text-gray-900 truncate max-w-[220px]">{displayItem.name}</p>
-                                    <QRCodeCanvas
-                                        value={displayItem.barcode}
-                                        size={140}
-                                        level="H"
-                                        includeMargin={false}
-                                    />
-                                    <p className="mt-4 text-sm font-mono font-bold tracking-widest text-gray-800">{displayItem.barcode}</p>
-                                </div>
-                                <div className="flex gap-2 mt-6">
-                                    <Button variant="outline" className="flex-1" onClick={() => handleCopy(displayItem.barcode)}>
-                                        {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                                        Copy Code
-                                    </Button>
-                                    <Button variant="outline" className="flex-1" onClick={() => handleCopyQR(displayItem.barcode, "qrcode-detail-single")}>
-                                        {copiedQR ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                                        Copy QR
-                                    </Button>
-                                </div>
+                    <div className="p-6 text-center max-h-[80vh] overflow-y-auto custom-scrollbar space-y-4">
+                        {/* Equipment Photo Display */}
+                        {(equipment?.image_url || equipment?.image_path) && (
+                            <div className="relative w-full h-48 rounded-lg overflow-hidden border border-border bg-black/20 flex items-center justify-center p-2 mb-2 group cursor-pointer"
+                                onClick={() => setFullscreenImage(true)}
+                            >
+                                <img
+                                    src={getStorageUrl(equipment.image_url || equipment.image_path) || ""}
+                                    alt={equipment.name}
+                                    className="w-full h-full object-contain rounded-md"
+                                />
+                                <button
+                                    className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5 hover:bg-black/80 transition-colors opacity-0 group-hover:opacity-100"
+                                    title="View fullscreen"
+                                >
+                                    <Maximize2 className="w-4 h-4" />
+                                </button>
                             </div>
                         )}
 
-                        <Button variant="outline" className="w-full" onClick={handlePrint}>
-                            <Printer className="w-4 h-4 mr-2" />
-                            Print Labels
-                        </Button>
+                        <h3 className="text-base font-semibold text-foreground">{displayItem.name}</h3>
+
+                        <div className="flex flex-col gap-6 mb-6">
+                            {/* If it's a cable with amount > 1, show multiple QR codes */}
+                            {cable && cable.amount > 1 ? (
+                                Array.from({ length: cable.amount }, (_, i) => i + 1).map(num => {
+                                    const code = `${displayItem.barcode}-${num}`
+                                    const containerId = `qrcode-container-${num}`
+                                    return (
+                                        <div key={num} className="bg-white/5 border border-border/50 p-4 rounded-lg">
+                                            <p className="text-xs font-mono text-muted-foreground mb-3 text-left">Label #{num}</p>
+                                            <div className="bg-white p-4 rounded-md shadow-inner flex flex-col items-center border border-gray-200" id={containerId}>
+                                                <p className="mb-2 text-xs font-bold text-gray-900 truncate max-w-[200px]">{displayItem.name}</p>
+                                                <QRCodeCanvas
+                                                    value={code}
+                                                    size={130}
+                                                    level="H"
+                                                    includeMargin={false}
+                                                />
+                                                <p className="mt-3 text-sm font-mono font-bold tracking-widest text-gray-800">{code}</p>
+                                            </div>
+                                            <div className="flex gap-2 mt-4">
+                                                <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => handleCopy(code)}>
+                                                    {copied ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                                                    Copy Code
+                                                </Button>
+                                                <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => handleCopyQR(code, containerId)}>
+                                                    {copiedQR ? <Check className="w-3 h-3 mr-1" /> : <Copy className="w-3 h-3 mr-1" />}
+                                                    Copy QR
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            ) : (
+                                <div className="bg-white/5 border border-border/50 p-4 rounded-lg">
+                                    <div className="bg-white p-6 rounded-md shadow-inner flex flex-col items-center border border-gray-200" id="qrcode-detail-single">
+                                        <p className="mb-2 text-sm font-bold text-gray-900 truncate max-w-[220px]">{displayItem.name}</p>
+                                        <QRCodeCanvas
+                                            value={displayItem.barcode}
+                                            size={140}
+                                            level="H"
+                                            includeMargin={false}
+                                        />
+                                        <p className="mt-4 text-sm font-mono font-bold tracking-widest text-gray-800">{displayItem.barcode}</p>
+                                    </div>
+                                    <div className="flex gap-2 mt-6">
+                                        <Button variant="outline" className="flex-1" onClick={() => handleCopy(displayItem.barcode)}>
+                                            {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                                            Copy Code
+                                        </Button>
+                                        <Button variant="outline" className="flex-1" onClick={() => handleCopyQR(displayItem.barcode, "qrcode-detail-single")}>
+                                            {copiedQR ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                                            Copy QR
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <Button variant="outline" className="w-full" onClick={handlePrint}>
+                                <Printer className="w-4 h-4 mr-2" />
+                                Print Labels
+                            </Button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Print-only section */}
-            <div className="hidden print:flex fixed inset-0 bg-white items-center justify-center p-0 m-0 z-[9999]">
-                <div className="flex flex-col gap-8 items-center py-10">
-                    {cable && cable.amount > 1 ? (
-                        Array.from({ length: cable.amount }, (_, i) => i + 1).map(num => (
-                            <div key={num} className="flex flex-col items-center justify-center border-2 border-black p-8 rounded-lg page-break-after-always">
+                {/* Print-only section */}
+                <div className="hidden print:flex fixed inset-0 bg-white items-center justify-center p-0 m-0 z-[9999]">
+                    <div className="flex flex-col gap-8 items-center py-10">
+                        {cable && cable.amount > 1 ? (
+                            Array.from({ length: cable.amount }, (_, i) => i + 1).map(num => (
+                                <div key={num} className="flex flex-col items-center justify-center border-2 border-black p-8 rounded-lg page-break-after-always">
+                                    <p className="mb-3 text-lg font-bold text-black">{displayItem.name}</p>
+                                    <QRCodeCanvas
+                                        value={`${displayItem.barcode}-${num}`}
+                                        size={200}
+                                        level="H"
+                                    />
+                                    <p className="mt-4 text-2xl font-mono font-bold tracking-widest text-black">{displayItem.barcode}-{num}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="flex flex-col items-center justify-center border-2 border-black p-8 rounded-lg">
                                 <p className="mb-3 text-lg font-bold text-black">{displayItem.name}</p>
                                 <QRCodeCanvas
-                                    value={`${displayItem.barcode}-${num}`}
+                                    value={displayItem.barcode}
                                     size={200}
                                     level="H"
                                 />
-                                <p className="mt-4 text-2xl font-mono font-bold tracking-widest text-black">{displayItem.barcode}-{num}</p>
+                                <p className="mt-4 text-2xl font-mono font-bold tracking-widest text-black">{displayItem.barcode}</p>
                             </div>
-                        ))
-                    ) : (
-                        <div className="flex flex-col items-center justify-center border-2 border-black p-8 rounded-lg">
-                            <p className="mb-3 text-lg font-bold text-black">{displayItem.name}</p>
-                            <QRCodeCanvas
-                                value={displayItem.barcode}
-                                size={200}
-                                level="H"
-                            />
-                            <p className="mt-4 text-2xl font-mono font-bold tracking-widest text-black">{displayItem.barcode}</p>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            <style jsx global>{`
+                <style jsx global>{`
                 @media print {
                     @page {
                         margin: 0;
@@ -240,6 +247,28 @@ export default function EquipmentDetailModal({ equipment, cable, isOpen, onClose
                     }
                 }
             `}</style>
-        </div>
+            </div>
+
+            {/* Fullscreen Image Lightbox */}
+            {fullscreenImage && equipment && (equipment.image_url || equipment.image_path) && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md cursor-zoom-out"
+                    onClick={() => setFullscreenImage(false)}
+                >
+                    <button
+                        className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors z-10"
+                        onClick={(e) => { e.stopPropagation(); setFullscreenImage(false) }}
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                    <img
+                        src={getStorageUrl(equipment.image_url || equipment.image_path) || ""}
+                        alt={equipment.name}
+                        className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
+        </>
     )
 }

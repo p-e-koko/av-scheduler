@@ -30,20 +30,32 @@ export function getStorageUrl(url?: string | null): string | null {
   if (!url) return null;
   if (url.startsWith('data:') || url.startsWith('blob:')) return url;
 
+  // Extract storage path portion starting at /storage/
   const storageIndex = url.indexOf('/storage/');
-  const storagePath = storageIndex !== -1 ? url.substring(storageIndex) : (url.startsWith('/') ? url : '/' + url);
+  const storagePath = storageIndex !== -1
+    ? url.substring(storageIndex)
+    : (url.startsWith('/') ? url : '/storage/' + url.replace(/^equipment_images\//, 'equipment_images/'));
 
   if (typeof window !== 'undefined') {
+    // If API_BASE_URL is absolute (e.g. http://localhost:8000/api)
     if (API_BASE_URL.startsWith('http')) {
       try {
         const apiUrlObj = new URL(API_BASE_URL);
         return `${apiUrlObj.origin}${storagePath}`;
       } catch (e) {
-        // Fallback
+        // Ignore parsing errors
       }
     }
+
+    // If API_BASE_URL is relative (/api) and running in browser (e.g. localhost:8080 or 3000)
+    // resolve to backend port 8000 directly if on dev host
+    if (window.location.port === '8080' || window.location.port === '3000' || window.location.port === '3001') {
+      return `http://${window.location.hostname}:8000${storagePath}`;
+    }
+
     return storagePath;
   }
+
   return url;
 }
 

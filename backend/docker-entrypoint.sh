@@ -36,6 +36,10 @@ php artisan migrate --force
 echo "Running seeders..."
 php artisan db:seed --force
 
+# Create storage symlink (public/storage -> storage/app/public)
+echo "Creating storage symlink..."
+php artisan storage:link --force
+
 # Re-cache configuration for performance
 echo "Caching configuration..."
 php artisan config:cache

@@ -480,9 +480,6 @@ function EquipmentCard({ item, canManage, onAction, onDelete, onHistory, onEdit 
                             src={getStorageUrl(item.image_url || item.image_path) || ""}
                             alt={item.name}
                             className="w-full h-full object-contain rounded-md"
-                            onError={(e) => {
-                                (e.target as HTMLElement).style.display = 'none';
-                            }}
                         />
                     </div>
                 )}
