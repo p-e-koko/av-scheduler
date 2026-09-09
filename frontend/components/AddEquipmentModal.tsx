@@ -96,12 +96,25 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
 
         const video = videoRef.current
         const canvas = canvasRef.current
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
+
+        let width = video.videoWidth
+        let height = video.videoHeight
+
+        // Downscale if larger than 1200px to ensure the resulting payload is small
+        const maxDim = 1200
+        if (width > maxDim || height > maxDim) {
+            const ratio = Math.min(maxDim / width, maxDim / height)
+            width *= ratio
+            height *= ratio
+        }
+
+        canvas.width = width
+        canvas.height = height
         const ctx = canvas.getContext("2d")
         if (!ctx) return
 
-        ctx.drawImage(video, 0, 0)
+        // Draw image onto canvas with new dimensions
+        ctx.drawImage(video, 0, 0, width, height)
         canvas.toBlob(
             (blob) => {
                 if (!blob) return
@@ -111,7 +124,7 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
                 stopCamera()
             },
             "image/webp",
-            0.85
+            0.3
         )
     }, [stopCamera])
 
@@ -150,14 +163,48 @@ export default function AddEquipmentModal({ isOpen, onClose, onSaved, editEquipm
         const file = e.target.files?.[0]
         if (!file) return
 
-        if (file.size > 5 * 1024 * 1024) {
-            setError("Image file size exceeds 5MB limit.")
+        if (file.size > 10 * 1024 * 1024) {
+            setError("Image file size exceeds 10MB limit.")
             return
         }
 
         setError(null)
-        setImageFile(file)
-        setImagePreview(URL.createObjectURL(file))
+
+        // Compress the image before setting it
+        const img = new window.Image()
+        const url = URL.createObjectURL(file)
+        img.onload = () => {
+            let width = img.width
+            let height = img.height
+            const maxDim = 1200
+            if (width > maxDim || height > maxDim) {
+                const ratio = Math.min(maxDim / width, maxDim / height)
+                width *= ratio
+                height *= ratio
+            }
+
+            const canvas = document.createElement('canvas')
+            canvas.width = width
+            canvas.height = height
+            const ctx = canvas.getContext('2d')
+            if (ctx) ctx.drawImage(img, 0, 0, width, height)
+
+            canvas.toBlob((blob) => {
+                URL.revokeObjectURL(url)
+                if (blob) {
+                    const newFile = new File([blob], `upload_${Date.now()}.webp`, { type: "image/webp" })
+                    setImageFile(newFile)
+                    setImagePreview(URL.createObjectURL(blob))
+                }
+            }, 'image/webp', 0.3)
+        }
+        img.onerror = () => {
+            URL.revokeObjectURL(url)
+            // Fallback to original file if compression fails
+            setImageFile(file)
+            setImagePreview(URL.createObjectURL(file))
+        }
+        img.src = url
     }
 
     const handleRemoveImage = () => {
