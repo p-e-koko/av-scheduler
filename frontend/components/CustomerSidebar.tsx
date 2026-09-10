@@ -155,7 +155,7 @@ export function CustomerSidebar({ activeTab, onTabChange, isOpen, onClose, user 
                 </nav>
 
                 {/* Switch View Section */}
-                {currentUser && !hasOnlyCustomerRole && getAllowedDashboards(userRoles).filter(path => path !== '/dashboard/customer' && path !== '/dashboard/inventory' && path !== '/dashboard/keys').length > 0 && (
+                {currentUser && !hasOnlyCustomerRole && getAllowedDashboards(userRoles).filter(path => path !== '/dashboard/customer' && path !== '/dashboard/inventory' && path !== '/dashboard/keys' && path !== '/dashboard/wireless-mics').length > 0 && (
                     <>
                         <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
                             {(!sidebarCollapsed || isMobile) ? (
@@ -167,7 +167,7 @@ export function CustomerSidebar({ activeTab, onTabChange, isOpen, onClose, user 
                             )}
                         </div>
                         {getAllowedDashboards(userRoles)
-                            .filter(path => path !== '/dashboard/customer' && path !== '/dashboard/inventory' && path !== '/dashboard/keys')
+                            .filter(path => path !== '/dashboard/customer' && path !== '/dashboard/inventory' && path !== '/dashboard/keys' && path !== '/dashboard/wireless-mics')
                             .map(path => {
                                 const label = path.split('/').pop();
                                 return (

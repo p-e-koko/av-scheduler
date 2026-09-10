@@ -146,7 +146,7 @@ export function MarketingSupervisorSidebar({
                     ))}
 
                     {/* Switch Dashboard */}
-                    {getAllowedDashboards(userRoles).filter(p => !p.includes('marketing-supervisor')).length > 0 && (
+                    {getAllowedDashboards(userRoles).filter(p => !p.includes('marketing-supervisor') && p !== '/dashboard/inventory' && p !== '/dashboard/keys' && p !== '/dashboard/wireless-mics').length > 0 && (
                         <>
                             <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
                                 {(!sidebarCollapsed || isMobile) ? (
@@ -156,7 +156,7 @@ export function MarketingSupervisorSidebar({
                                 )}
                             </div>
                             {getAllowedDashboards(userRoles)
-                                .filter(p => !p.includes('marketing-supervisor'))
+                                .filter(p => !p.includes('marketing-supervisor') && p !== '/dashboard/inventory' && p !== '/dashboard/keys' && p !== '/dashboard/wireless-mics')
                                 .map(path => (
                                     <div
                                         key={path}

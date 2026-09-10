@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
-import { DashboardSidebarWrapper } from "@/components/DashboardSidebarWrapper"
+import { DashboardSidebarWrapper, MobileSidebarTrigger } from "@/components/DashboardSidebarWrapper"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import {
@@ -233,10 +233,8 @@ function ReceiverManagementPage() {
             {/* Header */}
             <header className="bg-card/70 backdrop-blur-xl border-b border-border px-4 sm:px-6 py-4 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={goBack} className="text-muted-foreground hover:text-foreground">
-                            <ChevronLeft className="w-6 h-6" />
-                        </Button>
+                    <div className="flex items-center gap-3">
+                        <MobileSidebarTrigger />
                         <div>
                             <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
                                 <Radio className="w-6 h-6 text-primary dark:text-white" />

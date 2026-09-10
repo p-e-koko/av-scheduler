@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation"
+import React, { useState, useEffect, createContext, useContext } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getStoredUser, type User } from "@/lib/api"
@@ -9,6 +9,33 @@ import { SupervisorSidebar } from "@/components/SupervisorSidebar"
 import { CoordinatorSidebar } from "@/components/CoordinatorSidebar"
 import { StudentSidebar } from "@/components/StudentSidebar"
 import { AdminSidebar } from "@/components/AdminSidebar"
+import { CustomerSidebar } from "@/components/CustomerSidebar"
+
+interface DashboardSidebarContextType {
+    isSidebarOpen: boolean
+    setIsSidebarOpen: (open: boolean) => void
+    openSidebar: () => void
+}
+
+const DashboardSidebarContext = createContext<DashboardSidebarContextType | undefined>(undefined)
+
+export const useDashboardSidebar = () => useContext(DashboardSidebarContext)
+
+export function MobileSidebarTrigger({ className = "" }: { className?: string }) {
+    const context = useContext(DashboardSidebarContext)
+    if (!context) return null
+    return (
+        <Button
+            variant="ghost"
+            size="icon"
+            className={`md:hidden text-foreground hover:bg-accent ${className}`}
+            onClick={context.openSidebar}
+            aria-label="Open navigation menu"
+        >
+            <Menu className="h-6 w-6 text-foreground" />
+        </Button>
+    )
+}
 
 /**
  * Wraps sub-pages (Inventory, Keys, Receivers) with the user's
@@ -16,6 +43,7 @@ import { AdminSidebar } from "@/components/AdminSidebar"
  */
 export function DashboardSidebarWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
+    const router = useRouter()
     const [currentUser, setCurrentUser] = useState<User | null>(null)
     const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
@@ -28,12 +56,23 @@ export function DashboardSidebarWrapper({ children }: { children: React.ReactNod
         return <>{children}</>
     }
 
-    const role = currentUser.role?.toLowerCase() ?? "student"
+    const userRoles = (currentUser.roles && currentUser.roles.length > 0)
+        ? currentUser.roles.map(r => r.toLowerCase())
+        : [currentUser.role?.toLowerCase() ?? "student"]
+
+    let role = "student"
+    if (userRoles.includes("admin")) role = "admin"
+    else if (userRoles.includes("supervisor")) role = "supervisor"
+    else if (userRoles.includes("coordinator")) role = "coordinator"
+    else if (userRoles.includes("customer")) role = "customer"
+    else if (userRoles.includes("student")) role = "student"
+
+    const handleTabChange = (targetDashboard: string, tab: string) => {
+        setIsSidebarOpen(false)
+        router.push(`/dashboard/${targetDashboard}?tab=${tab}`)
+    }
 
     const renderSidebar = () => {
-        // We pass a dummy activeTab since none of the sidebar's own tabs are active
-        // on these sub-pages. The sidebar highlights Inventory/Keys/Receivers
-        // via pathname matching already built into each sidebar.
         switch (role) {
             case "admin":
                 return (
@@ -46,7 +85,7 @@ export function DashboardSidebarWrapper({ children }: { children: React.ReactNod
                 return (
                     <SupervisorSidebar
                         activeTab={"dashboard"}
-                        onTabChange={() => { }}
+                        onTabChange={(tab) => handleTabChange("supervisor", tab)}
                         isOpen={isSidebarOpen}
                         onClose={() => setIsSidebarOpen(false)}
                     />
@@ -55,7 +94,17 @@ export function DashboardSidebarWrapper({ children }: { children: React.ReactNod
                 return (
                     <CoordinatorSidebar
                         activeTab={"assignments"}
-                        onTabChange={() => { }}
+                        onTabChange={(tab) => handleTabChange("coordinator", tab)}
+                        isOpen={isSidebarOpen}
+                        onClose={() => setIsSidebarOpen(false)}
+                        user={currentUser}
+                    />
+                )
+            case "customer":
+                return (
+                    <CustomerSidebar
+                        activeTab={"book"}
+                        onTabChange={(tab) => handleTabChange("customer", tab)}
                         isOpen={isSidebarOpen}
                         onClose={() => setIsSidebarOpen(false)}
                         user={currentUser}
@@ -66,7 +115,7 @@ export function DashboardSidebarWrapper({ children }: { children: React.ReactNod
                 return (
                     <StudentSidebar
                         activeTab={"profile"}
-                        onTabChange={() => { }}
+                        onTabChange={(tab) => handleTabChange("student", tab)}
                         isOpen={isSidebarOpen}
                         onClose={() => setIsSidebarOpen(false)}
                     />
@@ -75,21 +124,19 @@ export function DashboardSidebarWrapper({ children }: { children: React.ReactNod
     }
 
     return (
-        <div className="flex h-screen bg-background">
-            {renderSidebar()}
-            <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
-                {/* Mobile menu button — only shown on small screens */}
-                <div className="md:hidden absolute top-4 left-4 z-20">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setIsSidebarOpen(true)}
-                    >
-                        <Menu className="h-6 w-6" />
-                    </Button>
+        <DashboardSidebarContext.Provider
+            value={{
+                isSidebarOpen,
+                setIsSidebarOpen,
+                openSidebar: () => setIsSidebarOpen(true),
+            }}
+        >
+            <div className="flex h-screen bg-background">
+                {renderSidebar()}
+                <div className="flex-1 flex flex-col overflow-hidden min-w-0 relative">
+                    {children}
                 </div>
-                {children}
             </div>
-        </div>
+        </DashboardSidebarContext.Provider>
     )
 }

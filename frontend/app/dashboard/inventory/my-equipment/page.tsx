@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
-import { DashboardSidebarWrapper } from "@/components/DashboardSidebarWrapper"
+import { DashboardSidebarWrapper, MobileSidebarTrigger } from "@/components/DashboardSidebarWrapper"
 import BarcodeScannerModal from "@/components/BarcodeScannerModal"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import { equipmentAPI, getStoredUser, formatAPIError, type EquipmentCheckout, type User } from "@/lib/api"
@@ -50,12 +50,15 @@ function MyEquipmentPage() {
         <>
             <header className="bg-card/70 backdrop-blur-xl border-b border-border px-4 sm:px-6 py-4 shadow-sm">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-                            <Package className="w-6 h-6 text-primary" />
-                            My Equipment
-                        </h1>
-                        <p className="text-sm text-muted-foreground mt-1">Equipment currently in your possession</p>
+                    <div className="flex items-center gap-3">
+                        <MobileSidebarTrigger />
+                        <div>
+                            <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
+                                <Package className="w-6 h-6 text-primary" />
+                                My Equipment
+                            </h1>
+                            <p className="text-sm text-muted-foreground mt-1">Equipment currently in your possession</p>
+                        </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <NotificationDropdown />

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
-import { DashboardSidebarWrapper } from "@/components/DashboardSidebarWrapper"
+import { DashboardSidebarWrapper, MobileSidebarTrigger } from "@/components/DashboardSidebarWrapper"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import BarcodeScannerModal from "@/components/BarcodeScannerModal"
 import AddEquipmentModal from "@/components/AddEquipmentModal"
@@ -154,7 +154,8 @@ function InventoryPage() {
             {/* Header */}
             <header className="bg-card/70 backdrop-blur-xl border-b border-border px-4 sm:px-6 py-4 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <MobileSidebarTrigger />
                         <div>
                             <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
                                 <Box className="w-6 h-6 text-primary dark:text-white" />

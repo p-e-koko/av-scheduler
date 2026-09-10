@@ -148,7 +148,7 @@ export function MarketingCoordinatorSidebar({
                     ))}
 
                     {/* Switch Dashboard */}
-                    {getAllowedDashboards(userRoles).filter(p => !p.includes('marketing-coordinator')).length > 0 && (
+                    {getAllowedDashboards(userRoles).filter(p => !p.includes('marketing-coordinator') && p !== '/dashboard/inventory' && p !== '/dashboard/keys' && p !== '/dashboard/wireless-mics').length > 0 && (
                         <>
                             <div className={`pt-4 pb-2 ${sidebarCollapsed && !isMobile ? 'text-center' : 'px-2'}`}>
                                 {(!sidebarCollapsed || isMobile) ? (
@@ -158,7 +158,7 @@ export function MarketingCoordinatorSidebar({
                                 )}
                             </div>
                             {getAllowedDashboards(userRoles)
-                                .filter(p => !p.includes('marketing-coordinator'))
+                                .filter(p => !p.includes('marketing-coordinator') && p !== '/dashboard/inventory' && p !== '/dashboard/keys' && p !== '/dashboard/wireless-mics')
                                 .map(path => (
                                     <div
                                         key={path}

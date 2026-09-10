@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
-import { DashboardSidebarWrapper } from "@/components/DashboardSidebarWrapper"
+import { DashboardSidebarWrapper, MobileSidebarTrigger } from "@/components/DashboardSidebarWrapper"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import {
@@ -101,10 +101,8 @@ function CheckoutsPage() {
     return (
         <>
             <header className="bg-card/70 backdrop-blur-xl border-b border-border px-4 sm:px-6 py-4 shadow-sm">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.push("/dashboard/inventory")} className="text-muted-foreground hover:text-foreground">
-                        <ChevronLeft className="w-6 h-6" />
-                    </Button>
+                <div className="flex items-center gap-3">
+                    <MobileSidebarTrigger />
                     <div className="flex-1">
                         <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
                             <History className="w-6 h-6 text-primary" />
