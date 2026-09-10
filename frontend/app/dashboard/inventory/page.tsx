@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
+import { DashboardSidebarWrapper } from "@/components/DashboardSidebarWrapper"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import BarcodeScannerModal from "@/components/BarcodeScannerModal"
 import AddEquipmentModal from "@/components/AddEquipmentModal"
@@ -146,14 +147,6 @@ function InventoryPage() {
         })
     }
 
-    const goBack = () => {
-        if (!currentUser) return
-        const dashPath = hasAnyRole(["admin", "coordinator", "supervisor", "student"])
-            ? `/dashboard/${currentUser.role}`
-            : "/dashboard"
-        router.push(dashPath)
-    }
-
     if (!currentUser) return <div className="flex items-center justify-center h-screen">Loading...</div>
 
     return (
@@ -162,9 +155,6 @@ function InventoryPage() {
             <header className="bg-card/70 backdrop-blur-xl border-b border-border px-4 sm:px-6 py-4 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={goBack} className="text-muted-foreground hover:text-foreground">
-                            <ChevronLeft className="w-6 h-6" />
-                        </Button>
                         <div>
                             <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
                                 <Box className="w-6 h-6 text-primary dark:text-white" />
@@ -568,7 +558,9 @@ function CableCard({ item, canManage, onAction, onDelete, onHistory, onEdit }: {
 export default function InventoryPageWrapper() {
     return (
         <RoleProtectedRoute allowedRoles={["admin", "coordinator", "supervisor", "student"]}>
-            <InventoryPage />
+            <DashboardSidebarWrapper>
+                <InventoryPage />
+            </DashboardSidebarWrapper>
         </RoleProtectedRoute>
     )
 }

@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
+import { DashboardSidebarWrapper } from "@/components/DashboardSidebarWrapper"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import {
@@ -734,7 +735,9 @@ function ReceiverManagementPage() {
 export default function ReceiverManagementPageWrapper() {
     return (
         <RoleProtectedRoute allowedRoles={["admin", "coordinator", "supervisor", "student"]}>
-            <ReceiverManagementPage />
+            <DashboardSidebarWrapper>
+                <ReceiverManagementPage />
+            </DashboardSidebarWrapper>
         </RoleProtectedRoute>
     )
 }

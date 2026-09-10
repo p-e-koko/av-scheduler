@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import {
   User,
   Calendar,
@@ -41,6 +41,7 @@ interface StudentSidebarProps {
 
 export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: StudentSidebarProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [currentUser, setCurrentUser] = useState<UserType | null>(null)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
@@ -195,9 +196,13 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
                 router.push('/dashboard/inventory')
                 if (isMobile && onClose) onClose()
               }}
-              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
+              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/inventory')
+                ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
+                : 'text-muted-foreground hover:bg-accent'
+                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/inventory') ? 'border-primary/20' : 'border-transparent'
+                }`}
             >
-              <Package className="w-5 h-5 flex-shrink-0" />
+              <Package className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/inventory') ? 'text-primary dark:text-white' : ''}`} />
               {(!sidebarCollapsed || isMobile) && <span className="font-medium">Inventory</span>}
             </div>
           )}
@@ -208,9 +213,13 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
                 router.push('/dashboard/keys')
                 if (isMobile && onClose) onClose()
               }}
-              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
+              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/keys')
+                ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
+                : 'text-muted-foreground hover:bg-accent'
+                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/keys') ? 'border-primary/20' : 'border-transparent'
+                }`}
             >
-              <Key className="w-5 h-5 flex-shrink-0" />
+              <Key className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/keys') ? 'text-primary dark:text-white' : ''}`} />
               {(!sidebarCollapsed || isMobile) && <span className="font-medium">Keys</span>}
             </div>
           )}
@@ -221,9 +230,13 @@ export function StudentSidebar({ activeTab, onTabChange, isOpen, onClose }: Stud
                 router.push('/dashboard/wireless-mics')
                 if (isMobile && onClose) onClose()
               }}
-              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} text-muted-foreground hover:bg-accent hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border border-transparent`}
+              className={`flex items-center ${sidebarCollapsed && !isMobile ? 'justify-center' : 'space-x-3'} ${pathname.startsWith('/dashboard/wireless-mics')
+                ? 'text-primary dark:text-white bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-700'
+                : 'text-muted-foreground hover:bg-accent'
+                } hover:bg-primary/20 rounded-lg p-2 cursor-pointer transition-colors border ${pathname.startsWith('/dashboard/wireless-mics') ? 'border-primary/20' : 'border-transparent'
+                }`}
             >
-              <Radio className="w-5 h-5 flex-shrink-0" />
+              <Radio className={`w-5 h-5 flex-shrink-0 ${pathname.startsWith('/dashboard/wireless-mics') ? 'text-primary dark:text-white' : ''}`} />
               {(!sidebarCollapsed || isMobile) && <span className="font-medium">Receivers</span>}
             </div>
           )}

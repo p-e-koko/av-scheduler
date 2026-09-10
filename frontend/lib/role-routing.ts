@@ -34,9 +34,9 @@ export const canAccessDashboard = (userRole: string | string[], dashboardPath: s
 
   // Check role-specific access
   const rolePathMap: Record<string, string[]> = {
-    'coordinator': ['/dashboard/coordinator', '/dashboard/inventory', '/dashboard/keys'],
-    'student': ['/dashboard/student', '/dashboard/inventory', '/dashboard/keys'],
-    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys'],
+    'coordinator': ['/dashboard/coordinator', '/dashboard/inventory', '/dashboard/keys', '/dashboard/wireless-mics'],
+    'student': ['/dashboard/student', '/dashboard/inventory', '/dashboard/keys', '/dashboard/wireless-mics'],
+    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys', '/dashboard/wireless-mics'],
     'customer': ['/dashboard/customer'],
     // Marketing roles — isolated from AV-IT paths
     'marketing_supervisor': ['/dashboard/marketing-supervisor'],
@@ -65,12 +65,13 @@ export const getAllowedDashboards = (userRole: string | string[]): string[] => {
     allowed.add('/dashboard/inventory');
     allowed.add('/dashboard/customer');
     allowed.add('/dashboard/keys');
+    allowed.add('/dashboard/wireless-mics');
   }
 
   const rolePathMap: Record<string, string[]> = {
-    'coordinator': ['/dashboard/coordinator', '/dashboard/inventory', '/dashboard/keys'],
-    'student': ['/dashboard/student', '/dashboard/inventory', '/dashboard/keys'],
-    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys'],
+    'coordinator': ['/dashboard/coordinator', '/dashboard/inventory', '/dashboard/keys', '/dashboard/wireless-mics'],
+    'student': ['/dashboard/student', '/dashboard/inventory', '/dashboard/keys', '/dashboard/wireless-mics'],
+    'supervisor': ['/dashboard/supervisor', '/dashboard/inventory', '/dashboard/keys', '/dashboard/wireless-mics'],
     'customer': ['/dashboard/customer'],
     // Marketing roles
     'marketing_supervisor': ['/dashboard/marketing-supervisor'],

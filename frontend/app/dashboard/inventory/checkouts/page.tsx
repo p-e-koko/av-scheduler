@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
+import { DashboardSidebarWrapper } from "@/components/DashboardSidebarWrapper"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import {
@@ -262,7 +263,9 @@ function CheckoutsPage() {
 export default function CheckoutsPageWrapper() {
     return (
         <RoleProtectedRoute allowedRoles={["admin", "coordinator", "supervisor", "student"]}>
-            <CheckoutsPage />
+            <DashboardSidebarWrapper>
+                <CheckoutsPage />
+            </DashboardSidebarWrapper>
         </RoleProtectedRoute>
     )
 }

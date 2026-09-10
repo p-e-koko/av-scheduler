@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
+import { DashboardSidebarWrapper } from "@/components/DashboardSidebarWrapper"
 import ConfirmationDialog from "@/components/ConfirmationDialog"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import {
@@ -105,11 +106,6 @@ function KeyManagementPage() {
         })
     }
 
-    const goBack = () => {
-        if (!currentUser) return
-        router.push(`/dashboard/${currentUser.role}`)
-    }
-
     const filteredKeys = keys.filter(k => {
         const matchesSearch = k.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
             k.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -194,9 +190,6 @@ function KeyManagementPage() {
             <header className="bg-card/80 backdrop-blur-xl border-b border-border px-4 sm:px-6 py-4 shadow-sm sticky top-0 z-20">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-7xl mx-auto">
                     <div className="flex items-center gap-4">
-                        <Button variant="ghost" size="icon" onClick={goBack} className="text-muted-foreground hover:text-foreground rounded-full">
-                            <ChevronLeft className="w-5 h-5" />
-                        </Button>
                         <div>
                             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2.5 tracking-tight">
                                 <div className="p-2 rounded-xl bg-blue-600/10 dark:bg-sky-500/15 text-blue-600 dark:text-sky-400">
@@ -594,7 +587,9 @@ function KeyCard({ item, isSelected, canManage, onToggleSelect, onClick, onEdit,
 export default function KeyManagementWrapper() {
     return (
         <RoleProtectedRoute allowedRoles={["admin", "coordinator", "supervisor", "student"]}>
-            <KeyManagementPage />
+            <DashboardSidebarWrapper>
+                <KeyManagementPage />
+            </DashboardSidebarWrapper>
         </RoleProtectedRoute>
     )
 }

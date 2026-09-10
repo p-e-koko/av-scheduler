@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute"
+import { DashboardSidebarWrapper } from "@/components/DashboardSidebarWrapper"
 import BarcodeScannerModal from "@/components/BarcodeScannerModal"
 import { NotificationDropdown } from "@/components/NotificationDropdown"
 import { equipmentAPI, getStoredUser, formatAPIError, type EquipmentCheckout, type User } from "@/lib/api"
@@ -131,7 +132,9 @@ function MyEquipmentPage() {
 export default function MyEquipmentWrapper() {
     return (
         <RoleProtectedRoute allowedRoles={["admin", "coordinator", "supervisor", "student"]}>
-            <MyEquipmentPage />
+            <DashboardSidebarWrapper>
+                <MyEquipmentPage />
+            </DashboardSidebarWrapper>
         </RoleProtectedRoute>
     )
 }
