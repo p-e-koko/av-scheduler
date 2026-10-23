@@ -21,7 +21,7 @@ RUN find vendor -name ".git" -type d -prune -exec rm -rf '{}' + || true
 # -----------------------
 # Stage 2: Final Runtime
 # -----------------------
-FROM php:8.4.27-fpm-alpine3.21
+FROM php:8.4-fpm-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
