@@ -379,6 +379,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Override getRememberToken to prevent null being passed to hash_equals()
+     * in PHP 8.4, which now throws a TypeError instead of a warning.
+     * Returns an empty string when no remember token is set.
+     */
+    public function getRememberToken(): string
+    {
+        return $this->remember_token ?? '';
+    }
+
+    /**
      * Send the email verification notification.
      *
      * @return void
