@@ -11,6 +11,7 @@ use App\Models\Assignment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Helpers\AuditLogger;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AssignmentAssigned;
 use App\Mail\AssignmentStatusUpdated;
@@ -154,7 +155,15 @@ class AssignmentController extends Controller
         // Set is_modified flag for all users
         foreach ($assignment->users as $user) {
             $assignment->users()->updateExistingPivot($user->id, ['is_modified' => true]);
-            $user->notify(new \App\Notifications\AssignmentModifiedNotification($assignment));
+            try {
+                $user->notify(new \App\Notifications\AssignmentModifiedNotification($assignment));
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send assignment modified notification', [
+                    'assignment_id' => $assignment->id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         // Load relationships for response
@@ -194,7 +203,15 @@ class AssignmentController extends Controller
     {
         // Notify assigned users before deletion
         foreach ($assignment->users as $user) {
-            $user->notify(new \App\Notifications\AssignmentDeletedNotification($assignment));
+            try {
+                $user->notify(new \App\Notifications\AssignmentDeletedNotification($assignment));
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send assignment deleted notification', [
+                    'assignment_id' => $assignment->id,
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         $assignment->delete();
@@ -313,7 +330,15 @@ class AssignmentController extends Controller
         }
 
         $assignedUser = $user;
-        $assignedUser->notify(new \App\Notifications\AssignmentAssignedNotification($assignment));
+        try {
+            $assignedUser->notify(new \App\Notifications\AssignmentAssignedNotification($assignment));
+        } catch (\Throwable $e) {
+            Log::warning('Failed to send assignment assigned notification', [
+                'assignment_id' => $assignment->id,
+                'user_id' => $assignedUser->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         AuditLogger::log('User Assigned to Assignment', [
             'assignment_id' => $assignment->id,
@@ -518,7 +543,15 @@ class AssignmentController extends Controller
 
         // Notify coordinator
         if ($assignment->creator) {
-            $assignment->creator->notify(new \App\Notifications\AssignmentAcceptedNotification($assignment, $user));
+            try {
+                $assignment->creator->notify(new \App\Notifications\AssignmentAcceptedNotification($assignment, $user));
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send assignment accepted notification', [
+                    'assignment_id' => $assignment->id,
+                    'creator_id' => $assignment->creator->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         AuditLogger::log('Assignment Accepted', [
@@ -571,7 +604,15 @@ class AssignmentController extends Controller
 
         // Notify coordinator
         if ($assignment->creator) {
-            $assignment->creator->notify(new \App\Notifications\AssignmentRejectedNotification($assignment, $user, $request->reason));
+            try {
+                $assignment->creator->notify(new \App\Notifications\AssignmentRejectedNotification($assignment, $user, $request->reason));
+            } catch (\Throwable $e) {
+                Log::warning('Failed to send assignment rejected notification', [
+                    'assignment_id' => $assignment->id,
+                    'creator_id' => $assignment->creator->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         AuditLogger::log('Assignment Rejected', [
