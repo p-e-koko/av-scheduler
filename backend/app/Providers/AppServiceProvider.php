@@ -8,6 +8,7 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,6 +17,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Bind SafeMailChannel so notification email failures don't crash the app
+        $this->app->bind(
+            \Illuminate\Notifications\Channels\MailChannel::class,
+            \App\Channels\SafeMailChannel::class
+        );
+
         // Override Resend Client to disable SSL verification (Fix for local dev)
         if ($this->app->environment('local')) {
             $this->app->singleton(\Resend\Contracts\Client::class, static function () {
@@ -46,6 +53,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Extend notification 'mail' channel to use SafeMailChannel
+        Notification::extend('mail', function ($app) {
+            return $app->make(\App\Channels\SafeMailChannel::class);
+        });
+
         // Register Socialite Provider
         Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
             $event->extendSocialite('microsoft', \SocialiteProviders\Azure\Provider::class);

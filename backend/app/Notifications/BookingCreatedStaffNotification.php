@@ -17,7 +17,7 @@ class BookingCreatedStaffNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database', 'mail', WebPushChannel::class];
+        return ['database', WebPushChannel::class, 'mail'];
     }
 
     public function toWebPush(object $notifiable, $notification): WebPushMessage

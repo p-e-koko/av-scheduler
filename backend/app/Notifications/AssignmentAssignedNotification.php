@@ -31,7 +31,7 @@ class AssignmentAssignedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail', WebPushChannel::class];
+        return ['database', WebPushChannel::class, 'mail'];
     }
 
     private function getTargetUrl(object $notifiable): string
